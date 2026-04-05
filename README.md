@@ -1,3 +1,50 @@
+# Git2LinkedIn (MVP)
+
+Generate LinkedIn post drafts from GitHub commits.
+
+## What’s included
+
+- GitHub OAuth sign-in
+- Repo selection
+- Sync recent commits
+- Generate AI drafts (progress / technical insight / build-in-public)
+- Edit + preview + character counter
+- Copy-to-clipboard (manual LinkedIn posting)
+
+## Setup
+
+1. Install deps
+
+```bash
+npm install
+```
+
+2. Configure env
+
+- Copy `.env.example` → `.env`
+- Create a GitHub OAuth App and set:
+  - `GITHUB_CLIENT_ID`
+  - `GITHUB_CLIENT_SECRET`
+- Set:
+  - `NEXTAUTH_SECRET`
+  - `AIML_API_KEY` (from `api.aimlapi.com`)
+
+3. Database
+
+```bash
+npx prisma migrate dev --name init
+# If Prisma complains about non-interactive mode, use:
+# npx prisma db push
+```
+
+4. Run
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
