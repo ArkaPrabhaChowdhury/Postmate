@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import "./globals.css";
 import { authOptions } from "@/lib/auth";
 import { SignOutButton } from "@/components/AuthButtons";
+import { ArrowRight } from "lucide-react";
+import { Providers } from "@/components/Providers";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ variable: "--font-sans", subsets: ["latin"] });
+const spaceMono = Space_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "700"] });
 
 export const metadata: Metadata = {
   title: { default: "Postmate", template: "%s — Postmate" },
@@ -19,7 +21,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const user = session?.user;
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${spaceGrotesk.variable} ${spaceMono.variable}`}>
       <body className="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-dvh">
         <style>{`
           details > summary {
@@ -36,31 +38,32 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }
         `}</style>
         {/* Nav */}
-        <header className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-md">
-          <div className="mx-auto max-w-6xl px-5 h-12 flex items-center justify-between gap-6">
+        <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/5 bg-zinc-950/70 backdrop-blur-xl transition-all duration-300">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-6">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-6 h-6 rounded-md bg-indigo-500 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-400 transition-colors">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-white">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500 flex items-center justify-center flex-shrink-0 group-hover:rotate-6 transition-all duration-300 shadow-lg shadow-indigo-500/20">
+                <svg width="16" height="16" viewBox="0 0 12 12" fill="none" className="text-white">
                   <path d="M6 1L10.5 4V8L6 11L1.5 8V4L6 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
                 </svg>
               </div>
-              <span className="font-semibold text-sm tracking-tight text-zinc-100 group-hover:text-white transition-colors">
+              <span className="font-bold text-lg tracking-tight text-white">
                 Postmate
               </span>
             </Link>
 
             {/* Center nav */}
             {user && (
-              <nav className="flex items-center gap-0.5">
+              <nav className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
                 {[
                   { href: "/dashboard", label: "Dashboard" },
+                  { href: "/news", label: "News" },
                   { href: "/settings", label: "Settings" },
                 ].map(({ href, label }) => (
                   <Link
                     key={href}
                     href={href}
-                    className="px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 rounded-md transition-all duration-150"
+                    className="px-4 py-1.5 text-sm font-medium text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                   >
                     {label}
                   </Link>
@@ -69,24 +72,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             )}
 
             {/* Right */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               {user ? (
                 <>
-                  {user.image && (
-                    <img
-                      src={user.image}
-                      alt={user.name ?? ""}
-                      className="w-7 h-7 rounded-full border border-zinc-700"
-                    />
-                  )}
+                  <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-white/5 rounded-xl border border-white/5">
+                    {user.image && (
+                      <img
+                        src={user.image}
+                        alt={user.name ?? ""}
+                        className="w-6 h-6 rounded-full border border-white/10"
+                      />
+                    )}
+                    <span className="text-xs font-semibold text-zinc-300 truncate max-w-[100px]">{user.name}</span>
+                  </div>
                   <SignOutButton />
                 </>
               ) : (
                 <Link
                   href="/signin"
-                  className="text-sm font-medium px-3 py-1.5 bg-indigo-500 hover:bg-indigo-400 text-white rounded-md transition-colors"
+                  className="group inline-flex items-center gap-2 px-5 py-2 bg-white text-black text-sm font-bold rounded-xl hover:bg-zinc-200 transition-all shadow-lg"
                 >
-                  Sign in
+                  Get Started
+                  <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               )}
             </div>
@@ -94,8 +101,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
 
         {/* Page */}
-        <main className="mx-auto max-w-6xl px-5 py-8">
-          {children}
+        <main className="relative pt-16">
+          <Providers>{children}</Providers>
         </main>
       </body>
     </html>

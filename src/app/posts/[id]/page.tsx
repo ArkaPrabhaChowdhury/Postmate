@@ -36,56 +36,58 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const st = statusConfig[post.status] ?? statusConfig.draft;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors w-fit"
-        >
-          <ChevronLeft size={13} />
-          Dashboard
-        </Link>
+    <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors w-fit"
+          >
+            <ChevronLeft size={13} />
+            Dashboard
+          </Link>
 
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Edit draft</h1>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {post.repo?.fullName && (
-                <a
-                  href={`https://github.com/${post.repo.fullName}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-mono transition-colors"
-                >
-                  {post.repo.fullName}
-                  <ExternalLink size={10} />
-                </a>
-              )}
-              <code className="font-mono text-[11px] text-zinc-500 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">
-                {post.sourceId.slice(0, 7)}
-              </code>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-widest uppercase ${sc.cls}`}>
-                {sc.label}
-              </span>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-widest uppercase ${st.cls}`}>
-                {st.label}
-              </span>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Edit draft</h1>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {post.repo?.fullName && (
+                  <a
+                    href={`https://github.com/${post.repo.fullName}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-mono transition-colors"
+                  >
+                    {post.repo.fullName}
+                    <ExternalLink size={10} />
+                  </a>
+                )}
+                <code className="font-mono text-[11px] text-zinc-500 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded">
+                  {post.sourceId.slice(0, 7)}
+                </code>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-widest uppercase ${sc.cls}`}>
+                  {sc.label}
+                </span>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-widest uppercase ${st.cls}`}>
+                  {st.label}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Editor */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-        <PostEditor
-          postId={post.id}
-          initialContent={post.content}
-          onSave={savePost}
-          onMarkCopied={markPostCopied}
-          onFindImage={findPostImage}
-          repoFullName={post.repo?.fullName ?? undefined}
-        />
+        {/* Editor */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+          <PostEditor
+            postId={post.id}
+            initialContent={post.content}
+            onSave={savePost}
+            onMarkCopied={markPostCopied}
+            onFindImage={findPostImage}
+            repoFullName={post.repo?.fullName ?? undefined}
+          />
+        </div>
       </div>
     </div>
   );

@@ -26,6 +26,8 @@ model User {
   posts     GeneratedPost[]
   strategies ProjectStrategy[]
   settings  UserSettings?
+  seenUrls  SeenUrl[]
+  newsTweets NewsTweet[]
 }
 
 model UserSettings {
@@ -33,10 +35,44 @@ model UserSettings {
   userId      String   @unique
   voiceMemory String?
   tone        String?
+  newsSources String?
+  newsKeywords String?
+  newsTone    String?
+  newsExclude String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SeenUrl {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  seenAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, url])
+  @@index([userId, seenAt])
+}
+
+model NewsTweet {
+  id           String   @id @default(cuid())
+  userId       String
+  articleUrl   String
+  articleTitle String
+  tone         String
+  tweet        String
+  status       String   @default("pending") // pending | approved | rejected | posted
+  postedAt     DateTime?
+  tweetId      String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt])
+  @@index([articleUrl, createdAt])
 }
 
 model Account {

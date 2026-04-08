@@ -507,3 +507,37 @@ export async function generateTrendPost(input: {
   });
   return normalizePostVoice(raw);
 }
+
+export async function generateTweetVariants(input: {
+  title: string;
+  summary: string;
+  voiceMemory?: string;
+  tone?: string;
+  preferredTone?: string;
+}): Promise<Array<{ tone: "informative" | "hot_take" | "thread_opener"; tweet: string }>> {
+  const system = Prompts.tweetGeneratorSystem;
+  const userMsg = [
+    `Title: ${input.title}`,
+    `Summary: ${input.summary}`,
+    input.preferredTone ? `Preferred format: ${input.preferredTone}` : "",
+    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
+    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const client = getOpenAIClient();
+  const raw = await chat(client, system, userMsg, { temperature: 0.6, max_tokens: 500 });
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+
+  try {
+    const parsed = JSON.parse(cleaned) as Array<{ tone: "informative" | "hot_take" | "thread_opener"; tweet: string }>;
+    if (!Array.isArray(parsed) || parsed.length !== 3) throw new Error("Invalid tweet variants");
+    return parsed.map((t) => ({
+      tone: t.tone,
+      tweet: t.tweet?.trim?.() ?? "",
+    }));
+  } catch {
+    throw new Error(`Failed to parse tweet variants JSON: ${cleaned.slice(0, 200)}`);
+  }
+}

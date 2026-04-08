@@ -143,8 +143,9 @@ export default async function DashboardPage() {
   const fallbackPills = ["DSA", "Web Dev", "AI/ML", "DevOps", "Open Source", "Systems"];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
+    <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
+      <div className="flex flex-col gap-6">
+        {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
@@ -500,6 +501,7 @@ export default async function DashboardPage() {
           </details>
         </section>
       )}
+      </div>
     </div>
   );
 }
