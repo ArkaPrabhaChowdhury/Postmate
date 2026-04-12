@@ -71,7 +71,7 @@ export default async function NewsSettingsPage() {
             <div>
               <span className="text-xs font-semibold text-zinc-300">Auto-fetch news</span>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Automatically poll RSS sources every hour via background cron job. Requires Vercel Pro plan for hourly frequency.
+                Automatically poll RSS sources once a day at 8 AM UTC via background cron job.
               </p>
             </div>
           </label>
