@@ -71,7 +71,7 @@ export default async function NewsPage() {
                   <a href={g.articleUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-zinc-100 hover:underline">
                     {g.articleTitle}
                   </a>
-                  <div className="text-[11px] text-zinc-500 mt-1 truncate">{g.articleUrl}</div>
+                  <a href={g.articleUrl} target="_blank" rel="noreferrer" className="text-[11px] text-zinc-500 hover:text-zinc-400 mt-1 truncate block">{g.articleUrl}</a>
                 </div>
                 <Link href="/news/history" className="text-xs text-zinc-400 hover:text-zinc-200">History →</Link>
               </div>
@@ -103,7 +103,7 @@ export default async function NewsPage() {
                         </button>
                       </form>
                       <a
-                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t.tweet)}`}
+                        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t.tweet + "\n\n" + g.articleUrl)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-black text-white border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors"
