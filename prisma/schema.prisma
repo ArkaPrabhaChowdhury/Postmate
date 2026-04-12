@@ -41,6 +41,8 @@ model UserSettings {
   newsExclude       String?
   newsAutoFetch     Boolean  @default(false)
   newsEmailEnabled  Boolean  @default(false)
+  xAccounts         String?  // newline-separated X handles to monitor (without @)
+  rsshubUrl         String?  // RSSHub instance URL, defaults to https://rsshub.app
   createdAt         DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
