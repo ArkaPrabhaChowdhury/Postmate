@@ -29,19 +29,12 @@ function parseList(input: string | null | undefined, fallback: string[]): string
     .filter(Boolean);
 }
 
-const DEFAULT_RSSHUB_URL = "https://rsshub.app";
-
 async function getUserNewsSettings(userId: string) {
   const settings = await prisma.userSettings.findUnique({ where: { userId } });
-
-  const rsshubBase = (settings?.rsshubUrl ?? DEFAULT_RSSHUB_URL).replace(/\/$/, "");
-  const xHandles = parseList(settings?.xAccounts, []);
-  const xSources = xHandles.map((handle) => `${rsshubBase}/twitter/user/${handle.replace(/^@/, "")}`);
-
   return {
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,
-    sources: [...parseList(settings?.newsSources, DEFAULT_SOURCES), ...xSources],
+    sources: parseList(settings?.newsSources, DEFAULT_SOURCES),
     keywords: parseList(settings?.newsKeywords, DEFAULT_KEYWORDS),
     newsTone: settings?.newsTone ?? undefined,
     exclude: parseList(settings?.newsExclude, ["politics", "war", "elections"]),

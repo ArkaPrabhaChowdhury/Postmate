@@ -7,7 +7,6 @@ import { saveNewsSettings } from "../actions";
 export default async function NewsSettingsPage() {
   const userId = await requireUserId();
   const settings = await prisma.userSettings.findUnique({ where: { userId } });
-  const DEFAULT_RSSHUB_URL = "https://rsshub.app";
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -57,35 +56,6 @@ export default async function NewsSettingsPage() {
             name="newsExclude"
             defaultValue={settings?.newsExclude ?? "politics\nwar\nelections"}
             className="mt-2 w-full h-32 resize-y bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-100 outline-none focus:border-indigo-500/60"
-          />
-        </div>
-
-        <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-900/40">
-          <label className="text-xs font-semibold text-zinc-400">Monitor X accounts (one handle per line)</label>
-          <p className="text-xs text-zinc-600 mt-1">
-            Enter handles without @. Fetched via RSSHub — use your own instance below for reliability.
-          </p>
-          <textarea
-            name="xAccounts"
-            defaultValue={settings?.xAccounts ?? ""}
-            placeholder={"AnthropicAI\nOpenAI\nGoogleDeepMind\nMistralAI"}
-            className="mt-2 w-full h-28 resize-y bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-indigo-500/60"
-          />
-        </div>
-
-        <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-900/40">
-          <label className="text-xs font-semibold text-zinc-400">RSSHub instance URL</label>
-          <p className="text-xs text-zinc-600 mt-1">
-            The public instance is unreliable. Self-host with{" "}
-            <code className="text-zinc-500 bg-zinc-800 px-1 rounded">docker run -d -p 1200:1200 diygod/rsshub</code>{" "}
-            on any VPS and paste the URL here.
-          </p>
-          <input
-            type="url"
-            name="rsshubUrl"
-            defaultValue={settings?.rsshubUrl ?? ""}
-            placeholder={DEFAULT_RSSHUB_URL}
-            className="mt-2 w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-700 outline-none focus:border-indigo-500/60"
           />
         </div>
 

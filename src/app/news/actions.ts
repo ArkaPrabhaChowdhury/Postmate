@@ -47,8 +47,6 @@ export async function saveNewsSettings(formData: FormData) {
   const newsExclude = String(formData.get("newsExclude") ?? "").trim();
   const newsAutoFetch = formData.get("newsAutoFetch") === "true";
   const newsEmailEnabled = formData.get("newsEmailEnabled") === "true";
-  const xAccounts = String(formData.get("xAccounts") ?? "").trim();
-  const rsshubUrl = String(formData.get("rsshubUrl") ?? "").trim();
 
   await prisma.userSettings.upsert({
     where: { userId },
@@ -60,8 +58,6 @@ export async function saveNewsSettings(formData: FormData) {
       newsExclude: newsExclude || null,
       newsAutoFetch,
       newsEmailEnabled,
-      xAccounts: xAccounts || null,
-      rsshubUrl: rsshubUrl || null,
     },
     update: {
       newsSources: newsSources || null,
@@ -70,8 +66,6 @@ export async function saveNewsSettings(formData: FormData) {
       newsExclude: newsExclude || null,
       newsAutoFetch,
       newsEmailEnabled,
-      xAccounts: xAccounts || null,
-      rsshubUrl: rsshubUrl || null,
     },
   });
 
