@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx plugins:*)"
+      "Bash(npx plugins:*)",
+      "Bash(vercel logs:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

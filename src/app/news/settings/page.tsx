@@ -6,16 +6,7 @@ import { saveNewsSettings } from "../actions";
 
 export default async function NewsSettingsPage() {
   const userId = await requireUserId();
-
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ newsSources?: string | null; newsKeywords?: string | null; newsTone?: string | null; newsExclude?: string | null } | null>;
-    };
-  };
-
-  const settings = settingsClient.userSettings
-    ? await settingsClient.userSettings.findUnique({ where: { userId } })
-    : null;
+  const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
   return (
     <div className="flex flex-col gap-6 p-8">
@@ -66,6 +57,43 @@ export default async function NewsSettingsPage() {
             defaultValue={settings?.newsExclude ?? "politics\nwar\nelections"}
             className="mt-2 w-full h-32 resize-y bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-100 outline-none focus:border-indigo-500/60"
           />
+        </div>
+
+        <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-900/40">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="newsAutoFetch"
+              value="true"
+              defaultChecked={settings?.newsAutoFetch ?? false}
+              className="mt-0.5 w-4 h-4 rounded accent-indigo-500 shrink-0"
+            />
+            <div>
+              <span className="text-xs font-semibold text-zinc-300">Auto-fetch news</span>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Automatically poll RSS sources every hour via background cron job. Requires Vercel Pro plan for hourly frequency.
+              </p>
+            </div>
+          </label>
+        </div>
+
+        <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-900/40">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="newsEmailEnabled"
+              value="true"
+              defaultChecked={settings?.newsEmailEnabled ?? false}
+              className="mt-0.5 w-4 h-4 rounded accent-indigo-500 shrink-0"
+            />
+            <div>
+              <span className="text-xs font-semibold text-zinc-300">Email notifications</span>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Get emailed when new articles and tweet drafts arrive. Requires auto-fetch to be enabled and{" "}
+                <code className="text-zinc-400 bg-zinc-800 px-1 rounded">RESEND_API_KEY</code> to be configured.
+              </p>
+            </div>
+          </label>
         </div>
 
         <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors">
