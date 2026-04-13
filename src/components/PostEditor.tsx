@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Twitter, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send } from "lucide-react";
+import { Linkedin, Twitter, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload } from "lucide-react";
 
-const MAX = 3000;
+const LIMITS = { linkedin: 3000, x: 280 } as const;
+type Platform = "linkedin" | "x";
 
-function CharRing({ count }: { count: number }) {
-  const remaining = MAX - count;
-  const pct = Math.min(count / MAX, 1);
+function CharRing({ count, max }: { count: number; max: number }) {
+  const remaining = max - count;
+  const pct = Math.min(count / max, 1);
   const r = 16;
   const circ = 2 * Math.PI * r;
   const over = remaining < 0;
@@ -47,6 +48,8 @@ export function PostEditor(props: {
   onFindImage?: (fd: FormData) => Promise<string>;
   repoFullName?: string;
 }) {
+  const [platform, setPlatform] = useState<Platform>("linkedin");
+  const MAX = LIMITS[platform];
   const [content, setContent] = useState(props.initialContent);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -120,7 +123,7 @@ export function PostEditor(props: {
             <span className={`text-xs font-mono ${over ? "text-red-400" : "text-[#666]"}`}>
               {content.length.toLocaleString()} / {MAX.toLocaleString()}
             </span>
-            <CharRing count={content.length} />
+            <CharRing count={content.length} max={MAX} />
           </div>
         </div>
 
@@ -143,7 +146,9 @@ export function PostEditor(props: {
           {over && (
             <div className="flex items-center gap-2 text-xs text-red-400">
               <AlertCircle size={12} />
-              Post exceeds LinkedIn&apos;s 3,000-character limit
+              {platform === "x"
+                ? "Post exceeds X's 280-character limit"
+                : "Post exceeds LinkedIn's 3,000-character limit"}
             </div>
           )}
 
@@ -297,61 +302,133 @@ export function PostEditor(props: {
         </div>
       </div>
 
-      {/* ── LinkedIn Preview ── */}
+      {/* ── Preview ── */}
       <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-[#f0ede8]">LinkedIn preview</h3>
-
-        <div className="bg-[#0c0c0c] rounded-xl overflow-hidden border border-white/[0.08] shadow-sm font-sans">
-          {/* Header */}
-          <div className="px-4 pt-4 pb-2 flex items-start gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#0A66C2] flex items-center justify-center text-white font-bold text-base flex-shrink-0">
-              Y
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#f0ede8] leading-tight">You</p>
-              <p className="text-xs text-[#666] leading-tight mt-0.5">Your headline · 1st</p>
-              <p className="text-[11px] text-[#555] mt-0.5">Just now · 🌐</p>
-            </div>
-          </div>
-
-          {/* Body */}
-          <div className="px-4 pb-3 overflow-y-auto max-h-64 text-sm text-[#aaa] leading-relaxed">
-            {lines.map((line, i) => (
-              <p key={i} className="mb-0.5 whitespace-pre-wrap">
-                {line.split(/(#[a-zA-Z]\w*)/).map((part, j) =>
-                  part.startsWith("#") ? (
-                    <span key={j} className="text-[#0A66C2] font-semibold">{part}</span>
-                  ) : part
-                )}
-              </p>
-            ))}
-          </div>
-
-          {/* Reactions */}
-          <div className="border-t border-white/[0.06] px-2 py-1 flex">
-            {[
-              { icon: ThumbsUp, label: "Like" },
-              { icon: MessageSquare, label: "Comment" },
-              { icon: Repeat2, label: "Repost" },
-              { icon: Send, label: "Send" },
-            ].map(({ icon: Icon, label }) => (
+        {/* Platform toggle */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-[#f0ede8]">Preview</h3>
+          <div className="flex items-center gap-1 p-0.5 bg-white/[0.05] border border-white/[0.08] rounded-lg">
+            {(["linkedin", "x"] as Platform[]).map((p) => (
               <button
-                key={label}
+                key={p}
                 type="button"
-                className="flex-1 flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-semibold text-[#555] rounded-md hover:bg-white/[0.04] hover:text-[#888] cursor-default"
+                onClick={() => setPlatform(p)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                  platform === p
+                    ? "bg-[#d4ff00] text-[#090909]"
+                    : "text-[#666] hover:text-[#aaa]"
+                }`}
               >
-                <Icon size={14} className="mt-0.5" />
-                {label}
+                {p === "linkedin" ? <Linkedin size={11} /> : <Twitter size={11} />}
+                {p === "linkedin" ? "LinkedIn" : "X"}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Copy tip */}
+        {platform === "linkedin" ? (
+          <div className="bg-[#0c0c0c] rounded-xl overflow-hidden border border-white/[0.08] shadow-sm font-sans">
+            {/* LinkedIn Header */}
+            <div className="px-4 pt-4 pb-2 flex items-start gap-3">
+              <div className="w-11 h-11 rounded-full bg-[#0A66C2] flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+                Y
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#f0ede8] leading-tight">You</p>
+                <p className="text-xs text-[#666] leading-tight mt-0.5">Your headline · 1st</p>
+                <p className="text-[11px] text-[#555] mt-0.5">Just now · 🌐</p>
+              </div>
+            </div>
+            {/* LinkedIn Body */}
+            <div className="px-4 pb-3 overflow-y-auto max-h-64 text-sm text-[#aaa] leading-relaxed">
+              {lines.map((line, i) => (
+                <p key={i} className="mb-0.5 whitespace-pre-wrap">
+                  {line.split(/(#[a-zA-Z]\w*)/).map((part, j) =>
+                    part.startsWith("#") ? (
+                      <span key={j} className="text-[#0A66C2] font-semibold">{part}</span>
+                    ) : part
+                  )}
+                </p>
+              ))}
+            </div>
+            {/* LinkedIn Reactions */}
+            <div className="border-t border-white/[0.06] px-2 py-1 flex">
+              {[
+                { icon: ThumbsUp, label: "Like" },
+                { icon: MessageSquare, label: "Comment" },
+                { icon: Repeat2, label: "Repost" },
+                { icon: Send, label: "Send" },
+              ].map(({ icon: Icon, label }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="flex-1 flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-semibold text-[#555] rounded-md hover:bg-white/[0.04] hover:text-[#888] cursor-default"
+                >
+                  <Icon size={14} className="mt-0.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-black rounded-xl overflow-hidden border border-white/[0.1] shadow-sm font-sans">
+            {/* X Header */}
+            <div className="px-4 pt-4 pb-2 flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#1a1a1a] border border-white/[0.12] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                Y
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-bold text-white leading-tight">You</p>
+                  <p className="text-xs text-[#71767b] leading-tight">@yourhandle · just now</p>
+                </div>
+              </div>
+            </div>
+            {/* X Body */}
+            <div className="px-4 pb-3 text-sm text-white leading-relaxed">
+              {content.length <= 280 ? (
+                <p className="whitespace-pre-wrap">{content || <span className="text-[#555]">Your X post…</span>}</p>
+              ) : (
+                <>
+                  <p className="whitespace-pre-wrap">{content.slice(0, 280)}</p>
+                  <p className="text-red-400 text-xs mt-1">+{content.length - 280} chars over limit</p>
+                </>
+              )}
+            </div>
+            {/* X Engagement */}
+            <div className="border-t border-white/[0.06] px-4 py-2 flex items-center gap-5">
+              {[
+                { icon: MessageSquare, count: "0" },
+                { icon: Repeat2, count: "0" },
+                { icon: Heart, count: "0" },
+                { icon: BarChart2, count: "0" },
+              ].map(({ icon: Icon, count }) => (
+                <button
+                  key={count + Icon.name}
+                  type="button"
+                  className="flex items-center gap-1.5 text-[#71767b] hover:text-[#1d9bf0] cursor-default text-xs"
+                >
+                  <Icon size={14} />
+                  <span>{count}</span>
+                </button>
+              ))}
+              <div className="ml-auto flex items-center gap-3 text-[#71767b]">
+                <Bookmark size={14} />
+                <Upload size={14} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tip */}
         <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#0c0c0c] border border-white/[0.08]">
           <Copy size={13} className="text-[#555] flex-shrink-0 mt-0.5" />
           <p className="text-xs text-[#666] leading-relaxed">
-            <strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to LinkedIn&rdquo; to copy the text, then paste it when the LinkedIn tab opens. The LinkedIn API doesn&apos;t allow 3rd-party posting, so this is the fastest flow.
+            {platform === "linkedin" ? (
+              <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to LinkedIn&rdquo; to copy the text, then paste it when the LinkedIn tab opens. The LinkedIn API doesn&apos;t allow 3rd-party posting.</>
+            ) : (
+              <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to X&rdquo; to pre-fill the tweet composer. Trim to 280 chars first if needed.</>
+            )}
           </p>
         </div>
       </div>

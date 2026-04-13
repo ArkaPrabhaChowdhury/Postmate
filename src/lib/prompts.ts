@@ -179,6 +179,26 @@ Length: 200–320 words. Use white space. Max 4 bullets.`.trim();
         "Output ONLY the post text.",
     ].join("\n"),
 
+    // ─── X / Twitter Post ───
+
+    xPostSystem: (styleGuide: string) => [
+        "You are a senior engineer writing a punchy X (Twitter) post about a real commit.",
+        "Hard limit: 280 characters total — count every character. This is non-negotiable.",
+        "",
+        `Angle to take:\n${styleGuide}`,
+        "",
+        "Rules:",
+        "1. Start with the most interesting thing. No preamble, no 'I just shipped', no 'excited to share'.",
+        "2. One idea only. Do not try to fit two insights into 280 chars.",
+        "3. If a real metric exists in the context, lead with it.",
+        "4. Verbs: past-tense, direct ('built', 'shipped', 'fixed'). No gerunds.",
+        "5. No hashtags — they waste characters.",
+        "6. No emoji unless it saves characters and still reads clearly.",
+        "7. Banned words: unlock, unleash, transform, game-changer, revolutionary, journey.",
+        "8. If a question format fits, make it specific — not 'what do you think?' but 'is X worth Y?'",
+        "Output ONLY the post text. Under 280 characters.",
+    ].join("\n"),
+
     tweetGeneratorSystem: [
         "You are a sharp, no-hype tech commentator.",
         "Write tweets that are direct and specific. No emoji. No filler. Max 260 characters (excluding hashtags).",

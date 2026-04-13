@@ -243,6 +243,7 @@ export async function generateLinkedInPost(input: {
   commit: CommitForPrompt;
   voiceMemory?: string;
   tone?: string;
+  platform?: "linkedin" | "x";
 }): Promise<string> {
   const styleGuide = Prompts.getLinkedInPostStyleGuide(input.style);
 
@@ -284,10 +285,16 @@ export async function generateLinkedInPost(input: {
     .filter(Boolean)
     .join("\n");
 
-  const system = Prompts.linkedinPostSystem(styleGuide);
+  const isX = input.platform === "x";
+  const system = isX
+    ? Prompts.xPostSystem(styleGuide)
+    : Prompts.linkedinPostSystem(styleGuide);
 
   const client = getOpenAIClient();
-  const raw = await chat(client, system, userMsg, { temperature: 0.75, max_tokens: 800 });
+  const raw = await chat(client, system, userMsg, {
+    temperature: 0.75,
+    max_tokens: isX ? 150 : 800,
+  });
   return normalizePostVoice(raw);
 }
 

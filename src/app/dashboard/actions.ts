@@ -70,6 +70,7 @@ export async function generatePostFromCommit(formData: FormData) {
   const userId = await requireUserId();
   const sha = String(formData.get("sha") ?? "").trim();
   const style = String(formData.get("style") ?? "progress").trim() as PostStyle;
+  const platform = (String(formData.get("platform") ?? "linkedin").trim() || "linkedin") as "linkedin" | "x";
   if (!sha) throw new Error("Missing commit SHA.");
 
   const repo = await prisma.repo.findFirst({
@@ -112,6 +113,7 @@ export async function generatePostFromCommit(formData: FormData) {
   const content = await generateLinkedInPost({
     repoFullName: repo.fullName,
     style,
+    platform,
     commit: {
       sha,
       message: firstLine(message),

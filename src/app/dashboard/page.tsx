@@ -320,8 +320,16 @@ export default async function DashboardPage() {
                             Draft exists
                           </Link>
                         )}
-                        <form action={generatePostFromCommit} className="flex items-center gap-2">
+                        <form action={generatePostFromCommit} className="flex items-center gap-2 flex-wrap">
                           <input type="hidden" name="sha" value={e.externalId} />
+                          <select
+                            name="platform"
+                            defaultValue="linkedin"
+                            className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
+                          >
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="x">X / Twitter</option>
+                          </select>
                           <select
                             name="style"
                             defaultValue="progress"
