@@ -287,7 +287,7 @@ export async function generateLinkedInPost(input: {
   const system = Prompts.linkedinPostSystem(styleGuide);
 
   const client = getOpenAIClient();
-  const raw = await chat(client, system, userMsg, { temperature: 0.7, max_tokens: 700 });
+  const raw = await chat(client, system, userMsg, { temperature: 0.75, max_tokens: 800 });
   return normalizePostVoice(raw);
 }
 
@@ -386,8 +386,8 @@ export async function generateJourneyPosts(input: {
 
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
-    temperature: 0.7,
-    max_tokens: 1200,
+    temperature: 0.75,
+    max_tokens: 1600,
   });
 
   // Strip accidental code fences
@@ -452,8 +452,8 @@ export async function generateProjectShowcase(input: {
 
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
-    temperature: 0.7,
-    max_tokens: 1200,
+    temperature: 0.75,
+    max_tokens: 1400,
   });
   return normalizePostVoice(raw);
 }
