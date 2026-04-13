@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { generatePostFromCommit, generateStrategyForRepo, syncRecentCommits, generateProjectShowcaseForRepo, generateTrendPostFromRepo, saveVoiceSettings } from "./actions";
+import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings } from "./actions";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
-import { getGitHubProfile } from "@/lib/github";
-import { fetchDevNews } from "@/lib/news";
+import { getOctokitForUser } from "@/lib/github";
 import {
-  RefreshCw, Sparkles, GitCommit, FileText, Route,
+  Sparkles, GitCommit, FileText, Route,
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown,
 } from "lucide-react";
 
@@ -78,6 +77,33 @@ export default async function DashboardPage() {
     );
   }
 
+  // Auto-sync commits on every page load
+  try {
+    const [owner, name] = activeRepo.fullName.split("/");
+    const octokit = await getOctokitForUser(userId);
+    const res = await octokit.rest.repos.listCommits({ owner, repo: name, per_page: 20 });
+    for (const c of res.data) {
+      const message = c.commit?.message ?? "";
+      const authoredAt = c.commit?.author?.date ?? null;
+      const authorLogin = c.author?.login ?? null;
+      const row = {
+        repoId: activeRepo.id,
+        type: "commit",
+        externalId: c.sha,
+        title: message.split(/\r?\n/)[0]?.trim() ?? message,
+        url: c.html_url ?? null,
+        authorLogin,
+        authoredAt: authoredAt ? new Date(authoredAt) : null,
+        payloadJson: JSON.stringify({ sha: c.sha, message, html_url: c.html_url, authoredAt, authorLogin }),
+      };
+      await prisma.gitHubEvent.upsert({
+        where: { repoId_type_externalId: { repoId: row.repoId, type: row.type, externalId: row.externalId } },
+        create: row,
+        update: { title: row.title, url: row.url, authorLogin: row.authorLogin, authoredAt: row.authoredAt, payloadJson: row.payloadJson },
+      });
+    }
+  } catch { /* silent fail — stale data still renders */ }
+
   const strategyModel = (prisma as unknown as {
     projectStrategy?: {
       findFirst: (args: {
@@ -127,26 +153,6 @@ export default async function DashboardPage() {
     } catch { /* ignore */ }
   }
 
-  const profile = await getGitHubProfile(userId);
-  const newsHeadlines = await fetchDevNews();
-  const rawProfileText = [
-    profile.bio,
-    profile.company,
-    profile.location,
-    profile.blog,
-    profile.twitter,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const topicPills = rawProfileText
-    .split(/[^a-zA-Z0-9#+.-]+/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 2 && t.length < 18)
-    .slice(0, 10);
-
-  const fallbackPills = ["DSA", "Web Dev", "AI/ML", "DevOps", "Open Source", "Systems"];
-
   return (
     <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
       <div className="flex flex-col gap-6">
@@ -172,20 +178,12 @@ export default async function DashboardPage() {
               </a>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <form action={syncRecentCommits}>
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all">
-                <RefreshCw size={12} />
-                Sync commits
-              </button>
-            </form>
-            <Link
-              href="/settings"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all"
-            >
-              Change repo
-            </Link>
-          </div>
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all"
+          >
+            Change repo
+          </Link>
         </div>
 
         {/* Stats */}
@@ -414,62 +412,6 @@ export default async function DashboardPage() {
                 </div>
               </div>
             )}
-          </details>
-        </section>
-
-        {/* Trend-based posts */}
-        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
-          <details>
-            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-              <div>
-                <h2 className="text-sm font-semibold text-[#f0ede8]">Viral Trend Generator</h2>
-                <p className="text-xs text-[#666] mt-0.5">
-                  Create a LinkedIn or X post tied to live trends and your GitHub profile interests.
-                </p>
-              </div>
-              <ChevronDown size={14} className="text-[#555] chevron" />
-            </summary>
-
-            <div className="p-5 flex flex-col gap-3">
-              <form action={generateTrendPostFromRepo} className="flex items-center gap-2 flex-wrap">
-                <select
-                  name="platform"
-                  defaultValue="linkedin"
-                  className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
-                >
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="x">X / Twitter</option>
-                </select>
-                <div className="flex flex-wrap gap-2">
-                  {(topicPills.length ? topicPills : fallbackPills).map((t) => (
-                    <button
-                      key={t}
-                      name="topic"
-                      value={t}
-                      className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-[#d4ff00]/10 border border-white/[0.08] hover:border-[#d4ff00]/20 text-[#888] hover:text-[#d4ff00] rounded-full transition-colors"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-                <div className="w-full h-px bg-white/[0.05] my-1" />
-                <div className="flex flex-wrap gap-2">
-                  {newsHeadlines.map((h) => (
-                    <button
-                      key={h}
-                      name="headline"
-                      value={h}
-                      className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-[#090909] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.1] text-[#888] rounded-full transition-colors"
-                    >
-                      {h}
-                    </button>
-                  ))}
-                </div>
-              </form>
-              <p className="text-[11px] text-[#555]">
-                Pick a topic or a news headline to generate a trend-aligned post draft.
-              </p>
-            </div>
           </details>
         </section>
 
