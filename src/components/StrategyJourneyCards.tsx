@@ -11,10 +11,10 @@ export type JourneyPostData = {
 };
 
 const stageStyles: Record<string, { dot: string; badge: string; border: string }> = {
-    origin: { dot: "bg-violet-500", badge: "bg-violet-500/10 text-violet-400 border-violet-500/20", border: "border-violet-500/20" },
+    origin: { dot: "bg-[#d4ff00]", badge: "bg-[#d4ff00]/10 text-[#d4ff00] border-[#d4ff00]/20", border: "border-[#d4ff00]/20" },
     build: { dot: "bg-blue-500", badge: "bg-blue-500/10 text-blue-400 border-blue-500/20", border: "border-blue-500/20" },
     launch: { dot: "bg-emerald-500", badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", border: "border-emerald-500/20" },
-    milestone: { dot: "bg-indigo-500", badge: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", border: "border-indigo-500/20" },
+    milestone: { dot: "bg-sky-500", badge: "bg-sky-500/10 text-sky-400 border-sky-500/20", border: "border-sky-500/20" },
     challenge: { dot: "bg-amber-500", badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", border: "border-amber-500/20" },
     growth: { dot: "bg-teal-500", badge: "bg-teal-500/10 text-teal-400 border-teal-500/20", border: "border-teal-500/20" },
     reflection: { dot: "bg-[#555]", badge: "bg-white/[0.06] text-[#888] border-white/[0.1]", border: "border-white/[0.1]" },
@@ -76,7 +76,7 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
                 <div className="p-4 bg-black rounded-none border-b border-white/[0.08]">
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex-shrink-0" />
+                            <div className="w-10 h-10 rounded-full bg-[#1a1a1a] border border-white/[0.1] flex-shrink-0" />
                             <div className="flex items-center flex-wrap gap-x-1">
                                 <span className="text-[15px] font-bold text-[#f0ede8] hover:underline cursor-pointer">Your Name</span>
                                 <BadgeCheck size={16} className="text-[#1d9bf0] fill-white" />

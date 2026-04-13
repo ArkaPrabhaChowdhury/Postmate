@@ -12,12 +12,12 @@ function CharRing({ count }: { count: number }) {
   const circ = 2 * Math.PI * r;
   const over = remaining < 0;
   const warn = remaining < 300;
-  const color = over ? "#ef4444" : warn ? "#f59e0b" : "#6366f1";
+  const color = over ? "#ef4444" : warn ? "#f59e0b" : "#d4ff00";
 
   return (
     <div className="relative w-10 h-10 flex-shrink-0">
       <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90">
-        <circle cx="20" cy="20" r={r} fill="none" stroke="#27272a" strokeWidth="3" />
+        <circle cx="20" cy="20" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
         <circle
           cx="20" cy="20" r={r}
           fill="none"
@@ -115,9 +115,9 @@ export function PostEditor(props: {
       {/* ── Editor ── */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-zinc-100">Editor</h3>
+          <h3 className="text-sm font-semibold text-[#f0ede8]">Editor</h3>
           <div className="flex items-center gap-3">
-            <span className={`text-xs font-mono ${over ? "text-red-400" : "text-zinc-500"}`}>
+            <span className={`text-xs font-mono ${over ? "text-red-400" : "text-[#666]"}`}>
               {content.length.toLocaleString()} / {MAX.toLocaleString()}
             </span>
             <CharRing count={content.length} />
@@ -129,12 +129,12 @@ export function PostEditor(props: {
             value={content}
             onChange={(e) => { setContent(e.target.value); setSaved(false); }}
             className={`
-              w-full h-80 resize-y bg-zinc-950 border rounded-xl p-4
-              text-sm text-zinc-100 leading-relaxed font-sans
-              outline-none transition-colors placeholder:text-zinc-600
+              w-full h-80 resize-y bg-[#090909] border rounded-xl p-4
+              text-sm text-[#f0ede8] leading-relaxed font-sans
+              outline-none transition-colors placeholder:text-[#444]
               ${over
                 ? "border-red-500/60 focus:border-red-500"
-                : "border-zinc-800 focus:border-indigo-500/60"
+                : "border-white/[0.08] focus:border-[#d4ff00]/50"
               }
             `}
             placeholder="Your LinkedIn post…"
@@ -155,7 +155,7 @@ export function PostEditor(props: {
                 inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
                 ${saved
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                  : "bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200"
+                  : "bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa]"
                 }
                 disabled:opacity-40 disabled:cursor-not-allowed
               `}
@@ -190,7 +190,7 @@ export function PostEditor(props: {
                 inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
                 ${copiedX
                   ? "bg-emerald-500 text-white"
-                  : "bg-black hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                  : "bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2]"
                 }
                 disabled:opacity-40 disabled:cursor-not-allowed
               `}
@@ -206,14 +206,14 @@ export function PostEditor(props: {
         {/* Hashtags */}
         {hashtags.length > 0 && (
           <div>
-            <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+            <p className="text-[11px] font-semibold text-[#555] uppercase tracking-wider mb-2">
               Hashtags detected
             </p>
             <div className="flex flex-wrap gap-1.5">
               {hashtags.map((t) => (
                 <span
                   key={t}
-                  className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full text-[11px] font-semibold"
+                  className="px-2 py-0.5 bg-[#d4ff00]/10 text-[#d4ff00] border border-[#d4ff00]/20 rounded-full text-[11px] font-semibold"
                 >
                   {t}
                 </span>
@@ -223,17 +223,17 @@ export function PostEditor(props: {
         )}
 
         {/* Image helper */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-semibold text-zinc-100">Post image</p>
-              <p className="text-xs text-zinc-500">Find README image or screenshot the site home.</p>
+              <p className="text-sm font-semibold text-[#f0ede8]">Post image</p>
+              <p className="text-xs text-[#666]">Find README image or screenshot the site home.</p>
             </div>
             <button
               type="button"
               onClick={handleFindImage}
               disabled={imageLoading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
             >
               {imageLoading ? "Finding..." : "Find image"}
             </button>
@@ -245,13 +245,13 @@ export function PostEditor(props: {
               value={manualSiteUrl}
               onChange={(e) => setManualSiteUrl(e.target.value)}
               placeholder="Enter site URL to screenshot (optional)"
-              className="flex-1 min-w-56 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 outline-none focus:border-indigo-500/60"
+              className="flex-1 min-w-56 bg-[#090909] border border-white/[0.08] rounded-lg px-3 py-2 text-xs text-[#f0ede8] placeholder:text-[#444] outline-none focus:border-[#d4ff00]/50 transition-colors"
             />
             <button
               type="button"
               onClick={handleFindImage}
               disabled={imageLoading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
             >
               {manualSiteUrl ? "Use URL" : "Search"}
             </button>
@@ -266,20 +266,20 @@ export function PostEditor(props: {
               <img
                 src={imageUrl}
                 alt="Post image"
-                className="rounded-lg border border-zinc-800 max-h-80 w-full object-cover"
+                className="rounded-lg border border-white/[0.08] max-h-80 w-full object-cover"
               />
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(imageUrl)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors"
                 >
                   Copy image URL
                 </button>
                 <a
                   href={imageUrl}
                   download
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors"
                 >
                   Download image
                 </a>
@@ -287,7 +287,7 @@ export function PostEditor(props: {
                   href={imageUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[11px] text-indigo-400 hover:text-indigo-300"
+                  className="text-[11px] text-[#d4ff00]/70 hover:text-[#d4ff00] transition-colors"
                 >
                   Open image
                 </a>
@@ -299,28 +299,28 @@ export function PostEditor(props: {
 
       {/* ── LinkedIn Preview ── */}
       <div className="flex flex-col gap-4">
-        <h3 className="text-sm font-semibold text-zinc-100">LinkedIn preview</h3>
+        <h3 className="text-sm font-semibold text-[#f0ede8]">LinkedIn preview</h3>
 
-        <div className="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 shadow-sm font-sans">
+        <div className="bg-[#0c0c0c] rounded-xl overflow-hidden border border-white/[0.08] shadow-sm font-sans">
           {/* Header */}
           <div className="px-4 pt-4 pb-2 flex items-start gap-3">
-            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0">
+            <div className="w-11 h-11 rounded-full bg-[#0A66C2] flex items-center justify-center text-white font-bold text-base flex-shrink-0">
               Y
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-100 leading-tight">You</p>
-              <p className="text-xs text-zinc-500 leading-tight mt-0.5">Your headline · 1st</p>
-              <p className="text-[11px] text-zinc-400 mt-0.5">Just now · 🌐</p>
+              <p className="text-sm font-semibold text-[#f0ede8] leading-tight">You</p>
+              <p className="text-xs text-[#666] leading-tight mt-0.5">Your headline · 1st</p>
+              <p className="text-[11px] text-[#555] mt-0.5">Just now · 🌐</p>
             </div>
           </div>
 
           {/* Body */}
-          <div className="px-4 pb-3 overflow-y-auto max-h-64 text-sm text-zinc-300 leading-relaxed">
+          <div className="px-4 pb-3 overflow-y-auto max-h-64 text-sm text-[#aaa] leading-relaxed">
             {lines.map((line, i) => (
               <p key={i} className="mb-0.5 whitespace-pre-wrap">
                 {line.split(/(#[a-zA-Z]\w*)/).map((part, j) =>
                   part.startsWith("#") ? (
-                    <span key={j} className="text-indigo-400 font-semibold">{part}</span>
+                    <span key={j} className="text-[#0A66C2] font-semibold">{part}</span>
                   ) : part
                 )}
               </p>
@@ -328,7 +328,7 @@ export function PostEditor(props: {
           </div>
 
           {/* Reactions */}
-          <div className="border-t border-zinc-800 px-2 py-1 flex">
+          <div className="border-t border-white/[0.06] px-2 py-1 flex">
             {[
               { icon: ThumbsUp, label: "Like" },
               { icon: MessageSquare, label: "Comment" },
@@ -338,7 +338,7 @@ export function PostEditor(props: {
               <button
                 key={label}
                 type="button"
-                className="flex-1 flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-semibold text-zinc-500 rounded-md hover:bg-zinc-800 hover:text-zinc-300 cursor-default"
+                className="flex-1 flex flex-col items-center gap-1.5 py-1.5 text-[10px] font-semibold text-[#555] rounded-md hover:bg-white/[0.04] hover:text-[#888] cursor-default"
               >
                 <Icon size={14} className="mt-0.5" />
                 {label}
@@ -348,10 +348,10 @@ export function PostEditor(props: {
         </div>
 
         {/* Copy tip */}
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-zinc-900 border border-zinc-800">
-          <Copy size={13} className="text-zinc-500 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-zinc-500 leading-relaxed">
-            <strong className="text-zinc-300">Tip:</strong> Click "Post to LinkedIn" to copy the text, then paste it when the LinkedIn tab opens. The LinkedIn API doesn&apos;t allow 3rd-party posting, so this is the fastest flow.
+        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#0c0c0c] border border-white/[0.08]">
+          <Copy size={13} className="text-[#555] flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-[#666] leading-relaxed">
+            <strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to LinkedIn&rdquo; to copy the text, then paste it when the LinkedIn tab opens. The LinkedIn API doesn&apos;t allow 3rd-party posting, so this is the fastest flow.
           </p>
         </div>
       </div>
