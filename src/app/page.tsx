@@ -1,229 +1,566 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { 
-  ArrowRight, 
-  Github, 
-  Linkedin, 
-  Twitter, 
-  BrainCircuit, 
-  History, 
-  ShieldCheck, 
-  Sparkles, 
-  Share2, 
-  Code2, 
-  ChevronDown
+import { useState, useEffect } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowRight,
+  Github,
+  Linkedin,
+  Twitter,
+  BrainCircuit,
+  Route,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Rss,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
+
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.11, delayChildren: 0.05 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 28 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring" as const,
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 32 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 export default function Home() {
   const { data: session } = useSession();
   const authed = !!session?.user;
-  const containerRef = useRef(null);
+  const prefersReducedMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true); }, []);
+  const shouldReduceMotion = mounted ? prefersReducedMotion : false;
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
-
-  const scale = useTransform(scrollYProgress, [0, 0.1], [1, 0.95]);
-  const opacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+  const motionInitial = shouldReduceMotion ? "show" : "hidden";
 
   return (
-    <div ref={containerRef} className="relative flex flex-col items-center w-full min-h-screen">
-      {/* Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-indigo-500 origin-left z-[60]"
-        style={{ scaleX: scrollYProgress }}
-      />
+    <div className="relative flex flex-col w-full min-h-screen bg-[#090909]">
 
-      {/* Hero Section */}
-      <section className="relative w-full min-h-[90vh] flex flex-col items-center justify-center pt-20 pb-32 overflow-hidden px-4">
-        {/* Background Gradients */}
-        <div className="absolute inset-x-0 top-0 -z-10 h-[800px] w-full bg-[radial-gradient(ellipse_100%_100%_at_50%_0%,rgba(99,102,241,0.15),transparent)]" />
-        <div className="absolute top-[20%] left-[-10%] -z-10 h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[20%] right-[-10%] -z-10 h-[400px] w-[400px] rounded-full bg-sky-500/10 blur-[120px]" />
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{ scale, opacity }}
-          className="text-center max-w-4xl"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/20 bg-indigo-500/5 text-indigo-300 text-xs font-medium mb-8">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-            </span>
-            Now supporting Gemini 1.5 Pro & OpenAI o1
-          </div>
-
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-8 leading-[0.9] text-gradient">
-            Turn commits <br className="hidden md:block" />
-            <span className="text-indigo-400">into content.</span>
-          </h1>
-
-          <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-            Postmate helps developers transform their GitHub activity into high-engagement LinkedIn and X posts in seconds. Ship code, not just drafts.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href={authed ? "/dashboard" : "/signin"}
-              className="group relative px-8 py-4 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] flex items-center gap-2 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-              {authed ? "Go to Dashboard" : "Start Building for Free"}
-              <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            
-            <Link
-              href="#features"
-              className="px-8 py-4 glass hover:bg-zinc-900/50 text-zinc-100 font-bold rounded-xl transition-all flex items-center gap-2 border border-white/10"
-            >
-              Explore Features
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Visual Cue */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-zinc-500"
-        >
-          <ChevronDown size={30} />
-        </motion.div>
-      </section>
-
-      {/* Trust Bar */}
-      <section className="w-full py-16 border-y border-white/5 bg-zinc-950/50 backdrop-blur-sm overflow-hidden">
-        <div className="text-center mb-8">
-          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Connect with your world</p>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-40 grayscale hover:grayscale-0 transition-all duration-500 px-6">
-          <div className="flex items-center gap-3"><Github size={32} /> <span className="font-bold text-xl tracking-tight">GitHub</span></div>
-          <div className="flex items-center gap-3"><Linkedin size={32} /> <span className="font-bold text-xl uppercase tracking-tighter">LinkedIn</span></div>
-          <div className="flex items-center gap-3"><Twitter size={32} /> <span className="font-bold text-xl italic uppercase">Twitter / X</span></div>
-          </div>
-      </section>
-
-      {/* Features Grid */}
-      <section id="features" className="w-full py-32 px-6 sm:px-8 md:px-12 lg:px-16 max-w-7xl">
-        <div className="mb-20 space-y-4">
-          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">Engineered for Momentum.</h2>
-          <p className="text-zinc-500 text-xl max-w-2xl font-medium">Stop staring at your commits. Start sharing your journey with AI-powered narration that actually sounds like you.</p>
+      {/* ── HERO ─────────────────────────────────────────── */}
+      <section className="relative w-full min-h-[100vh] overflow-hidden dot-grid">
+        {/* Gradient mesh */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-[700px] h-[600px] bg-[radial-gradient(ellipse_at_top_left,rgba(212,255,0,0.06)_0%,transparent_60%)]" />
+          <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.025)_0%,transparent_60%)]" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-32 bg-gradient-to-b from-transparent to-[#090909]" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, idx) => (
+        <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 pt-20 pb-16">
+          <div className="grid lg:grid-cols-[55fr_45fr] gap-12 xl:gap-20 items-center min-h-[calc(100vh-7rem)]">
+
+            {/* Left: Content */}
             <motion.div
-              key={idx}
-              whileHover={{ y: -10 }}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="group relative p-8 rounded-3xl glass-darker overflow-hidden flex flex-col gap-6 hover:border-indigo-500/50 transition-all duration-300"
+              variants={containerVariants}
+              initial={motionInitial}
+              animate="show"
+              className="flex flex-col gap-7"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
-                {feature.icon}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-zinc-500 leading-relaxed font-medium transition-colors group-hover:text-zinc-300 text-sm">
-                  {feature.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
+              {/* Badge */}
+              <motion.div variants={itemVariants}>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#d4ff00]/20 bg-[#d4ff00]/[0.05] text-[#d4ff00] text-[11px] font-mono tracking-wide">
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d4ff00] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#d4ff00]" />
+                  </span>
+                  GitHub → LinkedIn &amp; X, in your voice
+                </div>
+              </motion.div>
 
-      {/* How it works */}
-      <section className="w-full py-32 relative overflow-hidden bg-white/2">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight tracking-tight text-gradient">Sync, Draft, Ship. <br /> In under 60 seconds.</h2>
-              <div className="space-y-8">
-                {steps.map((step, idx) => (
-                  <div key={idx} className="flex gap-6 items-start group">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center text-indigo-400 font-bold group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                      {idx + 1}
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-white mb-1">{step.title}</h4>
-                      <p className="text-zinc-500 font-medium">{step.description}</p>
+              {/* Headline */}
+              <motion.h1
+                variants={itemVariants}
+                className="text-5xl sm:text-6xl lg:text-[4.5rem] xl:text-[5rem] font-extrabold leading-[1.0] tracking-[-0.035em] text-[#f0ede8]"
+                style={{ fontFamily: "var(--font-syne)" }}
+              >
+                Turn commits
+                <br />
+                <span className="text-[#d4ff00]">into content.</span>
+              </motion.h1>
+
+              {/* Subhead */}
+              <motion.p
+                variants={itemVariants}
+                className="text-[#525252] text-lg leading-[1.7] max-w-lg font-medium"
+              >
+                Ship code, not just drafts. Postmate reads your GitHub activity,
+                shapes the narrative, and hands you a post you&apos;ll actually
+                want to publish.
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div variants={itemVariants} className="flex flex-wrap gap-3">
+                <Link
+                  href={authed ? "/dashboard" : "/signin"}
+                  className="group inline-flex items-center gap-2 px-6 py-3 bg-[#d4ff00] text-[#090909] font-bold rounded-xl hover:bg-[#c4ef00] transition-colors text-sm"
+                >
+                  {authed ? "Go to Dashboard" : "Start for Free"}
+                  <ArrowRight
+                    size={16}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                  />
+                </Link>
+                <Link
+                  href="#how-it-works"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-white/[0.08] text-[#666] hover:text-[#f0ede8] hover:border-white/20 rounded-xl transition-all text-sm font-medium"
+                >
+                  See how it works
+                </Link>
+              </motion.div>
+
+              {/* Trust note */}
+              <motion.p
+                variants={itemVariants}
+                className="text-[11px] text-[#555] font-mono tracking-wide"
+              >
+                Read-only GitHub access · No posting without approval · Free forever plan
+              </motion.p>
+            </motion.div>
+
+            {/* Right: App mock */}
+            <motion.div
+              initial={shouldReduceMotion ? {} : { opacity: 0, x: 40, y: 10 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="hidden lg:block relative"
+            >
+              {/* Ambient glow */}
+              <div className="absolute -inset-6 bg-[#d4ff00]/[0.03] rounded-3xl blur-3xl pointer-events-none" />
+
+              {/* Mock window */}
+              <div className="relative rounded-2xl border border-white/[0.08] bg-[#0c0c0c] overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
+                {/* Title bar */}
+                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/[0.05] bg-[#0a0a0a]">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]/70" />
+                  <span className="ml-3 text-[11px] font-mono text-[#444]">
+                    postmate — dashboard
+                  </span>
+                </div>
+
+                {/* Commits list */}
+                <div className="p-4 space-y-1.5">
+                  <div className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em] mb-3">
+                    Recent commits
+                  </div>
+                  {[
+                    { msg: "fix: resolve token expiry edge case", hash: "a3f2c1" },
+                    { msg: "feat: add OAuth2 refresh flow", hash: "b8e4d9" },
+                    { msg: "docs: update API reference", hash: "c1f7a2" },
+                  ].map((commit, i) => (
+                    <motion.div
+                      key={i}
+                      initial={shouldReduceMotion ? {} : { opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.7 + i * 0.1, duration: 0.3 }}
+                      className="flex items-center gap-2.5 p-2.5 rounded-lg bg-[#131313] border border-white/[0.04] group hover:border-white/[0.08] transition-colors"
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#d4ff00] flex-shrink-0" />
+                      <span className="text-[11px] font-mono text-[#606060] flex-1 truncate">
+                        {commit.msg}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#444]">
+                        {commit.hash}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* AI divider */}
+                <div className="flex items-center gap-3 px-4 py-2">
+                  <div className="flex-1 h-px bg-white/[0.04]" />
+                  <motion.div
+                    animate={
+                      shouldReduceMotion ? {} : { scale: [1, 1.06, 1] }
+                    }
+                    transition={{
+                      duration: 2.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#d4ff00]/[0.07] border border-[#d4ff00]/20 rounded-full"
+                  >
+                    <Zap size={9} className="text-[#d4ff00]" />
+                    <span className="text-[10px] font-mono text-[#d4ff00]">
+                      AI generating
+                    </span>
+                  </motion.div>
+                  <div className="flex-1 h-px bg-white/[0.04]" />
+                </div>
+
+                {/* Generated post */}
+                <div className="p-4">
+                  <div className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em] mb-3">
+                    Generated post · LinkedIn
+                  </div>
+                  <div className="p-3 rounded-xl bg-[#131313] border border-white/[0.05]">
+                    <p className="text-[11px] text-[#808080] leading-relaxed">
+                      &ldquo;Just fixed a subtle bug that was silently breaking
+                      auth for 12% of users. Here&apos;s what I learned about
+                      JWT expiry edge cases...&rdquo;
+                    </p>
+                    <div className="mt-2.5 flex gap-2 flex-wrap">
+                      {["#buildinpublic", "#webdev", "#javascript"].map(
+                        (tag) => (
+                          <span
+                            key={tag}
+                            className="text-[10px] text-[#d4ff00]/40 font-mono"
+                          >
+                            {tag}
+                          </span>
+                        )
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            {/* Visual placeholder */}
-            <div className="relative p-2 rounded-3xl shadow-2xl glass-darker overflow-hidden border border-white/10 group">
-              <div className="aspect-[16/10] bg-zinc-900/50 rounded-2xl flex flex-col p-8 gap-4">
-                <div className="h-2 w-1/3 bg-indigo-500/20 rounded-full" />
-                <div className="h-8 w-full bg-white/5 rounded-lg border border-white/5" />
-                <div className="h-24 w-full bg-white/2 rounded-lg border border-white/5 flex flex-col p-4 gap-2">
-                   <div className="h-2 w-full bg-zinc-800 rounded-full" />
-                   <div className="h-2 w-3/4 bg-zinc-800 rounded-full" />
-                   <div className="h-2 w-1/2 bg-zinc-800 rounded-full" />
-                </div>
-                <div className="mt-auto flex justify-between items-center">
-                   <div className="flex gap-2">
-                      <div className="w-6 h-6 rounded-full bg-indigo-500/40" />
-                      <div className="w-6 h-6 rounded-full bg-sky-500/40" />
-                   </div>
-                   <div className="h-8 w-24 bg-indigo-500 rounded-lg" />
+                  <div className="mt-3 flex justify-end">
+                    <motion.div
+                      initial={shouldReduceMotion ? {} : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.2 }}
+                      className="px-3 py-1.5 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-lg cursor-pointer hover:bg-[#c4ef00] transition-colors"
+                    >
+                      Copy to LinkedIn →
+                    </motion.div>
+                  </div>
                 </div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-40" />
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/20 blur-[80px] group-hover:bg-indigo-500/40 transition-all duration-700" />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* CTA Final */}
-      <section className="w-full py-40 px-4">
-        <motion.div 
-          initial={{ scale: 0.95, opacity: 0 }}
-          whileInView={{ scale: 1, opacity: 1 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto glass p-12 md:p-24 rounded-[3rem] text-center relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1),transparent_70%)]" />
-          <h2 className="text-4xl md:text-6xl font-bold mb-8 text-white tracking-tighter">Ready to build <br /> in public?</h2>
-          <p className="text-zinc-400 text-xl mb-12 max-w-xl mx-auto font-medium">Join developers using Postmate to share their progress and build their personal brand.</p>
-          <Link
-            href={authed ? "/dashboard" : "/signin"}
-            className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-all text-lg shadow-[0_20px_50px_rgba(255,255,255,0.1)]"
-          >
-            {authed ? "Explore Dashboard" : "Connect with GitHub"}
-            <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <p className="mt-8 text-zinc-600 text-sm font-medium tracking-wide">Free forever plan available · Secure OAuth · Read-only access</p>
-        </motion.div>
+      {/* ── PLATFORM STRIP ───────────────────────────────── */}
+      <section className="w-full py-10 border-y border-white/[0.04] bg-[#0a0a0a]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-5">
+          <p className="text-[10px] font-mono text-[#444] uppercase tracking-[0.2em] flex-shrink-0">
+            Connects with
+          </p>
+          <div className="flex items-center gap-8 sm:gap-12 opacity-25 hover:opacity-55 transition-opacity duration-500">
+            <div className="flex items-center gap-2.5 text-[#f0ede8]">
+              <Github size={18} />
+              <span className="text-sm font-bold tracking-tight">GitHub</span>
+            </div>
+            <div className="w-px h-4 bg-white/10" />
+            <div className="flex items-center gap-2.5 text-[#f0ede8]">
+              <Linkedin size={18} />
+              <span className="text-sm font-bold tracking-tight uppercase">
+                LinkedIn
+              </span>
+            </div>
+            <div className="w-px h-4 bg-white/10" />
+            <div className="flex items-center gap-2.5 text-[#f0ede8]">
+              <Twitter size={18} />
+              <span className="text-sm font-bold tracking-tight italic">
+                X / Twitter
+              </span>
+            </div>
+          </div>
+          <div className="hidden sm:block text-[10px] font-mono text-[#444] text-right">
+            read-only · no write access
+          </div>
+        </div>
       </section>
 
-      <footer className="w-full py-16 px-6 border-t border-white/5 bg-black/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-white">P</div>
-             <span className="font-bold text-xl tracking-tight">Postmate</span>
+      {/* ── HOW IT WORKS ─────────────────────────────────── */}
+      <section id="how-it-works" className="w-full py-32">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
+
+          <motion.div
+            variants={fadeUp}
+            initial={motionInitial}
+            whileInView="show"
+            viewport={{ once: true, margin: "-5%" }}
+            className="mb-20"
+          >
+            <div className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em] mb-5">
+              Process
+            </div>
+            <h2
+              className="text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] text-[#f0ede8] max-w-xl leading-[1.05]"
+              style={{ fontFamily: "var(--font-syne)" }}
+            >
+              Sync, draft, ship.
+              <br />
+              <span className="text-[#555]">Under 60 seconds.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 relative">
+            {/* Dashed connecting line */}
+            <div className="hidden md:block absolute top-[2.25rem] left-[calc(16.66%+2rem)] right-[calc(16.66%+2rem)] h-px border-t border-dashed border-white/[0.06]" />
+
+            {steps.map((step, idx) => (
+              <motion.div
+                key={idx}
+                variants={fadeUp}
+                initial={motionInitial}
+                whileInView="show"
+                viewport={{ once: true, margin: "-5%" }}
+                transition={{ delay: idx * 0.1 }}
+                className="relative p-8 group"
+              >
+                {/* Faded large number */}
+                <div
+                  className="text-[96px] font-extrabold leading-none text-white/[0.025] select-none absolute top-4 left-6"
+                  style={{ fontFamily: "var(--font-syne)" }}
+                >
+                  0{idx + 1}
+                </div>
+
+                {/* Step circle */}
+                <div className="relative z-10 flex items-center gap-3 mb-5">
+                  <div className="w-9 h-9 rounded-xl border border-white/[0.07] bg-[#111] flex items-center justify-center text-xs font-mono text-[#d4ff00] font-bold group-hover:bg-[#d4ff00]/[0.07] group-hover:border-[#d4ff00]/20 transition-all duration-200">
+                    {idx + 1}
+                  </div>
+                </div>
+
+                <h3
+                  className="relative z-10 text-[17px] font-bold text-[#f0ede8] mb-2.5 tracking-[-0.01em]"
+                  style={{ fontFamily: "var(--font-syne)" }}
+                >
+                  {step.title}
+                </h3>
+                <p className="relative z-10 text-sm text-[#444] leading-relaxed font-medium">
+                  {step.description}
+                </p>
+              </motion.div>
+            ))}
           </div>
-          <div className="flex gap-8 text-sm font-medium text-zinc-500">
-            <Link href="#" className="hover:text-white transition-colors">Twitter</Link>
-            <Link href="#" className="hover:text-white transition-colors">GitHub</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+        </div>
+      </section>
+
+      {/* ── FEATURES ─────────────────────────────────────── */}
+      <section id="features" className="w-full py-32 border-t border-white/[0.04]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
+
+          {/* Asymmetric heading row */}
+          <div className="grid lg:grid-cols-[28fr_72fr] gap-10 mb-16 items-end">
+            <motion.div
+              variants={fadeUp}
+              initial={motionInitial}
+              whileInView="show"
+              viewport={{ once: true }}
+            >
+              <div className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em] mb-5">
+                Features
+              </div>
+              <h2
+                className="text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] text-[#f0ede8] leading-[1.1]"
+                style={{ fontFamily: "var(--font-syne)" }}
+              >
+                Engineered for
+                <br />
+                momentum.
+              </h2>
+            </motion.div>
+            <motion.p
+              variants={fadeUp}
+              initial={motionInitial}
+              whileInView="show"
+              viewport={{ once: true }}
+              className="text-[#444] text-lg leading-relaxed font-medium lg:pb-1"
+            >
+              Stop staring at your commits. AI narration that sounds like you
+              — not a corporate press release.
+            </motion.p>
           </div>
-          <p className="text-sm text-zinc-600">© 2024 Postmate. Built for builders.</p>
+
+          {/* Feature grid — staggered columns break symmetry */}
+          <div className="grid md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.04]">
+            {features.map((feature, idx) => (
+              <motion.div
+                key={idx}
+                variants={fadeUp}
+                initial={motionInitial}
+                whileInView="show"
+                viewport={{ once: true, margin: "-5%" }}
+                transition={{ delay: (idx % 2) * 0.08 }}
+                className={`group relative p-8 bg-[#090909] hover:bg-[#0d0d0d] transition-colors duration-300 ${
+                  idx === 0 ? "md:col-span-2 md:grid md:grid-cols-2 md:gap-0" : ""
+                }`}
+              >
+                {/* Feature index */}
+                <div className="absolute top-6 right-7 font-mono text-[10px] text-white/[0.05]">
+                  {String(idx + 1).padStart(2, "0")}
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="w-9 h-9 rounded-xl bg-[#111] border border-white/[0.06] flex items-center justify-center text-[#d4ff00] group-hover:border-[#d4ff00]/20 group-hover:bg-[#d4ff00]/[0.06] transition-all duration-200">
+                    {feature.icon}
+                  </div>
+                  <div>
+                    <h3
+                      className="text-[16px] font-bold text-[#f0ede8] mb-2 tracking-[-0.01em]"
+                      style={{ fontFamily: "var(--font-syne)" }}
+                    >
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-[#444] leading-relaxed font-medium">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* First feature spans 2 cols — show visual in 2nd col */}
+                {idx === 0 && (
+                  <div className="hidden md:flex flex-col justify-center pl-8 border-l border-white/[0.04]">
+                    <div className="text-[10px] font-mono text-[#444] uppercase tracking-widest mb-4">
+                      Voice profile
+                    </div>
+                    <div className="space-y-2.5">
+                      {[
+                        { label: "Technical", w: "w-full", active: false },
+                        { label: "Build in Public", w: "w-full", active: true },
+                        { label: "Insight", w: "w-3/4", active: false },
+                        { label: "Hype", w: "w-1/2", active: false },
+                      ].map((item) => (
+                        <div key={item.label} className="flex items-center gap-3">
+                          <div className="flex-1 h-1.5 bg-[#151515] rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                item.active
+                                  ? "bg-[#d4ff00]"
+                                  : "bg-[#222]"
+                              } ${item.w}`}
+                            />
+                          </div>
+                          <span
+                            className={`text-[10px] font-mono flex-shrink-0 ${
+                              item.active ? "text-[#d4ff00]/60" : "text-[#444]"
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────── */}
+      <section className="w-full py-40 border-t border-white/[0.04] relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[500px] h-[500px] bg-[#d4ff00]/[0.03] blur-[120px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
+          <div className="max-w-3xl">
+            <motion.div
+              variants={containerVariants}
+              initial={motionInitial}
+              whileInView="show"
+              viewport={{ once: true }}
+              className="space-y-8"
+            >
+              <motion.div
+                variants={itemVariants}
+                className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em]"
+              >
+                Ready?
+              </motion.div>
+
+              <motion.h2
+                variants={itemVariants}
+                className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.04em] text-[#f0ede8] leading-[1.0]"
+                style={{ fontFamily: "var(--font-syne)" }}
+              >
+                Build in public.
+                <br />
+                <span className="text-[#444]">Start today.</span>
+              </motion.h2>
+
+              <motion.p
+                variants={itemVariants}
+                className="text-[#444] text-xl leading-relaxed max-w-lg"
+              >
+                Join developers who ship and share — turning every commit into
+                momentum.
+              </motion.p>
+
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-wrap items-center gap-4"
+              >
+                <Link
+                  href={authed ? "/dashboard" : "/signin"}
+                  className="group inline-flex items-center gap-2 px-8 py-4 bg-[#d4ff00] text-[#090909] font-bold rounded-xl hover:bg-[#c4ef00] transition-colors text-[15px]"
+                >
+                  {authed ? "Explore Dashboard" : "Connect with GitHub"}
+                  <ArrowRight
+                    size={18}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                  />
+                </Link>
+                <p className="text-xs text-[#444] font-mono">
+                  Free forever · Read-only · No card required
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────── */}
+      <footer className="w-full py-10 border-t border-white/[0.04] bg-[#0a0a0a]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="7" fill="#d4ff00" />
+              <rect x="5" y="7.5" width="12" height="2.5" rx="1.25" fill="#090909" />
+              <rect x="5" y="12.75" width="9" height="2.5" rx="1.25" fill="#090909" />
+              <rect x="5" y="18" width="6" height="2.5" rx="1.25" fill="#090909" />
+              <path d="M22.5 14L18 9.5V18.5L22.5 14Z" fill="#090909" />
+            </svg>
+            <span
+              className="font-bold text-sm tracking-tight text-[#f0ede8]"
+              style={{ fontFamily: "var(--font-syne)" }}
+            >
+              Postmate
+            </span>
+          </div>
+          <div className="flex gap-8 text-xs font-medium text-[#555]">
+            {["Twitter", "GitHub", "Privacy", "Terms"].map((label) => (
+              <Link
+                key={label}
+                href="#"
+                className="hover:text-[#f0ede8] transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <p className="text-xs text-[#444] font-mono">
+            © 2025 Postmate. Built for builders.
+          </p>
         </div>
       </footer>
     </div>
@@ -232,48 +569,63 @@ export default function Home() {
 
 const features = [
   {
-    icon: <BrainCircuit size={24} />,
+    icon: <BrainCircuit size={17} />,
     title: "AI Voice Sync",
-    description: "Postmate learns your unique writing style. No more generic 'I am happy to share' vibes that everyone ignores."
+    description:
+      "Set a voice memory prompt and tone slider — every post sounds like you, not a corporate press release.",
   },
   {
-    icon: <Github size={24} />,
+    icon: <Github size={17} />,
     title: "Deep Git Context",
-    description: "We don't just look at commit messages. We analyze file changes and READMEs for true technical insight."
+    description:
+      "Reads commit messages, file diffs, READMEs, and language stats. Real technical insight, not just subject lines.",
   },
   {
-    icon: <Sparkles size={24} />,
-    title: "Draft Personality",
-    description: "Switch between 'Technical Deep-dive', 'Build in Public', or 'Hype' styles with a single toggle."
+    icon: <Sparkles size={17} />,
+    title: "Four Post Styles",
+    description:
+      "Progress update, technical insight, build-in-public, or full project showcase. One commit, four angles.",
   },
   {
-    icon: <History size={24} />,
-    title: "Ship History",
-    description: "Keep track of your consistency. Automatically group related commits into cohesive project threads."
+    icon: <Route size={17} />,
+    title: "Journey Threads",
+    description:
+      "Generate a 3-post X thread arc — origin, build, launch — from your repo's full history in one click.",
   },
   {
-    icon: <Share2 size={24} />,
-    title: "Cross-Platform",
-    description: "Optimized formats for LinkedIn, X, and Threads. We handle the hashtags and character limits."
+    icon: <TrendingUp size={17} />,
+    title: "Trend Posts",
+    description:
+      "Tie your work to live tech trends via Google Trends RSS. Generate LinkedIn or X posts anchored to what's hot.",
   },
   {
-    icon: <ShieldCheck size={24} />,
+    icon: <Rss size={17} />,
+    title: "News Intelligence",
+    description:
+      "Ingests 15+ RSS feeds — TechCrunch, Hacker News, Anthropic, OpenAI — and auto-drafts tweets for your review.",
+  },
+  {
+    icon: <ShieldCheck size={17} />,
     title: "Read-Only Security",
-    description: "We never write to your repositories or post without your final approval. You maintain total control."
-  }
+    description:
+      "OAuth read-only scope. We never write to your repos or post on your behalf. Total control, always.",
+  },
 ];
 
 const steps = [
   {
     title: "Connect Your GitHub",
-    description: "Grant read-only access to your public or private repositories via secure OAuth."
+    description:
+      "Grant read-only OAuth access. We pull commit history, READMEs, and language stats — nothing more.",
   },
   {
-    title: "Sync Your Activity",
-    description: "Select recent commits, PRs, or releases you want to turn into a narrative."
+    title: "Pick a generation mode",
+    description:
+      "Single commit post, full project showcase, 3-post X journey thread, or a trend-anchored opinion piece.",
   },
   {
-    title: "Narrate & Ship",
-    description: "Refine the AI draft in our beautiful editor and copy it to your social platform."
-  }
+    title: "Edit & Ship",
+    description:
+      "Review the draft in our editor. One click copies to LinkedIn or opens the X composer — done.",
+  },
 ];

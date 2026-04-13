@@ -17,7 +17,7 @@ const stageStyles: Record<string, { dot: string; badge: string; border: string }
     milestone: { dot: "bg-indigo-500", badge: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20", border: "border-indigo-500/20" },
     challenge: { dot: "bg-amber-500", badge: "bg-amber-500/10 text-amber-400 border-amber-500/20", border: "border-amber-500/20" },
     growth: { dot: "bg-teal-500", badge: "bg-teal-500/10 text-teal-400 border-teal-500/20", border: "border-teal-500/20" },
-    reflection: { dot: "bg-zinc-500", badge: "bg-zinc-800 text-zinc-400 border-zinc-700", border: "border-zinc-700" },
+    reflection: { dot: "bg-[#555]", badge: "bg-white/[0.06] text-[#888] border-white/[0.1]", border: "border-white/[0.1]" },
 };
 
 function getStyle(stage: string) {
@@ -53,45 +53,44 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
         <div className="flex gap-4">
             {/* Timeline */}
             <div className="flex flex-col items-center pt-1">
-                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-zinc-950 ${s.dot}`} />
-                {!isLast && <div className="w-px flex-1 mt-1.5 bg-zinc-800" />}
+                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-[#090909] ${s.dot}`} />
+                {!isLast && <div className="w-px flex-1 mt-1.5 bg-white/[0.08]" />}
             </div>
 
             {/* Card */}
-            <div className={`flex-1 mb-6 bg-zinc-900 border rounded-xl overflow-hidden ${s.border}`}>
+            <div className={`flex-1 mb-6 bg-[#0c0c0c] border rounded-xl overflow-hidden ${s.border}`}>
                 {/* Card header */}
-                <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between gap-3">
+                <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold tracking-widest uppercase ${s.badge}`}>
                             {post.stage}
                         </span>
-                        <span className="text-sm font-semibold text-zinc-100">{post.title}</span>
+                        <span className="text-sm font-semibold text-[#f0ede8]">{post.title}</span>
                     </div>
-                    <span className="text-[11px] text-zinc-600 font-mono flex-shrink-0">
+                    <span className="text-[11px] text-[#555] font-mono flex-shrink-0">
                         {index + 1}/{total}
                     </span>
                 </div>
 
                 {/* X thread mock */}
-                <div className="p-4 bg-black rounded-none border-b border-zinc-800">
-                    {/* X header */}
+                <div className="p-4 bg-black rounded-none border-b border-white/[0.08]">
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2.5">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex-shrink-0" />
                             <div className="flex items-center flex-wrap gap-x-1">
-                                <span className="text-[15px] font-bold text-zinc-100 hover:underline cursor-pointer">Your Name</span>
+                                <span className="text-[15px] font-bold text-[#f0ede8] hover:underline cursor-pointer">Your Name</span>
                                 <BadgeCheck size={16} className="text-[#1d9bf0] fill-white" />
-                                <span className="text-[15px] text-zinc-500">@yourhandle</span>
-                                <span className="text-[15px] text-zinc-500">·</span>
-                                <span className="text-[15px] text-zinc-500 hover:underline cursor-pointer">3h</span>
+                                <span className="text-[15px] text-[#666]">@yourhandle</span>
+                                <span className="text-[15px] text-[#666]">·</span>
+                                <span className="text-[15px] text-[#666] hover:underline cursor-pointer">3h</span>
                             </div>
                         </div>
-                        <div className="text-zinc-500 hover:text-zinc-300 cursor-pointer p-1">
+                        <div className="text-[#666] hover:text-[#aaa] cursor-pointer p-1">
                             <MoreHorizontal size={18} />
                         </div>
                     </div>
 
-                    <div className="text-[15px] text-zinc-100 leading-normal whitespace-pre-wrap mb-3">
+                    <div className="text-[15px] text-[#f0ede8] leading-normal whitespace-pre-wrap mb-3">
                         {(expanded ? post.content : preview)
                             .split(/(#[a-zA-Z]\w*)/)
                             .map((part, i) =>
@@ -112,7 +111,7 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
                     )}
 
                     {/* Reactions */}
-                    <div className="flex items-center justify-between text-zinc-500 mt-2">
+                    <div className="flex items-center justify-between text-[#555] mt-2">
                         <div className="flex items-center gap-1 group cursor-pointer hover:text-[#1d9bf0] transition-colors -ml-2">
                             <div className="p-2 rounded-full group-hover:bg-[#1d9bf0]/10 transition-colors">
                                 <MessageCircle size={18} />
@@ -150,7 +149,7 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
 
                 {/* Footer */}
                 <div className="px-4 py-3 flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-zinc-600">
+                    <span className="text-[11px] text-[#555]">
                         {post.content.length.toLocaleString()} chars
                     </span>
                     <div className="flex items-center gap-2">
@@ -173,7 +172,7 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
                             onClick={handlePostX}
                             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex-shrink-0 ${copiedX
                                 ? "bg-emerald-500 text-white"
-                                : "bg-black hover:bg-zinc-800 text-white border border-zinc-700 hover:border-zinc-500"
+                                : "bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2]"
                                 }`}
                         >
                             {copiedX ? (
@@ -194,11 +193,11 @@ export function StrategyJourneyCards({ posts }: { posts: JourneyPostData[] }) {
     return (
         <div>
             <div className="flex items-center gap-3 mb-5">
-                <div className="h-px flex-1 bg-zinc-800" />
-                <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-600">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-[#555]">
                     {posts.length}-post journey
                 </span>
-                <div className="h-px flex-1 bg-zinc-800" />
+                <div className="h-px flex-1 bg-white/[0.06]" />
             </div>
             <div>
                 {posts.map((post, i) => (

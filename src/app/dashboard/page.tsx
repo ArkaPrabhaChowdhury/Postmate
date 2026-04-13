@@ -30,9 +30,9 @@ const styleConfig = {
 } as const;
 
 const statusConfig = {
-  draft: { label: "Draft", cls: "bg-zinc-800 text-zinc-400 border-zinc-700" },
+  draft: { label: "Draft", cls: "bg-white/[0.06] text-[#888] border-white/[0.1]" },
   copied: { label: "Copied", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  posted: { label: "Posted", cls: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
+  posted: { label: "Posted", cls: "bg-[#d4ff00]/10 text-[#d4ff00] border-[#d4ff00]/20" },
 } as const;
 
 function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
@@ -53,18 +53,23 @@ export default async function DashboardPage() {
   if (!activeRepo) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-24 gap-4">
-        <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-          <GitCommit size={20} className="text-zinc-500" />
+        <div className="w-12 h-12 rounded-xl bg-[#0c0c0c] border border-white/[0.08] flex items-center justify-center">
+          <GitCommit size={20} className="text-[#555]" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight mb-1">No repo connected</h1>
-          <p className="text-sm text-zinc-500 max-w-xs mx-auto leading-relaxed">
-            Connect a GitHub repo to sync commits and start generating LinkedIn posts.
+          <h1
+            className="text-xl font-bold tracking-tight text-[#f0ede8] mb-1"
+            style={{ fontFamily: "var(--font-syne)" }}
+          >
+            No repo connected
+          </h1>
+          <p className="text-sm text-[#666] max-w-xs mx-auto leading-relaxed">
+            Connect a GitHub repo to sync commits and start generating posts.
           </p>
         </div>
         <Link
           href="/settings"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] text-sm font-bold rounded-xl transition-colors"
         >
           Connect a repo
           <ChevronRight size={14} />
@@ -146,361 +151,364 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
       <div className="flex flex-col gap-6">
         {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-zinc-500">Repo:</span>
-            <a
-              href={`https://github.com/${activeRepo.fullName}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1 font-mono"
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1
+              className="text-xl font-bold tracking-tight text-[#f0ede8]"
+              style={{ fontFamily: "var(--font-syne)" }}
             >
-              {activeRepo.fullName}
-              <ExternalLink size={10} />
-            </a>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <form action={syncRecentCommits}>
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 text-zinc-300 rounded-lg transition-all">
-              <RefreshCw size={12} />
-              Sync commits
-            </button>
-          </form>
-          <Link
-            href="/settings"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-zinc-600 text-zinc-300 rounded-lg transition-all"
-          >
-            Change repo
-          </Link>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Commits synced", value: events.length, icon: GitCommit },
-          { label: "Drafts created", value: posts.length, icon: FileText },
-          { label: "Journey posts", value: journeyPosts.length, icon: Route },
-        ].map(({ label, value, icon: Icon }) => (
-          <div key={label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center flex-shrink-0">
-              <Icon size={14} className="text-zinc-400" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold tracking-tight leading-none">{value}</div>
-              <div className="text-[11px] text-zinc-500 mt-0.5">{label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Voice & Tone */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <details>
-          <summary className="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">Voice & Tone</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Save your voice memory and tone preference for all generated posts.
-              </p>
-            </div>
-            <ChevronDown size={14} className="text-zinc-500 chevron" />
-          </summary>
-          <div className="p-5">
-            <form action={saveVoiceSettings} className="flex flex-col gap-4">
-              <div>
-                <label className="text-xs font-semibold text-zinc-400">Voice memory</label>
-                <textarea
-                  name="voiceMemory"
-                  defaultValue={settings?.voiceMemory ?? ""}
-                  className="mt-2 w-full h-24 resize-y bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-100 leading-relaxed outline-none focus:border-indigo-500/60"
-                  placeholder="Short phrases, tone quirks, or stylistic rules you want in every post."
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-zinc-400">Tone</label>
-                <div className="mt-2 flex items-center gap-3">
-                  <input
-                    type="range"
-                    name="tone"
-                    min="0"
-                    max="100"
-                    defaultValue={settings?.tone ?? "50"}
-                    className="w-full accent-indigo-500"
-                  />
-                  <span className="text-xs text-zinc-500 w-24 text-right">
-                    {settings?.tone ?? "50"}
-                  </span>
-                </div>
-                <div className="mt-1 text-[11px] text-zinc-600">
-                  0 = concise · 50 = balanced · 100 = bold
-                </div>
-              </div>
-              <div>
-                <button className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 rounded-lg transition-colors">
-                  Save preferences
-                </button>
-              </div>
-            </form>
-          </div>
-        </details>
-      </section>
-
-      {/* Commits */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <details open>
-          <summary className="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between gap-4 cursor-pointer select-none">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">Recent commits</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Select a commit and generate a LinkedIn-ready draft.
-              </p>
-            </div>
-            <ChevronDown size={14} className="text-zinc-500 chevron" />
-          </summary>
-
-          {events.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-                <GitCommit size={18} className="text-zinc-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-zinc-400">No commits synced</p>
-                <p className="text-xs text-zinc-600 mt-0.5">Hit "Sync commits" to pull activity from your repo.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="divide-y divide-zinc-800/60">
-              {events.map((e) => {
-                const existing = postBySha.get(e.externalId);
-                return (
-                  <div
-                    key={e.id}
-                    className="px-5 py-3.5 flex items-center gap-4 flex-wrap hover:bg-zinc-800/30 transition-colors"
-                  >
-                    {/* Commit info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-100 truncate">{e.title}</p>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-zinc-500 flex-wrap">
-                        <code className="font-mono bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-400">
-                          {e.externalId.slice(0, 7)}
-                        </code>
-                        {e.authorLogin && <span>{e.authorLogin}</span>}
-                        {e.authoredAt && <span>{timeAgo(new Date(e.authoredAt))}</span>}
-                        {e.url && (
-                          <a
-                            href={e.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-indigo-400 hover:text-indigo-300 flex items-center gap-0.5 transition-colors"
-                          >
-                            view <ExternalLink size={9} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                      {existing && (
-                        <Link
-                          href={`/posts/${existing.id}`}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors"
-                        >
-                          <CheckCircle2 size={11} />
-                          Draft exists
-                        </Link>
-                      )}
-                      <form action={generatePostFromCommit} className="flex items-center gap-2">
-                        <input type="hidden" name="sha" value={e.externalId} />
-                        <select
-                          name="style"
-                          defaultValue="progress"
-                          className="text-[11px] font-medium bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
-                        >
-                          <option value="progress">Progress update</option>
-                          <option value="insight">Technical insight</option>
-                          <option value="build_in_public">Build in public</option>
-                        </select>
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg transition-colors">
-                          <Sparkles size={11} />
-                          Generate
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </details>
-      </section>
-
-      {/* Project Showcase */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <details>
-          <summary className="px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">LinkedIn Project Showcase</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                AI reads the entire repo and generates a comprehensive LinkedIn post highlighting key features.
-              </p>
-            </div>
-            <ChevronDown size={14} className="text-zinc-500 chevron" />
-          </summary>
-          <div className="px-5 py-3.5 border-t border-zinc-800 flex items-center justify-between gap-4 flex-wrap">
-            <form action={generateProjectShowcaseForRepo}>
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg transition-colors">
-                <Sparkles size={11} />
-                Generate showcase
-              </button>
-            </form>
-          </div>
-        </details>
-      </section>
-
-      {/* Journey */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <details>
-          <summary className="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">X / Twitter Journey</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                AI reads your repo history and generates 3 posts ideal for an X thread.
-              </p>
-            </div>
-            <ChevronDown size={14} className="text-zinc-500 chevron" />
-          </summary>
-
-          <div className="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between gap-4 flex-wrap">
-            <form action={generateStrategyForRepo}>
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-lg transition-colors">
-                <Sparkles size={12} />
-                {journeyPosts.length ? "Regenerate" : "Generate journey"}
-              </button>
-            </form>
-          </div>
-
-          {journeyPosts.length > 0 ? (
-            <div className="p-5">
-              <StrategyJourneyCards posts={journeyPosts} />
-              {strategy?.createdAt && (
-                <p className="text-[11px] text-zinc-600 mt-3">
-                  Generated {timeAgo(new Date(strategy.createdAt))}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-                <Route size={18} className="text-zinc-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-zinc-400">No journey yet</p>
-                <p className="text-xs text-zinc-600 mt-0.5 max-w-xs mx-auto">
-                  Generate 3 story-arc posts that cover your project from origin to launch.
-                </p>
-              </div>
-            </div>
-          )}
-        </details>
-      </section>
-
-      {/* Trend-based posts */}
-      <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <details>
-          <summary className="px-5 py-3.5 border-b border-zinc-800 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-            <div>
-              <h2 className="text-sm font-semibold text-zinc-100">Viral Trend Generator</h2>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                Create a LinkedIn or X post tied to recent trends and your GitHub profile interests.
-              </p>
-            </div>
-            <ChevronDown size={14} className="text-zinc-500 chevron" />
-          </summary>
-
-          <div className="p-5 flex flex-col gap-3">
-            <form action={generateTrendPostFromRepo} className="flex items-center gap-2 flex-wrap">
-              <select
-                name="platform"
-                defaultValue="linkedin"
-                className="text-[11px] font-medium bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-lg px-2 py-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+              Dashboard
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-[#555]">Repo:</span>
+              <a
+                href={`https://github.com/${activeRepo.fullName}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-[#d4ff00]/70 hover:text-[#d4ff00] transition-colors flex items-center gap-1 font-mono"
               >
-                <option value="linkedin">LinkedIn</option>
-                <option value="x">X / Twitter</option>
-              </select>
-              <div className="flex flex-wrap gap-2">
-                {(topicPills.length ? topicPills : fallbackPills).map((t) => (
-                  <button
-                    key={t}
-                    name="topic"
-                    value={t}
-                    className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-full transition-colors"
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-              <div className="w-full h-px bg-zinc-800/60 my-1" />
-              <div className="flex flex-wrap gap-2">
-                {newsHeadlines.map((h) => (
-                  <button
-                    key={h}
-                    name="headline"
-                    value={h}
-                    className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 rounded-full transition-colors"
-                  >
-                    {h}
-                  </button>
-                ))}
-              </div>
-            </form>
-            <p className="text-[11px] text-zinc-600">
-              Pick a topic or a news headline to generate a trend-aligned post draft.
-            </p>
+                {activeRepo.fullName}
+                <ExternalLink size={10} />
+              </a>
+            </div>
           </div>
-        </details>
-      </section>
+          <div className="flex items-center gap-2 flex-wrap">
+            <form action={syncRecentCommits}>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all">
+                <RefreshCw size={12} />
+                Sync commits
+              </button>
+            </form>
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all"
+            >
+              Change repo
+            </Link>
+          </div>
+        </div>
 
-      {/* Recent drafts */}
-      {posts.length > 0 && (
-        <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Commits synced", value: events.length, icon: GitCommit },
+            { label: "Drafts created", value: posts.length, icon: FileText },
+            { label: "Journey posts", value: journeyPosts.length, icon: Route },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-4 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
+                <Icon size={14} className="text-[#d4ff00]/60" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight leading-none text-[#f0ede8]">{value}</div>
+                <div className="text-[11px] text-[#555] mt-0.5">{label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Voice & Tone */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
           <details>
-            <summary className="px-5 py-3.5 border-b border-zinc-800 cursor-pointer select-none flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-100">Recent drafts</h2>
-              <ChevronDown size={14} className="text-zinc-500 chevron" />
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Voice &amp; Tone</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  Save your voice memory and tone preference for all generated posts.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
             </summary>
-            <div className="divide-y divide-zinc-800/60">
-              {posts.map((p) => {
-                const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
-                const st = statusConfig[p.status as keyof typeof statusConfig] ?? statusConfig.draft;
-                return (
-                  <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-zinc-800/30 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Badge cls={sc.cls}>{sc.label}</Badge>
-                      <code className="font-mono text-[11px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">
-                        {p.repoId && p.sourceId.slice(0, 7) !== p.repoId.slice(0, 7) ? p.sourceId.slice(0, 7) : "repo"}
-                      </code>
-                      <Badge cls={st.cls}>{st.label}</Badge>
-                      <span className="text-[11px] text-zinc-600 hidden sm:block">{timeAgo(new Date(p.createdAt))}</span>
-                    </div>
-                    <Link
-                      href={`/posts/${p.id}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 rounded-lg transition-all flex-shrink-0"
-                    >
-                      Edit & post
-                      <ChevronRight size={12} />
-                    </Link>
+            <div className="p-5">
+              <form action={saveVoiceSettings} className="flex flex-col gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-[#888]">Voice memory</label>
+                  <textarea
+                    name="voiceMemory"
+                    defaultValue={settings?.voiceMemory ?? ""}
+                    className="mt-2 w-full h-24 resize-y bg-[#090909] border border-white/[0.08] rounded-xl p-3 text-sm text-[#f0ede8] leading-relaxed outline-none focus:border-[#d4ff00]/50 transition-colors"
+                    placeholder="Short phrases, tone quirks, or stylistic rules you want in every post."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-[#888]">Tone</label>
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      type="range"
+                      name="tone"
+                      min="0"
+                      max="100"
+                      defaultValue={settings?.tone ?? "50"}
+                      className="w-full accent-[#d4ff00]"
+                    />
+                    <span className="text-xs text-[#666] w-24 text-right">
+                      {settings?.tone ?? "50"}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="mt-1 text-[11px] text-[#555]">
+                    0 = concise · 50 = balanced · 100 = bold
+                  </div>
+                </div>
+                <div>
+                  <button className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                    Save preferences
+                  </button>
+                </div>
+              </form>
             </div>
           </details>
         </section>
-      )}
+
+        {/* Commits */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details open>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Recent commits</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  Select a commit and generate a LinkedIn-ready draft.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+
+            {events.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                  <GitCommit size={18} className="text-[#444]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#888]">No commits synced</p>
+                  <p className="text-xs text-[#555] mt-0.5">Hit &ldquo;Sync commits&rdquo; to pull activity from your repo.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.05]">
+                {events.map((e) => {
+                  const existing = postBySha.get(e.externalId);
+                  return (
+                    <div
+                      key={e.id}
+                      className="px-5 py-3.5 flex items-center gap-4 flex-wrap hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#f0ede8] truncate">{e.title}</p>
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#555] flex-wrap">
+                          <code className="font-mono bg-white/[0.05] px-1.5 py-0.5 rounded text-[#888]">
+                            {e.externalId.slice(0, 7)}
+                          </code>
+                          {e.authorLogin && <span>{e.authorLogin}</span>}
+                          {e.authoredAt && <span>{timeAgo(new Date(e.authoredAt))}</span>}
+                          {e.url && (
+                            <a
+                              href={e.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[#d4ff00]/60 hover:text-[#d4ff00] flex items-center gap-0.5 transition-colors"
+                            >
+                              view <ExternalLink size={9} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                        {existing && (
+                          <Link
+                            href={`/posts/${existing.id}`}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors"
+                          >
+                            <CheckCircle2 size={11} />
+                            Draft exists
+                          </Link>
+                        )}
+                        <form action={generatePostFromCommit} className="flex items-center gap-2">
+                          <input type="hidden" name="sha" value={e.externalId} />
+                          <select
+                            name="style"
+                            defaultValue="progress"
+                            className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
+                          >
+                            <option value="progress">Progress update</option>
+                            <option value="insight">Technical insight</option>
+                            <option value="build_in_public">Build in public</option>
+                          </select>
+                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                            <Sparkles size={11} />
+                            Generate
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </details>
+        </section>
+
+        {/* Project Showcase */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">LinkedIn Project Showcase</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  AI reads the entire repo and generates a comprehensive LinkedIn post highlighting key features.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+            <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
+              <form action={generateProjectShowcaseForRepo}>
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                  <Sparkles size={11} />
+                  Generate showcase
+                </button>
+              </form>
+            </div>
+          </details>
+        </section>
+
+        {/* Journey */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">X / Twitter Journey</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  AI reads your repo history and generates 3 posts ideal for an X thread.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+
+            <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
+              <form action={generateStrategyForRepo}>
+                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors">
+                  <Sparkles size={12} />
+                  {journeyPosts.length ? "Regenerate" : "Generate journey"}
+                </button>
+              </form>
+            </div>
+
+            {journeyPosts.length > 0 ? (
+              <div className="p-5">
+                <StrategyJourneyCards posts={journeyPosts} />
+                {strategy?.createdAt && (
+                  <p className="text-[11px] text-[#555] mt-3">
+                    Generated {timeAgo(new Date(strategy.createdAt))}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                  <Route size={18} className="text-[#444]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#888]">No journey yet</p>
+                  <p className="text-xs text-[#555] mt-0.5 max-w-xs mx-auto">
+                    Generate 3 story-arc posts covering your project from origin to launch.
+                  </p>
+                </div>
+              </div>
+            )}
+          </details>
+        </section>
+
+        {/* Trend-based posts */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Viral Trend Generator</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  Create a LinkedIn or X post tied to live trends and your GitHub profile interests.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+
+            <div className="p-5 flex flex-col gap-3">
+              <form action={generateTrendPostFromRepo} className="flex items-center gap-2 flex-wrap">
+                <select
+                  name="platform"
+                  defaultValue="linkedin"
+                  className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
+                >
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="x">X / Twitter</option>
+                </select>
+                <div className="flex flex-wrap gap-2">
+                  {(topicPills.length ? topicPills : fallbackPills).map((t) => (
+                    <button
+                      key={t}
+                      name="topic"
+                      value={t}
+                      className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-[#d4ff00]/10 border border-white/[0.08] hover:border-[#d4ff00]/20 text-[#888] hover:text-[#d4ff00] rounded-full transition-colors"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <div className="w-full h-px bg-white/[0.05] my-1" />
+                <div className="flex flex-wrap gap-2">
+                  {newsHeadlines.map((h) => (
+                    <button
+                      key={h}
+                      name="headline"
+                      value={h}
+                      className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold bg-[#090909] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.1] text-[#888] rounded-full transition-colors"
+                    >
+                      {h}
+                    </button>
+                  ))}
+                </div>
+              </form>
+              <p className="text-[11px] text-[#555]">
+                Pick a topic or a news headline to generate a trend-aligned post draft.
+              </p>
+            </div>
+          </details>
+        </section>
+
+        {/* Recent drafts */}
+        {posts.length > 0 && (
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <details>
+              <summary className="px-5 py-3.5 border-b border-white/[0.06] cursor-pointer select-none flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Recent drafts</h2>
+                <ChevronDown size={14} className="text-[#555] chevron" />
+              </summary>
+              <div className="divide-y divide-white/[0.05]">
+                {posts.map((p) => {
+                  const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
+                  const st = statusConfig[p.status as keyof typeof statusConfig] ?? statusConfig.draft;
+                  return (
+                    <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Badge cls={sc.cls}>{sc.label}</Badge>
+                        <code className="font-mono text-[11px] text-[#666] bg-white/[0.05] px-1.5 py-0.5 rounded">
+                          {p.repoId && p.sourceId.slice(0, 7) !== p.repoId.slice(0, 7) ? p.sourceId.slice(0, 7) : "repo"}
+                        </code>
+                        <Badge cls={st.cls}>{st.label}</Badge>
+                        <span className="text-[11px] text-[#555] hidden sm:block">{timeAgo(new Date(p.createdAt))}</span>
+                      </div>
+                      <Link
+                        href={`/posts/${p.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                      >
+                        Edit &amp; post
+                        <ChevronRight size={12} />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          </section>
+        )}
       </div>
     </div>
   );

@@ -4,22 +4,29 @@ import { Shield, Lock, EyeOff } from "lucide-react";
 export default function SignInPage() {
   return (
     <div className="max-w-sm mx-auto mt-24 px-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center shadow-xl shadow-black/50">
+      <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-3xl p-8 text-center shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
 
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <div className="w-14 h-14 bg-indigo-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <svg width="24" height="24" viewBox="0 0 12 12" fill="none" className="text-white">
-              <path d="M6 1L10.5 4V8L6 11L1.5 8V4L6 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{ background: "#d4ff00" }}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="5" y="7.5" width="12" height="2.5" rx="1.25" fill="#090909" />
+              <rect x="5" y="12.75" width="9" height="2.5" rx="1.25" fill="#090909" />
+              <rect x="5" y="18" width="6" height="2.5" rx="1.25" fill="#090909" />
+              <path d="M22.5 14L18 9.5V18.5L22.5 14Z" fill="#090909" />
             </svg>
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100 mb-2">
+        <h1
+          className="text-2xl font-bold tracking-tight text-[#f0ede8] mb-2"
+          style={{ fontFamily: "var(--font-syne)" }}
+        >
           Sign in to Postmate
         </h1>
-        <p className="text-sm text-zinc-400 leading-relaxed mb-8">
-          Connect your GitHub account to start turning your commits into LinkedIn posts.
+        <p className="text-sm text-[#888] leading-relaxed mb-8">
+          Connect your GitHub account to start turning your commits into LinkedIn &amp; X posts.
         </p>
 
         <SignInButton />
@@ -29,10 +36,10 @@ export default function SignInPage() {
           {[
             { icon: EyeOff, text: "Read-only access to your repos" },
             { icon: Lock, text: "We never commit code or post for you" },
-            { icon: Shield, text: "No LinkedIn API required" },
+            { icon: Shield, text: "No LinkedIn or X API required" },
           ].map(({ icon: Icon, text }) => (
-            <div key={text} className="flex items-center justify-center gap-2 text-xs font-medium text-zinc-500">
-              <Icon size={14} className="text-indigo-400" />
+            <div key={text} className="flex items-center justify-center gap-2 text-xs font-medium text-[#666]">
+              <Icon size={14} className="text-[#d4ff00]/60" />
               {text}
             </div>
           ))}
