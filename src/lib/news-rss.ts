@@ -5,53 +5,78 @@ export type RssItem = {
   pubDate?: string;
 };
 
-export const DEFAULT_SOURCES = [
-  // General tech news
-  "https://techcrunch.com/feed/",
-  "https://www.theverge.com/rss/index.xml",
-  "https://venturebeat.com/feed/",
-  "https://layoffs.fyi/feed/",
+// GitHub releases for high-signal runtimes, frameworks, and tooling
+const GITHUB_RELEASES: string[] = [
+  // Runtimes
+  "https://github.com/oven-sh/bun/releases.atom",
+  "https://github.com/denoland/deno/releases.atom",
+  "https://github.com/nodejs/node/releases.atom",
 
-  // Hacker News
-  "https://hnrss.org/frontpage",
-  "https://hnrss.org/newest?q=AI",
-  "https://hnrss.org/newest?q=Anthropic+OR+Claude&points=10",
-  "https://hnrss.org/newest?q=OpenAI+OR+ChatGPT&points=10",
+  // Frontend frameworks
+  "https://github.com/vercel/next.js/releases.atom",
+  "https://github.com/facebook/react/releases.atom",
+  "https://github.com/vitejs/vite/releases.atom",
+  "https://github.com/sveltejs/kit/releases.atom",
+  "https://github.com/withastro/astro/releases.atom",
 
-  // Company official blogs — highest signal for model/feature releases
-  "https://www.anthropic.com/rss.xml",
-  "https://openai.com/blog/rss.xml",
-  "https://deepmind.google/blog/rss.xml",
-  "https://mistral.ai/feed",
+  // Languages & compilers
+  "https://github.com/microsoft/TypeScript/releases.atom",
+  "https://github.com/rust-lang/rust/releases.atom",
+  "https://github.com/golang/go/releases.atom",
 
-  // Google News targeted RSS — aggregates coverage within minutes
-  "https://news.google.com/rss/search?q=Anthropic+Claude+AI&hl=en-US&gl=US&ceid=US:en",
-  "https://news.google.com/rss/search?q=OpenAI+model+release&hl=en-US&gl=US&ceid=US:en",
+  // Tooling
+  "https://github.com/astral-sh/uv/releases.atom",
+  "https://github.com/astral-sh/ruff/releases.atom",
+  "https://github.com/biomejs/biome/releases.atom",
+  "https://github.com/tailwindlabs/tailwindcss/releases.atom",
+  "https://github.com/prisma/prisma/releases.atom",
+  "https://github.com/oxc-project/oxc/releases.atom",
 
-  // Reddit AI communities
-  "https://www.reddit.com/r/artificial.rss",
-  "https://www.reddit.com/r/MachineLearning.rss",
-  "https://www.reddit.com/r/LocalLLaMA.rss",
+  // Editors & apps
+  "https://github.com/zed-industries/zed/releases.atom",
+  "https://github.com/tauri-apps/tauri/releases.atom",
+
+  // AI/ML tooling
+  "https://github.com/ollama/ollama/releases.atom",
+  "https://github.com/ggml-org/llama.cpp/releases.atom",
 ];
 
-export const DEFAULT_KEYWORDS = [
-  "AI",
-  "artificial intelligence",
-  "layoff",
-  "laid off",
-  "hiring",
-  "funding",
-  "Series A",
-  "Series B",
-  "Claude",
-  "Gemini",
-  "GPT",
-  "OpenAI",
-  "Anthropic",
-  "Mistral",
-  "LLM",
-  "model release",
-  "agent",
+// Official blogs with concrete release/feature announcements
+const OFFICIAL_BLOGS: string[] = [
+  "https://bun.sh/blog/rss.xml",
+  "https://deno.com/feed",
+  "https://vercel.com/blog/rss.xml",
+  "https://blog.cloudflare.com/rss/",
+  "https://github.blog/feed/",
+  "https://www.anthropic.com/rss.xml",
+  "https://openai.com/blog/rss.xml",
+  "https://deepmind.google/blog/rss/",
+];
+
+// Hacker News — only high-voted items (100+ points = widely noticed)
+const HN_FEEDS: string[] = [
+  "https://hnrss.org/frontpage?points=100",
+  "https://hnrss.org/newest?q=Show+HN&points=50",
+  "https://hnrss.org/newest?q=Ask+HN&points=75",
+];
+
+// GitHub Trending — community-curated viral projects
+const TRENDING_FEEDS: string[] = [
+  "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml",
+];
+
+// Discovery feeds
+const DISCOVERY_FEEDS: string[] = [
+  "https://www.producthunt.com/feed?category=developer-tools",
+  "https://lobste.rs/s/rss",
+];
+
+export const DEFAULT_SOURCES: string[] = [
+  ...GITHUB_RELEASES,
+  ...OFFICIAL_BLOGS,
+  ...HN_FEEDS,
+  ...TRENDING_FEEDS,
+  ...DISCOVERY_FEEDS,
 ];
 
 function stripHtml(input: string): string {
@@ -97,7 +122,7 @@ export function parseRss(xml: string): RssItem[] {
     return items;
   }
 
-  // Atom 1.0 fallback: split on <entry> (used by Google News, Anthropic blog, etc.)
+  // Atom 1.0 fallback
   const entryBlocks = xml.split(/<entry[\s>]/i).slice(1);
   for (const block of entryBlocks) {
     const title = (
@@ -106,7 +131,6 @@ export function parseRss(xml: string): RssItem[] {
       ""
     ).trim();
 
-    // Atom links: <link rel="alternate" href="..."/> or <link href="..."/> or <id>https://...</id>
     const link = (
       block.match(/<link[^>]+rel=["']alternate["'][^>]+href=["']([^"']+)["']/i)?.[1] ??
       block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/>/i)?.[1] ??
@@ -137,14 +161,6 @@ export function parseRss(xml: string): RssItem[] {
   }
 
   return items;
-}
-
-export function filterByKeywords(items: RssItem[], keywords: string[]): RssItem[] {
-  const set = keywords.map((k) => k.toLowerCase());
-  return items.filter((i) => {
-    const hay = `${i.title} ${i.description}`.toLowerCase();
-    return set.some((k) => hay.includes(k.toLowerCase()));
-  });
 }
 
 export function uniqueByUrl(items: RssItem[]): RssItem[] {

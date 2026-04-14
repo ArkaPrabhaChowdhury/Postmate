@@ -8,6 +8,7 @@ import {
   Sparkles, GitCommit, FileText, Route,
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown,
 } from "lucide-react";
+import { SubmitButton } from "@/components/SubmitButton";
 
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -248,9 +249,12 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <div>
-                  <button className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                  <SubmitButton
+                    pendingText="Saving…"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                  >
                     Save preferences
-                  </button>
+                  </SubmitButton>
                 </div>
               </form>
             </div>
@@ -339,10 +343,13 @@ export default async function DashboardPage() {
                             <option value="insight">Technical insight</option>
                             <option value="build_in_public">Build in public</option>
                           </select>
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                          <SubmitButton
+                            pendingText="Generating…"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                          >
                             <Sparkles size={11} />
                             Generate
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </div>
@@ -367,10 +374,13 @@ export default async function DashboardPage() {
             </summary>
             <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
               <form action={generateProjectShowcaseForRepo}>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                <SubmitButton
+                  pendingText="Generating…"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                >
                   <Sparkles size={11} />
                   Generate showcase
-                </button>
+                </SubmitButton>
               </form>
             </div>
           </details>
@@ -391,10 +401,13 @@ export default async function DashboardPage() {
 
             <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
               <form action={generateStrategyForRepo}>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors">
+                <SubmitButton
+                  pendingText="Generating…"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
+                >
                   <Sparkles size={12} />
                   {journeyPosts.length ? "Regenerate" : "Generate journey"}
-                </button>
+                </SubmitButton>
               </form>
             </div>
 

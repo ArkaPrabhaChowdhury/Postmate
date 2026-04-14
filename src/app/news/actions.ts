@@ -41,32 +41,14 @@ export async function markTweetPosted(formData: FormData) {
 
 export async function saveNewsSettings(formData: FormData) {
   const userId = await requireUserId();
-  const newsSources = String(formData.get("newsSources") ?? "").trim();
-  const newsKeywords = String(formData.get("newsKeywords") ?? "").trim();
   const newsTone = String(formData.get("newsTone") ?? "mixed").trim();
-  const newsExclude = String(formData.get("newsExclude") ?? "").trim();
   const newsAutoFetch = formData.get("newsAutoFetch") === "true";
   const newsEmailEnabled = formData.get("newsEmailEnabled") === "true";
 
   await prisma.userSettings.upsert({
     where: { userId },
-    create: {
-      userId,
-      newsSources: newsSources || null,
-      newsKeywords: newsKeywords || null,
-      newsTone: newsTone || null,
-      newsExclude: newsExclude || null,
-      newsAutoFetch,
-      newsEmailEnabled,
-    },
-    update: {
-      newsSources: newsSources || null,
-      newsKeywords: newsKeywords || null,
-      newsTone: newsTone || null,
-      newsExclude: newsExclude || null,
-      newsAutoFetch,
-      newsEmailEnabled,
-    },
+    create: { userId, newsTone, newsAutoFetch, newsEmailEnabled },
+    update: { newsTone, newsAutoFetch, newsEmailEnabled },
   });
 
   revalidatePath("/news/settings");
