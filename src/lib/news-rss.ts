@@ -95,7 +95,6 @@ const DISCOVERY_FEEDS: string[] = [
 export const DEFAULT_SOURCES: string[] = [
   ...AI_BLOGS,
   ...OFFICIAL_BLOGS,
-  ...GITHUB_RELEASES,
   ...HN_FEEDS,
   ...TRENDING_FEEDS,
   ...DISCOVERY_FEEDS,

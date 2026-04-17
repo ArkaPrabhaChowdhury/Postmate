@@ -40,7 +40,7 @@ function getGroqClient() {
  * 5–7:  blog posts, minor updates, framework news
  * 1–4:  generic articles, rehashed news, opinion pieces
  */
-async function scoreItems(items: RssItem[]): Promise<Map<number, number>> {
+async function scoreItems(items: RssItem[], keywords?: string): Promise<Map<number, number>> {
   const scores = new Map<number, number>();
   if (items.length === 0) return scores;
 
@@ -50,7 +50,11 @@ async function scoreItems(items: RssItem[]): Promise<Map<number, number>> {
     .map((item, i) => `${i}. ${item.title}${item.description ? ` — ${item.description.slice(0, 120)}` : ""}`)
     .join("\n");
 
-  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how impactful it is to a software developer who cares about AI and tech.
+  const userInterestLine = keywords
+    ? `\nUser interests: "${keywords}". Articles directly relevant to these topics or companies should score at least 1 point higher than they otherwise would.`
+    : "";
+
+  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how impactful it is to a software developer who cares about AI and tech.${userInterestLine}
 
 Scoring guide:
 9–10: Any new AI model release, new AI API or feature launch, new AI agent capability — from ANY company (OpenAI, Anthropic, Google, Meta, Mistral, etc.). Also: viral open-source project, paradigm-shifting framework release, critical security vulnerability.
@@ -98,15 +102,27 @@ async function getUserNewsSettings(userId: string) {
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,
     newsTone: settings?.newsTone ?? undefined,
+    newsKeywords: settings?.newsKeywords ?? undefined,
   };
 }
 
 export async function runNewsIngestForUser(userId: string): Promise<IngestResult> {
   const settings = await getUserNewsSettings(userId);
 
+  // Build keyword-specific HN search feeds from user interests
+  const keywordFeeds: string[] = [];
+  if (settings.newsKeywords) {
+    const terms = settings.newsKeywords.split(",").map((k) => k.trim()).filter(Boolean).slice(0, 5);
+    for (const term of terms) {
+      keywordFeeds.push(`https://hnrss.org/newest?q=${encodeURIComponent(term)}&points=50`);
+    }
+  }
+
+  const allSources = [...DEFAULT_SOURCES, ...keywordFeeds];
+
   // Fetch all sources in parallel
   const feeds = await Promise.allSettled(
-    DEFAULT_SOURCES.map((url) =>
+    allSources.map((url) =>
       fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) })
         .then((r) => (r.ok ? r.text() : ""))
         .catch(() => ""),
@@ -135,7 +151,7 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
 
   for (let i = 0; i < fresh.length; i += BATCH) {
     const batch = fresh.slice(i, i + BATCH);
-    const scores = await scoreItems(batch);
+    const scores = await scoreItems(batch, settings.newsKeywords);
 
     for (let j = 0; j < batch.length; j++) {
       const score = scores.get(j) ?? 5; // default to 5 if scoring failed

@@ -73,11 +73,12 @@ export async function saveNewsSettings(formData: FormData) {
   const newsTone = String(formData.get("newsTone") ?? "mixed").trim();
   const newsAutoFetch = formData.get("newsAutoFetch") === "true";
   const newsEmailEnabled = formData.get("newsEmailEnabled") === "true";
+  const newsKeywords = String(formData.get("newsKeywords") ?? "").trim();
 
   await prisma.userSettings.upsert({
     where: { userId },
-    create: { userId, newsTone, newsAutoFetch, newsEmailEnabled },
-    update: { newsTone, newsAutoFetch, newsEmailEnabled },
+    create: { userId, newsTone, newsAutoFetch, newsEmailEnabled, newsKeywords },
+    update: { newsTone, newsAutoFetch, newsEmailEnabled, newsKeywords },
   });
 
   revalidatePath("/news/settings");

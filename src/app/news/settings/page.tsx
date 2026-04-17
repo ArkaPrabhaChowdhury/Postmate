@@ -34,6 +34,26 @@ export default async function NewsSettingsPage() {
         <form action={saveNewsSettings} className="grid gap-4">
           <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
             <div className="px-5 py-3.5 border-b border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[#f0ede8]">Your interests</h2>
+              <p className="text-xs text-[#666] mt-0.5">
+                Companies, topics, or tech stacks you care about — comma-separated. News is filtered and scored around these.
+              </p>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-2">
+              <input
+                name="newsKeywords"
+                defaultValue={settings?.newsKeywords ?? ""}
+                placeholder="e.g. OpenAI, Anthropic, AI agents, React, TypeScript, Rust"
+                className="w-full bg-[#090909] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-[#f0ede8] placeholder:text-[#444] outline-none focus:border-[#d4ff00]/50 transition-colors"
+              />
+              <p className="text-[11px] text-[#555]">
+                These are also used to search Hacker News directly — so you get community discussion too, not just press releases.
+              </p>
+            </div>
+          </section>
+
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/[0.06]">
               <h2 className="text-sm font-semibold text-[#f0ede8]">Tweet format</h2>
               <p className="text-xs text-[#666] mt-0.5">Choose which tweet styles are generated per article.</p>
             </div>
@@ -94,12 +114,12 @@ export default async function NewsSettingsPage() {
             </div>
             <div className="px-5 py-4 grid gap-3 sm:grid-cols-2">
               {[
-                { label: "GitHub releases", desc: "Bun, Deno, Node, React, Next.js, TypeScript, Vite, Rust, uv, Ruff, Tailwind, Prisma, Biome, Astro, Zed, Tauri, Ollama, llama.cpp, and more" },
-                { label: "Official blogs", desc: "Bun, Deno, Vercel, Cloudflare, GitHub, Anthropic, OpenAI, Google DeepMind" },
-                { label: "Hacker News top posts", desc: "Items with 100+ points on the front page, plus high-voted Show HN and Ask HN" },
-                { label: "GitHub Trending", desc: "Daily trending repositories across all languages" },
-                { label: "ProductHunt", desc: "Top developer tools launches" },
-                { label: "Lobste.rs", desc: "Curated tech links from the developer community" },
+                { label: "AI company blogs", desc: "Anthropic, OpenAI, Google AI, DeepMind, Meta AI, Mistral, Hugging Face, Microsoft AI, AWS ML, NVIDIA, Cohere, Stability AI" },
+                { label: "Tech news — AI sections", desc: "TechCrunch AI, The Verge AI, VentureBeat AI, Wired AI" },
+                { label: "Official dev blogs", desc: "Bun, Deno, Vercel, Cloudflare, GitHub" },
+                { label: "Hacker News", desc: "Front page (100+ points) + keyword search on your interests" },
+                { label: "GitHub Trending", desc: "Daily trending repos across all languages" },
+                { label: "ProductHunt & Lobste.rs", desc: "Developer tool launches and curated community links" },
               ].map((s) => (
                 <div key={s.label} className="flex flex-col gap-0.5">
                   <span className="text-xs font-semibold text-[#f0ede8]">{s.label}</span>
@@ -109,7 +129,7 @@ export default async function NewsSettingsPage() {
             </div>
             <div className="px-5 py-3 border-t border-white/[0.06]">
               <p className="text-[11px] text-[#444]">
-                All items are AI-scored 1–10. Only items scoring ≥7 ("concrete release, viral tool, or major AI launch") reach your queue.
+                All items are AI-scored 1–10. Only scores ≥8 reach your queue — major launches, new AI features, and genuinely impactful releases. Minor version bumps and patch releases are filtered out.
               </p>
             </div>
           </section>
