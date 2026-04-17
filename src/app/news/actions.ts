@@ -4,10 +4,26 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { runNewsIngestForUser } from "@/lib/news-ingest";
+import { sendNewsDigestEmail } from "@/lib/email";
 
 export async function ingestNews() {
   const userId = await requireUserId();
   const result = await runNewsIngestForUser(userId);
+
+  if (result.added > 0) {
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { newsEmailEnabled: true, user: { select: { email: true, name: true } } },
+    });
+    if (settings?.newsEmailEnabled && settings.user.email) {
+      await sendNewsDigestEmail({
+        to: settings.user.email,
+        name: settings.user.name,
+        articles: result.articles,
+      }).catch(() => {});
+    }
+  }
+
   revalidatePath("/news");
   return result;
 }
