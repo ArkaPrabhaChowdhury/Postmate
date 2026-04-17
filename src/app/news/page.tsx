@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { requireUserId } from "@/lib/requireUser";
-import { ingestNews } from "./actions";
+import { useEffect, useState, useTransition } from "react";
 import { ArrowRight, RefreshCw } from "lucide-react";
+import { ingestNews, getPendingTweets, getLastFetchTime } from "./actions";
 
 function XLogo({ size = 12 }: { size?: number }) {
   return (
@@ -21,24 +22,50 @@ type NewsItem = {
   createdAt: Date;
 };
 
-export default async function NewsPage() {
-  const userId = await requireUserId();
+export default function NewsPage() {
+  const [items, setItems] = useState<NewsItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [statusMsg, setStatusMsg] = useState("");
 
-  const allPending = await prisma.newsTweet.findMany({
-    where: { userId, status: "pending" },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    select: { id: true, articleUrl: true, articleTitle: true, tone: true, tweet: true, createdAt: true },
-  });
+  useEffect(() => {
+    async function init() {
+      const [data, lastFetch] = await Promise.all([getPendingTweets(), getLastFetchTime()]);
+      setItems(data);
+      setLoaded(true);
 
-  // One tweet per article — prefer "informative", fallback to first
-  const seen = new Map<string, NewsItem>();
-  for (const t of allPending) {
-    if (!seen.has(t.articleUrl) || t.tone === "informative") {
-      seen.set(t.articleUrl, t);
+      const TWO_HOURS = 2 * 60 * 60 * 1000;
+      const stale = !lastFetch || Date.now() - new Date(lastFetch).getTime() > TWO_HOURS;
+      if (stale) {
+        setStatusMsg("Checking for new articles…");
+        startTransition(async () => {
+          try {
+            const result = await ingestNews();
+            const fresh = await getPendingTweets();
+            setItems(fresh);
+            setStatusMsg(result.added > 0 ? `Found ${result.added} new article${result.added !== 1 ? "s" : ""}.` : "");
+          } catch {
+            setStatusMsg("");
+          }
+        });
+      }
     }
+    init();
+  }, []);
+
+  function handleFetch() {
+    setStatusMsg("Fetching RSS feeds and scoring articles…");
+    startTransition(async () => {
+      try {
+        const result = await ingestNews();
+        const fresh = await getPendingTweets();
+        setItems(fresh);
+        setStatusMsg(result.added > 0 ? `Added ${result.added} new article${result.added !== 1 ? "s" : ""}.` : "No new high-signal articles found.");
+      } catch {
+        setStatusMsg("Fetch failed. Try again.");
+      }
+    });
   }
-  const items = Array.from(seen.values());
 
   return (
     <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 py-8">
@@ -56,12 +83,14 @@ export default async function NewsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <form action={ingestNews}>
-              <button className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
-                <RefreshCw size={12} />
-                Fetch now
-              </button>
-            </form>
+            <button
+              onClick={handleFetch}
+              disabled={isPending}
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <RefreshCw size={12} className={isPending ? "animate-spin" : ""} />
+              {isPending ? "Fetching…" : "Fetch now"}
+            </button>
             <Link
               href="/news/settings"
               className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-colors"
@@ -72,7 +101,22 @@ export default async function NewsPage() {
           </div>
         </div>
 
-        {items.length === 0 ? (
+        {/* Status message */}
+        {isPending && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#d4ff00]/20 bg-[#d4ff00]/[0.05]">
+            <span className="w-2.5 h-2.5 rounded-full border-2 border-[#d4ff00] border-t-transparent animate-spin flex-shrink-0" />
+            <p className="text-xs text-[#d4ff00]">{statusMsg}</p>
+          </div>
+        )}
+        {!isPending && statusMsg && (
+          <p className="text-xs text-[#666] px-1">{statusMsg}</p>
+        )}
+
+        {!loaded ? (
+          <div className="border border-white/[0.08] rounded-xl p-10 text-center">
+            <p className="text-[#555] text-sm">Loading…</p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="border border-white/[0.08] rounded-xl p-10 text-center">
             <p className="text-[#555] text-sm">No pending tweets yet.</p>
             <p className="text-[#444] text-xs mt-1">Click &ldquo;Fetch now&rdquo; to ingest RSS feeds.</p>
@@ -81,7 +125,6 @@ export default async function NewsPage() {
           <div className="flex flex-col gap-3">
             {items.map((item) => (
               <div key={item.id} className="border border-white/[0.08] rounded-xl bg-[#0c0c0c] overflow-hidden">
-                {/* Source article */}
                 <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-4">
                   <a
                     href={item.articleUrl}
@@ -93,14 +136,12 @@ export default async function NewsPage() {
                   </a>
                 </div>
 
-                {/* Tweet body */}
                 <div className="px-4 pb-3">
                   <p className="text-sm text-[#e0ddd8] leading-relaxed whitespace-pre-wrap">
                     {item.tweet}
                   </p>
                 </div>
 
-                {/* Footer */}
                 <div className="px-4 pb-4 flex items-center justify-between gap-3">
                   <a
                     href={item.articleUrl}

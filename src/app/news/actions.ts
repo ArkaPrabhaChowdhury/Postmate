@@ -7,8 +7,37 @@ import { runNewsIngestForUser } from "@/lib/news-ingest";
 
 export async function ingestNews() {
   const userId = await requireUserId();
-  await runNewsIngestForUser(userId);
+  const result = await runNewsIngestForUser(userId);
   revalidatePath("/news");
+  return result;
+}
+
+export async function getLastFetchTime(): Promise<Date | null> {
+  const userId = await requireUserId();
+  const latest = await prisma.seenUrl.findFirst({
+    where: { userId },
+    orderBy: { seenAt: "desc" },
+    select: { seenAt: true },
+  });
+  return latest?.seenAt ?? null;
+}
+
+export async function getPendingTweets() {
+  const userId = await requireUserId();
+  const allPending = await prisma.newsTweet.findMany({
+    where: { userId, status: "pending" },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { id: true, articleUrl: true, articleTitle: true, tone: true, tweet: true, createdAt: true },
+  });
+
+  const seen = new Map<string, typeof allPending[0]>();
+  for (const t of allPending) {
+    if (!seen.has(t.articleUrl) || t.tone === "informative") {
+      seen.set(t.articleUrl, t);
+    }
+  }
+  return Array.from(seen.values());
 }
 
 export async function approveTweet(formData: FormData) {

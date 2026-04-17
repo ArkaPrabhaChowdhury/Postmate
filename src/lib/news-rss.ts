@@ -48,9 +48,30 @@ const OFFICIAL_BLOGS: string[] = [
   "https://vercel.com/blog/rss.xml",
   "https://blog.cloudflare.com/rss/",
   "https://github.blog/feed/",
+];
+
+// AI company blogs — every new model, API, or feature announcement
+const AI_BLOGS: string[] = [
+  // Labs
   "https://www.anthropic.com/rss.xml",
   "https://openai.com/blog/rss.xml",
   "https://deepmind.google/blog/rss/",
+  "https://mistral.ai/news/rss",
+  "https://blog.google/technology/ai/rss/",
+  "https://research.google/blog/rss/",
+  "https://ai.meta.com/blog/rss/",
+  "https://huggingface.co/blog/feed.xml",
+  "https://blogs.microsoft.com/ai/feed/",
+  "https://aws.amazon.com/blogs/machine-learning/feed/",
+  "https://blogs.nvidia.com/blog/category/generative-ai/feed/",
+  "https://cohere.com/blog/rss",
+  "https://www.together.ai/blog/rss.xml",
+  "https://stability.ai/blog/rss.xml",
+  // AI-section feeds from tech outlets
+  "https://techcrunch.com/category/artificial-intelligence/feed/",
+  "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
+  "https://venturebeat.com/category/ai/feed/",
+  "https://www.wired.com/feed/tag/artificial-intelligence/latest/rss",
 ];
 
 // Hacker News — only high-voted items (100+ points = widely noticed)
@@ -72,8 +93,9 @@ const DISCOVERY_FEEDS: string[] = [
 ];
 
 export const DEFAULT_SOURCES: string[] = [
-  ...GITHUB_RELEASES,
+  ...AI_BLOGS,
   ...OFFICIAL_BLOGS,
+  ...GITHUB_RELEASES,
   ...HN_FEEDS,
   ...TRENDING_FEEDS,
   ...DISCOVERY_FEEDS,

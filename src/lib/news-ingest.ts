@@ -7,7 +7,7 @@ import { generateTweetVariants } from "@/lib/ai";
 // Force IPv4 — same fix as ai.ts
 dns.setDefaultResultOrder("ipv4first");
 
-const MAX_ARTICLES_PER_RUN = 10;
+const MAX_ARTICLES_PER_RUN = 15;
 const GROQ_DELAY_MS = 1500;
 const AI_SCORE_THRESHOLD = 8; // out of 10
 
@@ -50,15 +50,15 @@ async function scoreItems(items: RssItem[]): Promise<Map<number, number>> {
     .map((item, i) => `${i}. ${item.title}${item.description ? ` — ${item.description.slice(0, 120)}` : ""}`)
     .join("\n");
 
-  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how impactful it is to the average software developer.
+  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how impactful it is to a software developer who cares about AI and tech.
 
 Scoring guide:
-9–10: Major AI product launch (new model, new API, new agent capability), viral open-source project (10k+ stars overnight), paradigm-shifting framework release (e.g. React 19, Bun 1.0), critical security vulnerability in widely-used software
-7–8:  Tool or framework reaching stable/v1 for the first time, significant architectural change in a major project, new AI research with immediate practical use
-4–6:  Blog posts, minor version bumps (patch/pre-release), incremental feature additions, ecosystem housekeeping, pre-release builds, nightly/alpha/beta/rc releases
-1–3:  Funding rounds, layoffs, company announcements without technical substance, opinion pieces, recycled news, changelog-only updates
+9–10: Any new AI model release, new AI API or feature launch, new AI agent capability — from ANY company (OpenAI, Anthropic, Google, Meta, Mistral, etc.). Also: viral open-source project, paradigm-shifting framework release, critical security vulnerability.
+7–8:  New AI research with immediate practical use, new AI product entering public beta, significant non-AI framework release reaching stable/v1, major architectural change in a widely-used project.
+4–6:  Blog posts and opinion pieces, incremental AI updates with no new capability, minor version bumps, patch releases, pre-release builds (alpha/beta/rc/-pre), changelog-only posts.
+1–3:  Funding rounds, layoffs, company announcements with no technical substance, recycled news, opinion pieces.
 
-IMPORTANT: pre-release versions (v0.x, -pre, -rc, -alpha, -beta, nightly), patch bumps (e.g. v1.2.3 → v1.2.4), and minor changelogs with no user-facing impact must score 5 or below.
+IMPORTANT: Any genuinely new AI feature or model from any company — even a lesser-known one — must score 8 or above. Pre-release versions (v0.x, -pre, -rc, -alpha, -beta), patch bumps, and changelogs with no user-facing capability change must score 5 or below.
 
 Return ONLY a JSON array of objects with index and score. No explanation. Example:
 [{"index":0,"score":9},{"index":1,"score":4}]`;
