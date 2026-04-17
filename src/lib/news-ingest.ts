@@ -9,7 +9,7 @@ dns.setDefaultResultOrder("ipv4first");
 
 const MAX_ARTICLES_PER_RUN = 10;
 const GROQ_DELAY_MS = 1500;
-const AI_SCORE_THRESHOLD = 7; // out of 10
+const AI_SCORE_THRESHOLD = 8; // out of 10
 
 export type IngestArticle = {
   title: string;
@@ -50,14 +50,15 @@ async function scoreItems(items: RssItem[]): Promise<Map<number, number>> {
     .map((item, i) => `${i}. ${item.title}${item.description ? ` — ${item.description.slice(0, 120)}` : ""}`)
     .join("\n");
 
-  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how interesting it is to a software developer who follows the cutting edge of runtimes, frameworks, AI tooling, and viral open-source projects.
+  const system = `You are a signal filter for a developer news digest. Score each article 1–10 for how impactful it is to the average software developer.
 
 Scoring guide:
-9–10: Concrete release with measurable improvements (e.g. "Bun v1.2 uses 30% less memory"), viral GitHub project (10k+ stars), major AI product launch with new capabilities (new model, new API, agent feature)
-7–8:  New tool or framework reaching stable/v1, significant framework update, new AI research with practical implications
-5–6:  Blog post with insight, minor version bumps, framework ecosystem news
-3–4:  Generic "AI is changing everything" takes, company announcements without technical content
-1–2:  Layoffs, funding rounds, politics, opinion pieces, recycled news
+9–10: Major AI product launch (new model, new API, new agent capability), viral open-source project (10k+ stars overnight), paradigm-shifting framework release (e.g. React 19, Bun 1.0), critical security vulnerability in widely-used software
+7–8:  Tool or framework reaching stable/v1 for the first time, significant architectural change in a major project, new AI research with immediate practical use
+4–6:  Blog posts, minor version bumps (patch/pre-release), incremental feature additions, ecosystem housekeeping, pre-release builds, nightly/alpha/beta/rc releases
+1–3:  Funding rounds, layoffs, company announcements without technical substance, opinion pieces, recycled news, changelog-only updates
+
+IMPORTANT: pre-release versions (v0.x, -pre, -rc, -alpha, -beta, nightly), patch bumps (e.g. v1.2.3 → v1.2.4), and minor changelogs with no user-facing impact must score 5 or below.
 
 Return ONLY a JSON array of objects with index and score. No explanation. Example:
 [{"index":0,"score":9},{"index":1,"score":4}]`;

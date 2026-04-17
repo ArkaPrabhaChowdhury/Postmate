@@ -135,7 +135,7 @@ export default function Home() {
               {/* Trust note */}
               <motion.p
                 variants={itemVariants}
-                className="text-[11px] text-[#555] font-mono tracking-wide"
+                className="text-[12px] text-[#777] font-mono tracking-wide"
               >
                 Read-only GitHub access · No posting without approval · Free forever plan
               </motion.p>
@@ -238,14 +238,16 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="mt-3 flex justify-end">
-                    <motion.div
-                      initial={shouldReduceMotion ? {} : { opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1.2 }}
-                      className="px-3 py-1.5 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-lg cursor-pointer hover:bg-[#c4ef00] transition-colors"
-                    >
-                      Copy to LinkedIn →
-                    </motion.div>
+                    <Link href={authed ? "/dashboard" : "/signin"}>
+                      <motion.div
+                        initial={shouldReduceMotion ? {} : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.2 }}
+                        className="px-3 py-1.5 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-lg cursor-pointer hover:bg-[#c4ef00] transition-colors"
+                      >
+                        Copy to LinkedIn →
+                      </motion.div>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -257,7 +259,7 @@ export default function Home() {
       {/* ── PLATFORM STRIP ───────────────────────────────── */}
       <section className="w-full py-10 border-y border-white/[0.04] bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-5">
-          <p className="text-[10px] font-mono text-[#444] uppercase tracking-[0.2em] flex-shrink-0">
+          <p className="text-[11px] font-mono text-[#666] uppercase tracking-[0.2em] flex-shrink-0">
             Connects with
           </p>
           <div className="flex items-center gap-8 sm:gap-12 opacity-25 hover:opacity-55 transition-opacity duration-500">
@@ -280,7 +282,7 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <div className="hidden sm:block text-[10px] font-mono text-[#444] text-right">
+          <div className="hidden sm:block text-[11px] font-mono text-[#666] text-right">
             read-only · no write access
           </div>
         </div>
@@ -297,7 +299,7 @@ export default function Home() {
             viewport={{ once: true, margin: "-5%" }}
             className="mb-20"
           >
-            <div className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em] mb-5">
+            <div className="text-[11px] font-mono text-[#d4ff00]/70 uppercase tracking-[0.2em] mb-5">
               Process
             </div>
             <h2
@@ -345,7 +347,7 @@ export default function Home() {
                 >
                   {step.title}
                 </h3>
-                <p className="relative z-10 text-sm text-[#444] leading-relaxed font-medium">
+                <p className="relative z-10 text-sm text-[#666] leading-relaxed font-medium">
                   {step.description}
                 </p>
               </motion.div>
@@ -366,7 +368,7 @@ export default function Home() {
               whileInView="show"
               viewport={{ once: true }}
             >
-              <div className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em] mb-5">
+              <div className="text-[11px] font-mono text-[#d4ff00]/70 uppercase tracking-[0.2em] mb-5">
                 Features
               </div>
               <h2
@@ -383,7 +385,7 @@ export default function Home() {
               initial={motionInitial}
               whileInView="show"
               viewport={{ once: true }}
-              className="text-[#444] text-lg leading-relaxed font-medium lg:pb-1"
+              className="text-[#666] text-lg leading-relaxed font-medium lg:pb-1"
             >
               Stop staring at your commits. AI narration that sounds like you
               — not a corporate press release.
@@ -420,7 +422,7 @@ export default function Home() {
                     >
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-[#444] leading-relaxed font-medium">
+                    <p className="text-sm text-[#666] leading-relaxed font-medium">
                       {feature.description}
                     </p>
                   </div>
@@ -429,7 +431,7 @@ export default function Home() {
                 {/* First feature spans 2 cols — show visual in 2nd col */}
                 {idx === 0 && (
                   <div className="hidden md:flex flex-col justify-center pl-8 border-l border-white/[0.04]">
-                    <div className="text-[10px] font-mono text-[#444] uppercase tracking-widest mb-4">
+                    <div className="text-[11px] font-mono text-[#666] uppercase tracking-widest mb-4">
                       Voice profile
                     </div>
                     <div className="space-y-2.5">
@@ -483,7 +485,7 @@ export default function Home() {
             >
               <motion.div
                 variants={itemVariants}
-                className="text-[10px] font-mono text-[#d4ff00]/50 uppercase tracking-[0.2em]"
+                className="text-[11px] font-mono text-[#d4ff00]/70 uppercase tracking-[0.2em]"
               >
                 Ready?
               </motion.div>
@@ -520,7 +522,7 @@ export default function Home() {
                     className="group-hover:translate-x-0.5 transition-transform"
                   />
                 </Link>
-                <p className="text-xs text-[#444] font-mono">
+                <p className="text-[13px] text-[#777] font-mono">
                   Free forever · Read-only · No card required
                 </p>
               </motion.div>
@@ -558,7 +560,7 @@ export default function Home() {
               </Link>
             ))}
           </div>
-          <p className="text-xs text-[#444] font-mono">
+          <p className="text-[13px] text-[#666] font-mono">
             © 2025 Postmate. Built for builders.
           </p>
         </div>

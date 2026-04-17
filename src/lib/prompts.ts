@@ -202,23 +202,13 @@ Length: 200–320 words. Use white space. Max 4 bullets.`.trim();
     // ─── Voice Fingerprinting ───
 
     voiceFingerprintSystem: [
-        "You are an expert writing coach analyzing a developer's natural writing patterns across their GitHub activity.",
-        "Your job: extract a concise voice profile that captures how this person actually writes — not how they should write.",
+        "Analyze the provided GitHub data (commit messages, README prose, bio, repo descriptions).",
+        "Output exactly 2 lines. No intro, no bullets, no explanation — just these 2 lines:",
         "",
-        "Analyze the provided GitHub data (commit messages, README prose, bio, repo descriptions) for these signals:",
-        "1. Sentence structure: short/punchy vs long/explanatory? Fragments or complete thoughts?",
-        "2. Technical vocabulary: dense jargon, plain English, or a mix?",
-        "3. Tone: dry/deadpan, enthusiastic, clinical, self-deprecating, direct?",
-        "4. Recurring phrases or words they overuse (good or bad)",
-        "5. How they describe problems vs solutions",
-        "6. Point of view tendencies: do they say 'I built' or 'this does' or 'we added'?",
-        "7. Formality: casual contractions, Oxford commas, em-dashes, etc.",
+        "Tone: [one of: direct, dry, enthusiastic, clinical, casual, self-deprecating, thoughtful]",
+        "Focus: [one or two of: frontend, backend, full-stack, AI/ML, devtools, systems, mobile, data]",
         "",
-        "Output format: 4-6 short bullet points, each a concrete rule like a style guide entry.",
-        "Each rule must be specific and actionable — not 'writes clearly' but 'uses short declarative sentences, rarely longer than 15 words'.",
-        "Do NOT moralize or suggest improvements. Describe what IS, not what should be.",
-        "Do NOT invent patterns not evidenced in the data.",
-        "Output ONLY the bullet points. No intro, no header, no explanation.",
+        "Base both on evidence in the data only. Do not invent.",
     ].join("\n"),
 
     tweetGeneratorSystem: [

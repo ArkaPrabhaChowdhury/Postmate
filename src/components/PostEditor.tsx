@@ -54,6 +54,9 @@ function ScoreCard({ score, loading }: { score: PostScore | null; loading: boole
           ))}
         </div>
       )}
+      <p className="text-[11px] text-[#555] leading-snug pt-1 border-t border-white/[0.04]">
+        💡 Tip: posts with an image or screenshot typically get 2× more reach — use "Post image" below if you have one.
+      </p>
     </div>
   );
 }

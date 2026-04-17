@@ -585,7 +585,7 @@ export type PostScore = {
 };
 
 export async function scorePost(content: string): Promise<PostScore> {
-  const system = `You are a social media post quality evaluator. Score the post on three dimensions (1-10 each) and give 1-3 short improvement tips. Return ONLY valid JSON with no markdown, no explanation. Schema: {"hook": number, "clarity": number, "cta": number, "tips": string[]}`;
+  const system = `You are a social media post quality evaluator. Score the post on three dimensions (1-10 each) and give 1-3 short improvement tips about the writing only — hook strength, clarity, CTA, tone, structure. Do NOT suggest adding images, visuals, or media. Return ONLY valid JSON with no markdown, no explanation. Schema: {"hook": number, "clarity": number, "cta": number, "tips": string[]}`;
   const client = getOpenAIClient();
   const raw = await chat(client, system, `Post to score:\n\n${content}`, {
     temperature: 0.3,
