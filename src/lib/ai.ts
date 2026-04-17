@@ -515,6 +515,34 @@ export async function generateTrendPost(input: {
   return normalizePostVoice(raw);
 }
 
+export async function generateVoiceFingerprint(input: {
+  bio: string;
+  commitMessages: string[];
+  readmeExcerpts: string[];
+  repoDescriptions: string[];
+}): Promise<string> {
+  const userMsg = [
+    input.bio ? `GitHub bio: ${input.bio}` : "",
+    input.repoDescriptions.length
+      ? `Repo descriptions:\n${input.repoDescriptions.map((d) => `- ${d}`).join("\n")}`
+      : "",
+    input.commitMessages.length
+      ? `Recent commit messages (${input.commitMessages.length} total):\n${input.commitMessages.slice(0, 50).map((m) => `- ${m.split(/\r?\n/)[0]?.trim()}`).join("\n")}`
+      : "",
+    input.readmeExcerpts.length
+      ? `README prose samples:\n${input.readmeExcerpts.map((r, i) => `[Repo ${i + 1}]: ${r}`).join("\n\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const client = getOpenAIClient();
+  return chat(client, Prompts.voiceFingerprintSystem, userMsg, {
+    temperature: 0.4,
+    max_tokens: 400,
+  });
+}
+
 export async function generateTweetVariants(input: {
   title: string;
   summary: string;

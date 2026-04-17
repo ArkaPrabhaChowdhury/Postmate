@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { getOctokitForUser, getRepoContext, getGitHubProfile } from "@/lib/github";
+import { getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprintData } from "@/lib/github";
 import { fetchDevNews } from "@/lib/news";
-import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, type PostStyle } from "@/lib/ai";
+import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, type PostStyle } from "@/lib/ai";
 
 function firstLine(s: string): string {
   return s.split(/\r?\n/)[0]?.trim() ?? s;
@@ -239,6 +239,33 @@ export async function generateProjectShowcaseForRepo() {
 
   revalidatePath("/dashboard");
   redirect(`/posts/${post.id}`);
+}
+
+export async function autoGenerateVoice() {
+  const userId = await requireUserId();
+
+  const fingerprintData = await getVoiceFingerprintData(userId);
+  const voiceMemory = await generateVoiceFingerprint(fingerprintData);
+
+  const settingsClient = prisma as unknown as {
+    userSettings?: {
+      upsert: (args: {
+        where: { userId: string };
+        create: { userId: string; voiceMemory?: string | null; tone?: string | null };
+        update: { voiceMemory?: string | null; tone?: string | null };
+      }) => Promise<unknown>;
+    };
+  };
+
+  if (settingsClient.userSettings) {
+    await settingsClient.userSettings.upsert({
+      where: { userId },
+      create: { userId, voiceMemory },
+      update: { voiceMemory },
+    });
+  }
+
+  revalidatePath("/dashboard");
 }
 
 export async function saveVoiceSettings(formData: FormData) {

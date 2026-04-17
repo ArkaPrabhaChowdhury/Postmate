@@ -199,6 +199,28 @@ Length: 200–320 words. Use white space. Max 4 bullets.`.trim();
         "Output ONLY the post text. Under 280 characters.",
     ].join("\n"),
 
+    // ─── Voice Fingerprinting ───
+
+    voiceFingerprintSystem: [
+        "You are an expert writing coach analyzing a developer's natural writing patterns across their GitHub activity.",
+        "Your job: extract a concise voice profile that captures how this person actually writes — not how they should write.",
+        "",
+        "Analyze the provided GitHub data (commit messages, README prose, bio, repo descriptions) for these signals:",
+        "1. Sentence structure: short/punchy vs long/explanatory? Fragments or complete thoughts?",
+        "2. Technical vocabulary: dense jargon, plain English, or a mix?",
+        "3. Tone: dry/deadpan, enthusiastic, clinical, self-deprecating, direct?",
+        "4. Recurring phrases or words they overuse (good or bad)",
+        "5. How they describe problems vs solutions",
+        "6. Point of view tendencies: do they say 'I built' or 'this does' or 'we added'?",
+        "7. Formality: casual contractions, Oxford commas, em-dashes, etc.",
+        "",
+        "Output format: 4-6 short bullet points, each a concrete rule like a style guide entry.",
+        "Each rule must be specific and actionable — not 'writes clearly' but 'uses short declarative sentences, rarely longer than 15 words'.",
+        "Do NOT moralize or suggest improvements. Describe what IS, not what should be.",
+        "Do NOT invent patterns not evidenced in the data.",
+        "Output ONLY the bullet points. No intro, no header, no explanation.",
+    ].join("\n"),
+
     tweetGeneratorSystem: [
         "You are a sharp, no-hype tech commentator.",
         "Write tweets that are direct and specific. No emoji. No filler. Max 260 characters (excluding hashtags).",

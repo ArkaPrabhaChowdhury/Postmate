@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings } from "./actions";
+import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice } from "./actions";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
 import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
-  ExternalLink, ChevronRight, CheckCircle2, ChevronDown,
+  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint,
 } from "lucide-react";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -221,12 +221,23 @@ export default async function DashboardPage() {
             <div className="p-5">
               <form action={saveVoiceSettings} className="flex flex-col gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-[#888]">Voice memory</label>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <label className="text-xs font-semibold text-[#888]">Voice memory</label>
+                    <form action={autoGenerateVoice}>
+                      <SubmitButton
+                        pendingText="Analyzing GitHub…"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
+                      >
+                        <Fingerprint size={11} />
+                        Auto-generate from GitHub
+                      </SubmitButton>
+                    </form>
+                  </div>
                   <textarea
                     name="voiceMemory"
                     defaultValue={settings?.voiceMemory ?? ""}
-                    className="mt-2 w-full h-24 resize-y bg-[#090909] border border-white/[0.08] rounded-xl p-3 text-sm text-[#f0ede8] leading-relaxed outline-none focus:border-[#d4ff00]/50 transition-colors"
-                    placeholder="Short phrases, tone quirks, or stylistic rules you want in every post."
+                    className="w-full h-24 resize-y bg-[#090909] border border-white/[0.08] rounded-xl p-3 text-sm text-[#f0ede8] leading-relaxed outline-none focus:border-[#d4ff00]/50 transition-colors"
+                    placeholder="Short phrases, tone quirks, or stylistic rules you want in every post. Or click 'Auto-generate' to analyze your GitHub writing style."
                   />
                 </div>
                 <div>

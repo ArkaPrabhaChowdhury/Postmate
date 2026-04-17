@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx plugins:*)",
       "Bash(vercel logs:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(git add *)"
     ]
   }
 }

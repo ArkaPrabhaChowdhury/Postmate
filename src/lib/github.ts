@@ -49,6 +49,70 @@ export function parseFullName(fullName: string): { owner: string; repo: string }
   return { owner, repo };
 }
 
+export async function getVoiceFingerprintData(userId: string): Promise<{
+  bio: string;
+  commitMessages: string[];
+  readmeExcerpts: string[];
+  repoDescriptions: string[];
+}> {
+  const octokit = await getOctokitForUser(userId);
+
+  const [profileRes, reposRes] = await Promise.allSettled([
+    octokit.rest.users.getAuthenticated(),
+    octokit.rest.repos.listForAuthenticatedUser({ per_page: 10, sort: "updated" }),
+  ]);
+
+  const bio =
+    profileRes.status === "fulfilled"
+      ? (profileRes.value.data.bio ?? "")
+      : "";
+
+  const repos =
+    reposRes.status === "fulfilled"
+      ? reposRes.value.data.slice(0, 5)
+      : [];
+
+  const repoDescriptions = repos
+    .map((r) => r.description ?? "")
+    .filter(Boolean);
+
+  // Fetch commits from top 3 repos in parallel
+  const commitFetches = repos.slice(0, 3).map((r) =>
+    octokit.rest.repos
+      .listCommits({ owner: r.owner.login, repo: r.name, per_page: 20 })
+      .then((res) => res.data.map((c) => c.commit?.message ?? "").filter(Boolean))
+      .catch(() => [] as string[])
+  );
+
+  // Fetch READMEs from top 3 repos in parallel
+  const readmeFetches = repos.slice(0, 3).map((r) =>
+    octokit.rest.repos
+      .getReadme({ owner: r.owner.login, repo: r.name })
+      .then((res) => {
+        const raw = Buffer.from(res.data.content, "base64").toString("utf8");
+        // First 800 chars of prose only
+        return raw
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
+          .replace(/<[^>]+>/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 800);
+      })
+      .catch(() => "")
+  );
+
+  const [commitResults, readmeResults] = await Promise.all([
+    Promise.all(commitFetches),
+    Promise.all(readmeFetches),
+  ]);
+
+  const commitMessages = commitResults.flat().slice(0, 60);
+  const readmeExcerpts = readmeResults.filter(Boolean);
+
+  return { bio, commitMessages, readmeExcerpts, repoDescriptions };
+}
+
 export async function getRepoContext(params: {
   userId: string;
   owner: string;
