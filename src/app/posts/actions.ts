@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { getRepoContext, parseFullName } from "@/lib/github";
+import { scorePost, type PostScore } from "@/lib/ai";
 import { logExtraction } from "@/lib/logger";
 import fs from "fs";
 import path from "path";
@@ -122,6 +123,11 @@ export async function markPostCopied(id: string) {
   });
   revalidatePath(`/posts/${id}`);
   revalidatePath("/dashboard");
+}
+
+export async function scorePostAction(content: string): Promise<PostScore> {
+  await requireUserId();
+  return scorePost(content);
 }
 
 export async function findPostImage(formData: FormData): Promise<string> {

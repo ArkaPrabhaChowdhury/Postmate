@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Github, Linkedin, Twitter } from "lucide-react";
+import { ArrowRight, Github, Linkedin } from "lucide-react";
+import { XLogo } from "@/components/XLogo";
 
 export function HomeHero({ authed }: { authed: boolean }) {
   const reduceMotion = useReducedMotion();
@@ -96,7 +97,7 @@ export function HomeHero({ authed }: { authed: boolean }) {
                 <Linkedin size={44} className="text-[#0A66C2]" />
               </div>
               <div className="w-24 h-24 rounded-full bg-zinc-900/80 border border-zinc-800 flex items-center justify-center shadow-[0_0_40px_rgba(29,155,240,0.2)]">
-                <Twitter size={44} className="text-[#1d9bf0]" />
+                <XLogo size={44} className="text-white" />
               </div>
             </div>
           </div>

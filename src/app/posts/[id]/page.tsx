@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { PostEditor } from "@/components/PostEditor";
-import { markPostCopied, savePost, findPostImage } from "../actions";
+import { markPostCopied, savePost, findPostImage, scorePostAction } from "../actions";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 
 const styleConfig: Record<string, { label: string; cls: string }> = {
@@ -92,6 +92,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             onSave={savePost}
             onMarkCopied={markPostCopied}
             onFindImage={findPostImage}
+            onScore={scorePostAction}
             repoFullName={post.repo?.fullName ?? undefined}
           />
         </div>

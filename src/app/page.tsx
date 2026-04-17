@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Github,
   Linkedin,
-  Twitter,
   BrainCircuit,
   Route,
   ShieldCheck,
@@ -17,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { XLogo } from "@/components/XLogo";
 
 const containerVariants = {
   hidden: {},
@@ -274,7 +274,7 @@ export default function Home() {
             </div>
             <div className="w-px h-4 bg-white/10" />
             <div className="flex items-center gap-2.5 text-[#f0ede8]">
-              <Twitter size={18} />
+              <XLogo size={18} />
               <span className="text-sm font-bold tracking-tight italic">
                 X / Twitter
               </span>

@@ -241,7 +241,7 @@ export async function generateProjectShowcaseForRepo() {
   redirect(`/posts/${post.id}`);
 }
 
-export async function autoGenerateVoice() {
+export async function autoGenerateVoice(): Promise<string> {
   const userId = await requireUserId();
 
   const fingerprintData = await getVoiceFingerprintData(userId);
@@ -266,6 +266,7 @@ export async function autoGenerateVoice() {
   }
 
   revalidatePath("/dashboard");
+  return voiceMemory;
 }
 
 export async function saveVoiceSettings(formData: FormData) {

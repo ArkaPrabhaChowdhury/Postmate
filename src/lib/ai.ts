@@ -576,3 +576,31 @@ export async function generateTweetVariants(input: {
     throw new Error(`Failed to parse tweet variants JSON: ${cleaned.slice(0, 200)}`);
   }
 }
+
+export type PostScore = {
+  hook: number;
+  clarity: number;
+  cta: number;
+  tips: string[];
+};
+
+export async function scorePost(content: string): Promise<PostScore> {
+  const system = `You are a social media post quality evaluator. Score the post on three dimensions (1-10 each) and give 1-3 short improvement tips. Return ONLY valid JSON with no markdown, no explanation. Schema: {"hook": number, "clarity": number, "cta": number, "tips": string[]}`;
+  const client = getOpenAIClient();
+  const raw = await chat(client, system, `Post to score:\n\n${content}`, {
+    temperature: 0.3,
+    max_tokens: 150,
+  });
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned) as PostScore;
+    return {
+      hook: Math.min(10, Math.max(1, Math.round(parsed.hook))),
+      clarity: Math.min(10, Math.max(1, Math.round(parsed.clarity))),
+      cta: Math.min(10, Math.max(1, Math.round(parsed.cta))),
+      tips: Array.isArray(parsed.tips) ? parsed.tips.slice(0, 3) : [],
+    };
+  } catch {
+    throw new Error(`Failed to parse score JSON: ${cleaned.slice(0, 200)}`);
+  }
+}

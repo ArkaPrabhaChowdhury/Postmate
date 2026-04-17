@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice } from "./actions";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
+import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
 import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
@@ -219,55 +220,12 @@ export default async function DashboardPage() {
               <ChevronDown size={14} className="text-[#555] chevron" />
             </summary>
             <div className="p-5">
-              <form action={saveVoiceSettings} className="flex flex-col gap-4">
-                <div>
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <label className="text-xs font-semibold text-[#888]">Voice memory</label>
-                    <form action={autoGenerateVoice}>
-                      <SubmitButton
-                        pendingText="Analyzing GitHub…"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
-                      >
-                        <Fingerprint size={11} />
-                        Auto-generate from GitHub
-                      </SubmitButton>
-                    </form>
-                  </div>
-                  <textarea
-                    name="voiceMemory"
-                    defaultValue={settings?.voiceMemory ?? ""}
-                    className="w-full h-24 resize-y bg-[#090909] border border-white/[0.08] rounded-xl p-3 text-sm text-[#f0ede8] leading-relaxed outline-none focus:border-[#d4ff00]/50 transition-colors"
-                    placeholder="Short phrases, tone quirks, or stylistic rules you want in every post. Or click 'Auto-generate' to analyze your GitHub writing style."
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#888]">Tone</label>
-                  <div className="mt-2 flex items-center gap-3">
-                    <input
-                      type="range"
-                      name="tone"
-                      min="0"
-                      max="100"
-                      defaultValue={settings?.tone ?? "50"}
-                      className="w-full accent-[#d4ff00]"
-                    />
-                    <span className="text-xs text-[#666] w-24 text-right">
-                      {settings?.tone ?? "50"}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-[11px] text-[#555]">
-                    0 = concise · 50 = balanced · 100 = bold
-                  </div>
-                </div>
-                <div>
-                  <SubmitButton
-                    pendingText="Saving…"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
-                  >
-                    Save preferences
-                  </SubmitButton>
-                </div>
-              </form>
+              <VoiceSettingsSection
+                initialVoiceMemory={settings?.voiceMemory ?? ""}
+                initialTone={settings?.tone ?? "50"}
+                onSave={saveVoiceSettings}
+                onAutoGenerate={autoGenerateVoice}
+              />
             </div>
           </details>
         </section>

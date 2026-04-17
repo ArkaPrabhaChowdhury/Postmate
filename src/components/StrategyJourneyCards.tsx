@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
-import { Linkedin, Twitter, Check, MessageCircle, Repeat2, Heart, BarChart2,
+import { Linkedin, Check, MessageCircle, Repeat2, Heart, BarChart2,
          Bookmark, Share, MoreHorizontal, BadgeCheck, ArrowRight, X as XIcon } from "lucide-react";
+import { XLogo } from "@/components/XLogo";
 
 export type JourneyPostData = {
     title: string;
@@ -226,7 +227,7 @@ function ThreadPoster({ posts, onExit }: { posts: JourneyPostData[]; onExit: () 
                             disabled={over}
                             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold bg-black hover:bg-white/[0.06] text-white border border-white/[0.15] hover:border-white/[0.25] rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                         >
-                            <Twitter size={13} />
+                            <XLogo size={13} />
                             {step === 0 ? "Copy & Tweet" : "Copy & Open X"}
                             <ArrowRight size={12} className="text-[#555]" />
                         </button>
@@ -371,7 +372,7 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
                                 copiedX ? "bg-emerald-500 text-white" : "bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2]"
                             }`}
                         >
-                            {copiedX ? <><Check size={11} /> Opening X…</> : <><Twitter size={12} /> Post to X</>}
+                            {copiedX ? <><Check size={11} /> Opening X…</> : <><XLogo size={12} /> Post to X</>}
                         </button>
                     </div>
                 </div>
@@ -406,7 +407,7 @@ export function StrategyJourneyCards({ posts }: { posts: JourneyPostData[] }) {
                         onClick={() => setThreadMode(true)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2] rounded-lg transition-colors"
                     >
-                        <Twitter size={12} />
+                        <XLogo size={12} />
                         Post as thread
                     </button>
                 </div>

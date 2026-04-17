@@ -1,41 +1,47 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { approveTweet, ingestNews, markTweetPosted, rejectTweet } from "./actions";
-import { ArrowRight, Check, X, RefreshCw, Twitter } from "lucide-react";
+import { ingestNews } from "./actions";
+import { ArrowRight, RefreshCw } from "lucide-react";
 
-type Group = {
+function XLogo({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 1200 1227" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z" />
+    </svg>
+  );
+}
+
+type NewsItem = {
+  id: string;
   articleUrl: string;
   articleTitle: string;
-  items: Array<{ id: string; tone: string; tweet: string; status: string; createdAt: Date }>;
+  tone: string;
+  tweet: string;
+  createdAt: Date;
 };
 
 export default async function NewsPage() {
   const userId = await requireUserId();
 
-  const pending = await prisma.newsTweet.findMany({
+  const allPending = await prisma.newsTweet.findMany({
     where: { userId, status: "pending" },
     orderBy: { createdAt: "desc" },
-    take: 100,
-    select: { id: true, articleUrl: true, articleTitle: true, tone: true, tweet: true, status: true, createdAt: true },
+    take: 200,
+    select: { id: true, articleUrl: true, articleTitle: true, tone: true, tweet: true, createdAt: true },
   });
 
-  const grouped = new Map<string, Group>();
-  for (const t of pending) {
-    const key = t.articleUrl;
-    const g = grouped.get(key) ?? {
-      articleUrl: t.articleUrl,
-      articleTitle: t.articleTitle,
-      items: [],
-    };
-    g.items.push({ id: t.id, tone: t.tone, tweet: t.tweet, status: t.status, createdAt: t.createdAt });
-    grouped.set(key, g);
+  // One tweet per article — prefer "informative", fallback to first
+  const seen = new Map<string, NewsItem>();
+  for (const t of allPending) {
+    if (!seen.has(t.articleUrl) || t.tone === "informative") {
+      seen.set(t.articleUrl, t);
+    }
   }
-
-  const groups = Array.from(grouped.values());
+  const items = Array.from(seen.values());
 
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
+    <div className="max-w-4xl mx-auto px-6 sm:px-8 md:px-12 py-8">
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -46,7 +52,7 @@ export default async function NewsPage() {
               News queue
             </h1>
             <p className="text-xs text-[#666] mt-1">
-              High-signal tech news → AI-drafted tweets for your review.
+              High-signal tech news → AI-drafted tweets ready to post.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -66,86 +72,53 @@ export default async function NewsPage() {
           </div>
         </div>
 
-        {groups.length === 0 ? (
+        {items.length === 0 ? (
           <div className="border border-white/[0.08] rounded-xl p-10 text-center">
             <p className="text-[#555] text-sm">No pending tweets yet.</p>
             <p className="text-[#444] text-xs mt-1">Click &ldquo;Fetch now&rdquo; to ingest RSS feeds.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-5">
-            {groups.map((g) => (
-              <div key={g.articleUrl} className="border border-white/[0.08] rounded-xl overflow-hidden bg-[#0c0c0c]">
-                {/* Article header */}
-                <div className="px-5 py-4 border-b border-white/[0.06] flex items-start justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <a
-                      href={g.articleUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-semibold text-[#f0ede8] hover:text-[#d4ff00] transition-colors"
-                    >
-                      {g.articleTitle}
-                    </a>
-                    <a
-                      href={g.articleUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[11px] font-mono text-[#555] hover:text-[#888] mt-1 truncate block transition-colors"
-                    >
-                      {g.articleUrl}
-                    </a>
-                  </div>
-                  <Link
-                    href="/news/history"
-                    className="text-xs text-[#666] hover:text-[#f0ede8] transition-colors flex-shrink-0"
+          <div className="flex flex-col gap-3">
+            {items.map((item) => (
+              <div key={item.id} className="border border-white/[0.08] rounded-xl bg-[#0c0c0c] overflow-hidden">
+                {/* Source article */}
+                <div className="px-4 pt-4 pb-3 flex items-start justify-between gap-4">
+                  <a
+                    href={item.articleUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-semibold text-[#888] hover:text-[#d4ff00] transition-colors leading-snug line-clamp-1"
                   >
-                    History →
-                  </Link>
+                    {item.articleTitle}
+                  </a>
                 </div>
 
-                {/* Tweet variants */}
-                <div className="p-4 grid gap-3 md:grid-cols-2">
-                  {g.items.map((t) => (
-                    <div key={t.id} className="border border-white/[0.06] rounded-xl p-4 bg-[#090909]">
-                      <div className="text-[10px] font-mono uppercase tracking-widest text-[#555] mb-2">
-                        {t.tone}
-                      </div>
-                      <p className="text-sm text-[#e0ddd8] leading-relaxed whitespace-pre-wrap">
-                        {t.tweet}
-                      </p>
-                      <div className="mt-4 flex items-center gap-2 flex-wrap">
-                        <form action={approveTweet}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors">
-                            <Check size={11} />
-                            Approve
-                          </button>
-                        </form>
-                        <form action={rejectTweet}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors">
-                            <X size={11} />
-                            Reject
-                          </button>
-                        </form>
-                        <form action={markTweetPosted}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] text-[#888] border border-white/[0.08] rounded-lg hover:bg-white/[0.08] transition-colors">
-                            Mark posted
-                          </button>
-                        </form>
-                        <a
-                          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t.tweet + "\n\n" + g.articleUrl)}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-black text-white border border-white/[0.1] rounded-lg hover:bg-white/[0.06] transition-colors"
-                        >
-                          <Twitter size={11} />
-                          Tweet
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+                {/* Tweet body */}
+                <div className="px-4 pb-3">
+                  <p className="text-sm text-[#e0ddd8] leading-relaxed whitespace-pre-wrap">
+                    {item.tweet}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="px-4 pb-4 flex items-center justify-between gap-3">
+                  <a
+                    href={item.articleUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] font-mono text-[#444] hover:text-[#666] transition-colors truncate"
+                  >
+                    {new URL(item.articleUrl).hostname.replace("www.", "")}
+                  </a>
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.tweet)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-shrink-0 inline-flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold bg-black text-white border border-white/[0.12] rounded-lg hover:bg-white/[0.06] transition-colors"
+                  >
+                    <XLogo size={11} />
+                    Post to X
+                  </a>
                 </div>
               </div>
             ))}

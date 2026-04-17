@@ -1,7 +1,62 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Twitter, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload } from "lucide-react";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles } from "lucide-react";
+import { XLogo } from "@/components/XLogo";
+
+type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
+
+function ScoreBar({ label, value }: { label: string; value: number }) {
+  const color = value >= 8 ? "#d4ff00" : value >= 5 ? "#f59e0b" : "#ef4444";
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-[11px] text-[#666] w-12 flex-shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${value * 10}%`, backgroundColor: color }}
+        />
+      </div>
+      <span className="text-[11px] font-bold w-5 text-right" style={{ color }}>{value}</span>
+    </div>
+  );
+}
+
+function ScoreCard({ score, loading }: { score: PostScore | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+        <Sparkles size={12} className="text-[#d4ff00] animate-pulse" />
+        <span className="text-[11px] text-[#555]">Scoring…</span>
+      </div>
+    );
+  }
+  if (!score) return null;
+  const avg = Math.round((score.hook + score.clarity + score.cta) / 3);
+  return (
+    <div className="rounded-xl bg-[#0c0c0c] border border-white/[0.08] p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles size={12} className="text-[#d4ff00]" />
+          <span className="text-xs font-semibold text-[#f0ede8]">Quality Score</span>
+        </div>
+        <span className="text-lg font-bold text-[#d4ff00]">{avg}<span className="text-xs text-[#555] font-normal">/10</span></span>
+      </div>
+      <div className="flex flex-col gap-2">
+        <ScoreBar label="Hook" value={score.hook} />
+        <ScoreBar label="Clarity" value={score.clarity} />
+        <ScoreBar label="CTA" value={score.cta} />
+      </div>
+      {score.tips.length > 0 && (
+        <div className="flex flex-col gap-1 pt-1 border-t border-white/[0.06]">
+          {score.tips.map((tip, i) => (
+            <p key={i} className="text-[11px] text-[#888] leading-snug">· {tip}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const LIMITS = { linkedin: 3000, x: 280 } as const;
 type Platform = "linkedin" | "x";
@@ -46,6 +101,7 @@ export function PostEditor(props: {
   onSave: (fd: FormData) => Promise<void>;
   onMarkCopied: (id: string) => Promise<void>;
   onFindImage?: (fd: FormData) => Promise<string>;
+  onScore?: (content: string) => Promise<PostScore>;
   repoFullName?: string;
 }) {
   const [platform, setPlatform] = useState<Platform>("linkedin");
@@ -58,6 +114,8 @@ export function PostEditor(props: {
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string>("");
   const [manualSiteUrl, setManualSiteUrl] = useState("");
+  const [score, setScore] = useState<PostScore | null>(null);
+  const [scoreLoading, setScoreLoading] = useState(false);
   const [, startTransition] = useTransition();
 
   const over = content.length > MAX;
@@ -111,6 +169,17 @@ export function PostEditor(props: {
     }
   }
 
+  async function handleScore() {
+    if (!props.onScore) return;
+    setScoreLoading(true);
+    try {
+      const result = await props.onScore(content);
+      setScore(result);
+    } finally {
+      setScoreLoading(false);
+    }
+  }
+
   const lines = content.split("\n");
 
   return (
@@ -153,6 +222,17 @@ export function PostEditor(props: {
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
+            {props.onScore && (
+              <button
+                type="button"
+                onClick={handleScore}
+                disabled={scoreLoading || content.trim().length < 20}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg transition-colors bg-[#d4ff00]/10 hover:bg-[#d4ff00]/20 border border-[#d4ff00]/20 text-[#d4ff00] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Sparkles size={12} />
+                {scoreLoading ? "Scoring…" : "Score post"}
+              </button>
+            )}
             <button
               type="submit"
               disabled={over}
@@ -202,7 +282,7 @@ export function PostEditor(props: {
             >
               {copiedX
                 ? <><Check size={12} /> Opening X…</>
-                : <><Twitter size={13} /> Post to X</>
+                : <><XLogo size={13} /> Post to X</>
               }
             </button>
           </div>
@@ -226,6 +306,9 @@ export function PostEditor(props: {
             </div>
           </div>
         )}
+
+        {/* Score card */}
+        <ScoreCard score={score} loading={scoreLoading} />
 
         {/* Image helper */}
         <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-4">
@@ -319,7 +402,7 @@ export function PostEditor(props: {
                     : "text-[#666] hover:text-[#aaa]"
                 }`}
               >
-                {p === "linkedin" ? <Linkedin size={11} /> : <Twitter size={11} />}
+                {p === "linkedin" ? <Linkedin size={11} /> : <XLogo size={11} />}
                 {p === "linkedin" ? "LinkedIn" : "X"}
               </button>
             ))}
