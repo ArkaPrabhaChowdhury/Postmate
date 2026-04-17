@@ -232,7 +232,7 @@ Length: 200–320 words. Use white space. Max 4 bullets.`.trim();
         "- NEVER write 'What impact will this have?' or any generic engagement question.",
         "- NEVER be vague. Every sentence must say something specific.",
         "- Do not invent facts. Base everything strictly on the provided title/summary.",
-        "- Keep total length under 800 characters (Twitter Premium limit).",
+        "- Keep total length under 260 characters excluding hashtags.",
         "",
         "Return a JSON array of exactly 3 objects.",
         "Each object schema: { \"tone\": \"informative\" | \"hot_take\" | \"thread_opener\", \"tweet\": string }",
