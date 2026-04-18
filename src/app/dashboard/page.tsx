@@ -11,6 +11,7 @@ import {
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap,
 } from "lucide-react";
 import { SubmitButton } from "@/components/SubmitButton";
+import { StopPropagation } from "@/components/StopPropagation";
 
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
@@ -269,7 +270,7 @@ export default async function DashboardPage() {
                   Select a commit and generate a LinkedIn-ready draft.
                 </p>
               </div>
-              <div className="flex items-center gap-3 ml-auto mr-3" onClick={(e) => e.preventDefault()}>
+              <StopPropagation>
                 <form action={generateClusteredPostsAction} className="flex items-center gap-2">
                   <select
                     name="platform"
@@ -287,7 +288,7 @@ export default async function DashboardPage() {
                     Cluster commits
                   </SubmitButton>
                 </form>
-              </div>
+              </StopPropagation>
               <ChevronDown size={14} className="text-[#555] chevron" />
             </summary>
 
