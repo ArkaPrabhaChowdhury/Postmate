@@ -6,8 +6,8 @@ const GAP_WEIGHT = 1.5;
 
 const MS_PER_DAY = 86_400_000;
 
-function daysSince(date: Date | null): number {
-  if (!date) return 0;
+function daysSince(date: Date | null, fallback = 30): number {
+  if (!date) return fallback;
   return Math.floor((Date.now() - date.getTime()) / MS_PER_DAY);
 }
 
@@ -76,6 +76,6 @@ export async function getPostingSuggestion(userId: string): Promise<PostingSugge
   );
 
   const best = scored.sort((a, b) => b.score - a.score)[0];
-  if (!best || best.score === 0) return null;
+  if (!best || !best.topCommitSha) return null;
   return best;
 }
