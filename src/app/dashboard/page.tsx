@@ -240,6 +240,25 @@ export default async function DashboardPage() {
                   Select a commit and generate a LinkedIn-ready draft.
                 </p>
               </div>
+              <div className="flex items-center gap-3 ml-auto mr-3" onClick={(e) => e.preventDefault()}>
+                <form action={generateClusteredPostsAction} className="flex items-center gap-2">
+                  <select
+                    name="platform"
+                    defaultValue="linkedin"
+                    className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
+                  >
+                    <option value="linkedin">LinkedIn</option>
+                    <option value="x">X / Twitter</option>
+                  </select>
+                  <SubmitButton
+                    pendingText="Clustering…"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    <Layers size={11} />
+                    Cluster commits
+                  </SubmitButton>
+                </form>
+              </div>
               <ChevronDown size={14} className="text-[#555] chevron" />
             </summary>
 
@@ -351,41 +370,6 @@ export default async function DashboardPage() {
                   Generate showcase
                 </SubmitButton>
               </form>
-            </div>
-          </details>
-        </section>
-
-        {/* Commit Clusters */}
-        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
-          <details>
-            <summary className="px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
-              <div>
-                <h2 className="text-sm font-semibold text-[#f0ede8]">Commit Clusters</h2>
-                <p className="text-xs text-[#666] mt-0.5">
-                  AI groups your recent commits by theme and writes one post per cluster.
-                </p>
-              </div>
-              <ChevronDown size={14} className="text-[#555] chevron" />
-            </summary>
-            <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center gap-3 flex-wrap">
-              <form action={generateClusteredPostsAction} className="flex items-center gap-2">
-                <select
-                  name="platform"
-                  defaultValue="linkedin"
-                  className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
-                >
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="x">X / Twitter</option>
-                </select>
-                <SubmitButton
-                  pendingText="Clustering…"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
-                >
-                  <Layers size={11} />
-                  Generate clusters
-                </SubmitButton>
-              </form>
-              <p className="text-[11px] text-[#555]">Uses last 20 commits · creates one draft per theme</p>
             </div>
           </details>
         </section>

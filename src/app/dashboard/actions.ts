@@ -330,14 +330,7 @@ export async function generateClusteredPostsAction(formData: FormData) {
 
   if (events.length === 0) throw new Error("No commits to cluster.");
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
-    };
-  };
-  const settings = settingsClient.userSettings
-    ? await settingsClient.userSettings.findUnique({ where: { userId } })
-    : null;
+  const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
   const clusters = await generateClusteredPosts({
     repoFullName: repo.fullName,
