@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction } from "./actions";
+import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction, generateSuggestedPost } from "./actions";
+import { getPostingSuggestion } from "@/lib/scoring";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
 import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
 import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
-  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers,
+  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap,
 } from "lucide-react";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -122,7 +123,7 @@ export default async function DashboardPage() {
     };
   };
 
-  const [events, posts, strategy, settings] = await Promise.all([
+  const [events, posts, strategy, settings, suggestion] = await Promise.all([
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
@@ -143,6 +144,7 @@ export default async function DashboardPage() {
       })
       : Promise.resolve(null),
     settingsClient.userSettings ? settingsClient.userSettings.findUnique({ where: { userId } }) : Promise.resolve(null),
+    getPostingSuggestion(userId),
   ]);
 
   const postBySha = new Map(posts.map((p) => [p.sourceId, p]));
@@ -206,6 +208,33 @@ export default async function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Suggested today */}
+        {suggestion && suggestion.topCommitSha && (
+          <div className="bg-[#0c0c0c] border border-[#d4ff00]/20 rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#d4ff00]/10 border border-[#d4ff00]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Zap size={14} className="text-[#d4ff00]" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#d4ff00] uppercase tracking-wider mb-0.5">Suggested today</p>
+                <p className="text-sm font-medium text-[#f0ede8]">{suggestion.repoFullName}</p>
+                <p className="text-xs text-[#666] mt-0.5">{suggestion.reasons.join(" · ")}</p>
+              </div>
+            </div>
+            <form action={generateSuggestedPost}>
+              <input type="hidden" name="commitSha" value={suggestion.topCommitSha} />
+              <input type="hidden" name="repoId" value={suggestion.repoId} />
+              <SubmitButton
+                pendingText="Generating…"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
+              >
+                <Sparkles size={11} />
+                Generate post
+              </SubmitButton>
+            </form>
+          </div>
+        )}
 
         {/* Voice & Tone */}
         <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">

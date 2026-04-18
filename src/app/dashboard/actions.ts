@@ -361,6 +361,51 @@ export async function generateClusteredPostsAction(formData: FormData) {
   redirect(`/posts/${posts[0]!.id}`);
 }
 
+export async function generateSuggestedPost(formData: FormData) {
+  const userId = await requireUserId();
+  const commitSha = String(formData.get("commitSha") ?? "").trim();
+  const repoId = String(formData.get("repoId") ?? "").trim();
+  if (!commitSha || !repoId) throw new Error("Missing suggestion data.");
+
+  const repo = await prisma.repo.findFirst({
+    where: { id: repoId, userId },
+    select: { id: true, owner: true, name: true, fullName: true },
+  });
+  if (!repo) throw new Error("Repo not found.");
+
+  const event = await prisma.gitHubEvent.findFirst({
+    where: { repoId: repo.id, type: "commit", externalId: commitSha },
+    select: { externalId: true, title: true },
+  });
+  if (!event) throw new Error("Commit not found.");
+
+  const settings = await prisma.userSettings.findUnique({ where: { userId } });
+
+  const content = await generateLinkedInPost({
+    repoFullName: repo.fullName,
+    style: "progress",
+    commit: { sha: event.externalId, message: event.title },
+    voiceMemory: settings?.voiceMemory ?? undefined,
+    tone: settings?.tone ?? undefined,
+  });
+
+  const post = await prisma.generatedPost.create({
+    data: {
+      userId,
+      repoId: repo.id,
+      sourceType: "commit",
+      sourceId: event.externalId,
+      style: "progress",
+      content,
+      status: "draft",
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/dashboard");
+  redirect(`/posts/${post.id}`);
+}
+
 function parseTrendsFromRss(xml: string): string[] {
   const titles = [...xml.matchAll(/<title><!\[CDATA\[(.*?)]]><\/title>/g)].map((m) => m[1]);
   return titles.slice(1).filter(Boolean);
