@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprintData } from "@/lib/github";
 import { fetchDevNews } from "@/lib/news";
-import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, type PostStyle } from "@/lib/ai";
+import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, generateClusteredPosts, type PostStyle } from "@/lib/ai";
 
 function firstLine(s: string): string {
   return s.split(/\r?\n/)[0]?.trim() ?? s;
@@ -245,7 +245,16 @@ export async function autoGenerateVoice(): Promise<string> {
   const userId = await requireUserId();
 
   const fingerprintData = await getVoiceFingerprintData(userId);
-  const voiceMemory = await generateVoiceFingerprint(fingerprintData);
+  const generated = await generateVoiceFingerprint(fingerprintData);
+
+  const existing = await prisma.userSettings.findUnique({
+    where: { userId },
+    select: { voiceMemory: true },
+  });
+
+  const voiceMemory = existing?.voiceMemory
+    ? `${existing.voiceMemory}\n${generated}`
+    : generated;
 
   const settingsClient = prisma as unknown as {
     userSettings?: {
@@ -300,6 +309,63 @@ export async function saveVoiceSettings(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+}
+
+export async function generateClusteredPostsAction(formData: FormData) {
+  const userId = await requireUserId();
+  const platform = (String(formData.get("platform") ?? "linkedin").trim() || "linkedin") as "linkedin" | "x";
+
+  const repo = await prisma.repo.findFirst({
+    where: { userId, isActive: true },
+    select: { id: true, owner: true, name: true, fullName: true },
+  });
+  if (!repo) redirect("/settings");
+
+  const events = await prisma.gitHubEvent.findMany({
+    where: { repoId: repo.id, type: "commit" },
+    orderBy: { authoredAt: "desc" },
+    take: 20,
+    select: { externalId: true, title: true },
+  });
+
+  if (events.length === 0) throw new Error("No commits to cluster.");
+
+  const settingsClient = prisma as unknown as {
+    userSettings?: {
+      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
+    };
+  };
+  const settings = settingsClient.userSettings
+    ? await settingsClient.userSettings.findUnique({ where: { userId } })
+    : null;
+
+  const clusters = await generateClusteredPosts({
+    repoFullName: repo.fullName,
+    commits: events.map((e) => ({ sha: e.externalId, message: e.title })),
+    voiceMemory: settings?.voiceMemory ?? undefined,
+    tone: settings?.tone ?? undefined,
+    platform,
+  });
+
+  const posts = await Promise.all(
+    clusters.map((cluster) =>
+      prisma.generatedPost.create({
+        data: {
+          userId,
+          repoId: repo.id,
+          sourceType: "commit",
+          sourceId: cluster.commitShas[0] ?? repo.id,
+          style: "progress" as PostStyle,
+          content: cluster.content,
+          status: "draft",
+        },
+        select: { id: true },
+      })
+    )
+  );
+
+  revalidatePath("/dashboard");
+  redirect(`/posts/${posts[0]!.id}`);
 }
 
 function parseTrendsFromRss(xml: string): string[] {

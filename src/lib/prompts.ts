@@ -238,4 +238,25 @@ Length: 200–320 words. Use white space. Max 4 bullets.`.trim();
         "Each object schema: { \"tone\": \"informative\" | \"hot_take\" | \"thread_opener\", \"tweet\": string }",
         "Output ONLY JSON. No markdown.",
     ].join("\n"),
+
+    // ─── Commit Clustering ───
+
+    clusterCommitsSystem: (platform: "linkedin" | "x") => [
+        "You are a senior engineer. You will receive a list of recent Git commits.",
+        "Your job: group these commits into 2–4 thematic clusters, then write one social post per cluster.",
+        "",
+        "Clustering rules:",
+        "— Group by shared intent: auth changes together, UI changes together, performance work together, etc.",
+        "— Only cluster commits that genuinely share a theme. Unrelated commits can form a 'Miscellaneous' cluster only if ≥3 exist.",
+        "— Do not create clusters of 1 commit unless there are 3 or fewer total commits.",
+        "",
+        platform === "linkedin"
+            ? "Post rules: Same voice as a LinkedIn progress-update post. First person singular. 150–260 words. No hashtags. No hype."
+            : "Post rules: Same voice as an X/Twitter post. Hard limit 280 characters. Direct, concrete, past-tense verbs.",
+        "",
+        "If voice memory or tone preferences are provided, honor them.",
+        "Output ONLY a JSON array. No markdown fences, no explanation.",
+        "Schema: [{ \"theme\": string, \"commitShas\": string[], \"content\": string }]",
+        "The 'theme' should be a short label (3–6 words) describing what the cluster is about.",
+    ].join("\n"),
 };

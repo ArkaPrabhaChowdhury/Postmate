@@ -577,6 +577,54 @@ export async function generateTweetVariants(input: {
   }
 }
 
+// ─── generateClusteredPosts ──────────────────────────────────────────────────
+
+export type CommitCluster = {
+  theme: string;
+  commitShas: string[];
+  content: string;
+};
+
+export async function generateClusteredPosts(input: {
+  repoFullName: string;
+  commits: CommitForPrompt[];
+  voiceMemory?: string;
+  tone?: string;
+  platform?: "linkedin" | "x";
+}): Promise<CommitCluster[]> {
+  const platform = input.platform ?? "linkedin";
+  const commitLines = input.commits
+    .slice(0, 30)
+    .map((c) => `- ${c.sha.slice(0, 7)}: ${c.message.split(/\r?\n/)[0]?.trim() ?? c.message}`)
+    .join("\n");
+
+  const userMsg = [
+    `Repo: ${input.repoFullName}`,
+    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
+    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    "",
+    "Commits to cluster:",
+    commitLines,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const client = getOpenAIClient();
+  const raw = await chat(client, Prompts.clusterCommitsSystem(platform), userMsg, {
+    temperature: 0.7,
+    max_tokens: platform === "x" ? 800 : 2400,
+  });
+
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  try {
+    const parsed = JSON.parse(cleaned) as CommitCluster[];
+    if (!Array.isArray(parsed)) throw new Error("Not an array");
+    return parsed;
+  } catch {
+    throw new Error(`Failed to parse clustered posts JSON: ${cleaned.slice(0, 200)}`);
+  }
+}
+
 export type PostScore = {
   hook: number;
   clarity: number;
