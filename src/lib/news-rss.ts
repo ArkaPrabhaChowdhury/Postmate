@@ -189,25 +189,29 @@ type HNAlgoliaHit = {
 };
 
 /**
- * Fetch HN stories via Algolia search API.
+ * Fetch HN stories via Algolia search_by_date API (newest first).
  * queries: search terms (fetched in parallel, results merged + deduped)
  * minPoints: minimum score filter
+ * maxAgeDays: only return stories newer than this (default 7 days)
  */
 export async function fetchHNAlgoliaItems(
   queries: string[],
   minPoints = 50,
+  maxAgeDays = 7,
 ): Promise<RssItem[]> {
   if (queries.length === 0) return [];
+
+  const since = Math.floor((Date.now() - maxAgeDays * 24 * 60 * 60 * 1000) / 1000);
 
   const results = await Promise.allSettled(
     queries.map((q) => {
       const params = new URLSearchParams({
         query: q,
         tags: "story",
-        numericFilters: `points>=${minPoints}`,
+        numericFilters: `points>=${minPoints},created_at_i>=${since}`,
         hitsPerPage: "30",
       });
-      return fetch(`https://hn.algolia.com/api/v1/search?${params}`, {
+      return fetch(`https://hn.algolia.com/api/v1/search_by_date?${params}`, {
         cache: "no-store",
         signal: AbortSignal.timeout(10_000),
       })

@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import dns from "dns";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_SOURCES, fetchHNAlgoliaItems, parseRss, uniqueByUrl, type RssItem } from "@/lib/news-rss";
-import { generateTweetVariants } from "@/lib/ai";
+import { generateNewsTweet } from "@/lib/ai";
 
 // Force IPv4 — same fix as ai.ts
 dns.setDefaultResultOrder("ipv4first");
@@ -14,7 +14,7 @@ const AI_SCORE_THRESHOLD = 8; // out of 10
 export type IngestArticle = {
   title: string;
   url: string;
-  tweets: Array<{ tone: string; tweet: string }>;
+  tweet: string;
 };
 
 export type IngestResult = {
@@ -69,7 +69,7 @@ Return ONLY a JSON array of objects with index and score. No explanation. Exampl
 
   try {
     const res = await client.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       temperature: 0,
       max_tokens: 512,
       messages: [
@@ -103,6 +103,7 @@ async function getUserNewsSettings(userId: string) {
     tone: settings?.tone ?? undefined,
     newsTone: settings?.newsTone ?? undefined,
     newsKeywords: settings?.newsKeywords ?? undefined,
+    newsTasteProfile: settings?.newsTasteProfile ?? undefined,
   };
 }
 
@@ -132,13 +133,21 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
     ),
   ]);
 
-  const rssItems = feeds.flatMap((res) =>
-    res.status === "fulfilled" && res.value ? parseRss(res.value) : [],
-  );
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const rssItems = feeds
+    .flatMap((res) => (res.status === "fulfilled" && res.value ? parseRss(res.value) : []))
+    .filter((item) => {
+      if (!item.pubDate) return true; // no date = keep
+      const t = new Date(item.pubDate).getTime();
+      return isNaN(t) || t >= cutoff;
+    });
 
-  const items = [...rssItems, ...hnItems];
+  // HN keyword items first so they survive the 300-item slice
+  const items = [...hnItems, ...rssItems];
 
-  const deduped = uniqueByUrl(items).slice(0, 300);
+  console.log(`[ingest] rss=${rssItems.length} hn=${hnItems.length} total=${items.length}`);
+
+  const deduped = uniqueByUrl(items).slice(0, userKeywords.length > 0 ? 2000 : 300);
 
   // Filter already-seen URLs
   const existingUrls = await prisma.seenUrl.findMany({
@@ -148,25 +157,43 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
   const existingSet = new Set(existingUrls.map((u) => u.url));
   const fresh = deduped.filter((i) => !existingSet.has(i.link));
 
+  console.log(`[ingest] deduped=${deduped.length} fresh=${fresh.length} seenUrls=${existingSet.size}`);
+
   if (fresh.length === 0) return { added: 0, articles: [] };
 
-  // AI score in batches of 25
-  const BATCH = 25;
-  const highSignal: RssItem[] = [];
+  // When user has keywords, hard-filter to only matching items
+  const toScore = userKeywords.length > 0
+    ? fresh.filter((item) => {
+        const text = `${item.title} ${item.description ?? ""}`.toLowerCase();
+        return userKeywords.some((kw) => text.includes(kw.toLowerCase()));
+      })
+    : fresh;
 
-  for (let i = 0; i < fresh.length; i += BATCH) {
-    const batch = fresh.slice(i, i + BATCH);
-    const scores = await scoreItems(batch, settings.newsKeywords);
+  console.log(`[ingest] keywords=${userKeywords.join(",")} toScore=${toScore.length}`);
 
-    for (let j = 0; j < batch.length; j++) {
-      const score = scores.get(j) ?? 5; // default to 5 if scoring failed
-      if (score >= AI_SCORE_THRESHOLD) {
-        highSignal.push(batch[j]);
+  if (toScore.length === 0) return { added: 0, articles: [] };
+
+  // When user has keywords, trust the pre-filter — skip AI scoring
+  let highSignal: RssItem[];
+  if (userKeywords.length > 0) {
+    highSignal = toScore.slice(0, MAX_ARTICLES_PER_RUN);
+  } else {
+    highSignal = [];
+    const BATCH = 25;
+    for (let i = 0; i < toScore.length; i += BATCH) {
+      const batch = toScore.slice(i, i + BATCH);
+      const scores = await scoreItems(batch, settings.newsKeywords);
+
+      for (let j = 0; j < batch.length; j++) {
+        const score = scores.get(j) ?? 5;
+        if (score >= AI_SCORE_THRESHOLD) {
+          highSignal.push(batch[j]);
+        }
       }
-    }
 
-    if (highSignal.length >= MAX_ARTICLES_PER_RUN) break;
-    if (i + BATCH < fresh.length) await sleep(500);
+      if (highSignal.length >= MAX_ARTICLES_PER_RUN) break;
+      if (i + BATCH < toScore.length) await sleep(500);
+    }
   }
 
   const toProcess = highSignal.slice(0, MAX_ARTICLES_PER_RUN);
@@ -176,26 +203,25 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
     await prisma.seenUrl.create({ data: { userId, url: item.link } });
 
     const summary = (item.description || "").slice(0, 1200);
-    const variants = await generateTweetVariants({
+    const tweet = await generateNewsTweet({
       title: item.title,
       summary,
       voiceMemory: settings.voiceMemory,
-      tone: settings.tone,
-      preferredTone: settings.newsTone,
+      tasteProfile: settings.newsTasteProfile,
     });
 
-    await prisma.newsTweet.createMany({
-      data: variants.map((v) => ({
+    await prisma.newsTweet.create({
+      data: {
         userId,
         articleUrl: item.link,
         articleTitle: item.title,
-        tone: v.tone,
-        tweet: v.tweet,
+        tone: "informative",
+        tweet,
         status: "pending",
-      })),
+      },
     });
 
-    articles.push({ title: item.title, url: item.link, tweets: variants });
+    articles.push({ title: item.title, url: item.link, tweet });
     await sleep(GROQ_DELAY_MS);
   }
 

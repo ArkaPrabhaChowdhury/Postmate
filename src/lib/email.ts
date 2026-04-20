@@ -13,25 +13,11 @@ export async function sendNewsDigestEmail(params: {
   const greeting = name ? `Hi ${name.split(" ")[0]},` : "Hi,";
 
   const articleRows = articles
-    .map((a) => {
-      const tweetList = a.tweets
-        .map(
-          (t) =>
-            `<tr>
-              <td style="padding:4px 0;vertical-align:top;width:80px;color:#a1a1aa;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">${t.tone.replace("_", " ")}</td>
-              <td style="padding:4px 0 4px 12px;font-size:13px;color:#e4e4e7;line-height:1.5;">${escapeHtml(t.tweet)}</td>
-            </tr>`,
-        )
-        .join("");
-
-      return `
+    .map((a) => `
         <div style="margin-bottom:24px;padding:16px;background:#18181b;border:1px solid #27272a;border-radius:10px;">
           <a href="${escapeHtml(a.url)}" style="font-size:14px;font-weight:600;color:#818cf8;text-decoration:none;" target="_blank">${escapeHtml(a.title)}</a>
-          <table style="margin-top:12px;border-collapse:collapse;width:100%;">
-            <tbody>${tweetList}</tbody>
-          </table>
-        </div>`;
-    })
+          <p style="margin:12px 0 0;font-size:13px;color:#e4e4e7;line-height:1.5;">${escapeHtml(a.tweet)}</p>
+        </div>`)
     .join("");
 
   const html = `<!DOCTYPE html>
@@ -54,12 +40,25 @@ export async function sendNewsDigestEmail(params: {
 </body>
 </html>`;
 
-  await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "Postmate <onboarding@resend.dev>",
-    to,
+  const from = process.env.RESEND_FROM_EMAIL ?? "Postmate <onboarding@resend.dev>";
+  // Resend sandbox only allows sending to the verified owner email
+  const sandboxOwner = process.env.RESEND_SANDBOX_EMAIL;
+  const recipient = !process.env.RESEND_FROM_EMAIL && sandboxOwner ? sandboxOwner : to;
+  console.log(`[email] sending to=${recipient} (requested=${to}) from=${from} articles=${articles.length}`);
+
+  const result = await resend.emails.send({
+    from,
+    to: recipient,
     subject: `${articles.length} new article${articles.length === 1 ? "" : "s"} in your news queue`,
     html,
   });
+
+  if (result.error) {
+    console.error(`[email] resend error:`, JSON.stringify(result.error));
+    throw new Error(`Resend error: ${result.error.message}`);
+  }
+
+  console.log(`[email] sent id=${result.data?.id}`);
 }
 
 function escapeHtml(str: string): string {

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { getRepoContext, parseFullName } from "@/lib/github";
-import { scorePost, type PostScore } from "@/lib/ai";
+import { scorePost, generateLinkedInPost, type PostScore } from "@/lib/ai";
 import { logExtraction } from "@/lib/logger";
 import fs from "fs";
 import path from "path";
@@ -128,6 +128,48 @@ export async function markPostCopied(id: string) {
 export async function scorePostAction(content: string): Promise<PostScore> {
   await requireUserId();
   return scorePost(content);
+}
+
+export async function regeneratePostAction(postId: string, additionalPrompt: string): Promise<string> {
+  const userId = await requireUserId();
+
+  const post = await prisma.generatedPost.findFirst({
+    where: { id: postId, userId },
+    select: {
+      style: true,
+      sourceId: true,
+      repo: { select: { fullName: true } },
+    },
+  });
+  if (!post || !post.repo) throw new Error("Post or repo not found.");
+
+  const settings = await prisma.userSettings.findUnique({
+    where: { userId },
+    select: { voiceMemory: true, tone: true },
+  });
+
+  const { owner, repo } = parseFullName(post.repo.fullName);
+  const context = await getRepoContext({ userId, owner, repo });
+
+  const commit = context.commits.find((c) => c.sha === post.sourceId) ?? context.commits[0];
+  if (!commit) throw new Error("Commit not found in repo context.");
+
+  const content = await generateLinkedInPost({
+    repoFullName: post.repo.fullName,
+    style: post.style as Parameters<typeof generateLinkedInPost>[0]["style"],
+    commit,
+    voiceMemory: settings?.voiceMemory ?? undefined,
+    tone: settings?.tone ?? undefined,
+    additionalPrompt,
+  });
+
+  await prisma.generatedPost.update({
+    where: { id: postId, userId },
+    data: { content },
+  });
+
+  revalidatePath(`/posts/${postId}`);
+  return content;
 }
 
 export async function findPostImage(formData: FormData): Promise<string> {

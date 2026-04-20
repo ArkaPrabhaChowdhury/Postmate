@@ -409,7 +409,7 @@ export default async function DashboardPage() {
           <details>
             <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
               <div>
-                <h2 className="text-sm font-semibold text-[#f0ede8]">X / Twitter Journey</h2>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Journey Posts for X</h2>
                 <p className="text-xs text-[#666] mt-0.5">
                   AI reads your repo history and generates 3 posts ideal for an X thread.
                 </p>

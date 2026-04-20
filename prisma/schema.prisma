@@ -39,6 +39,7 @@ model UserSettings {
   newsKeywords      String?
   newsTone          String?
   newsExclude       String?
+  newsTasteProfile  String?
   newsAutoFetch     Boolean  @default(false)
   newsEmailEnabled  Boolean  @default(false)
   createdAt         DateTime @default(now())

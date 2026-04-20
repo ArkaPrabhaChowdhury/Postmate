@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles } from "lucide-react";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 
 type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
@@ -105,6 +105,7 @@ export function PostEditor(props: {
   onMarkCopied: (id: string) => Promise<void>;
   onFindImage?: (fd: FormData) => Promise<string>;
   onScore?: (content: string) => Promise<PostScore>;
+  onRegenerate?: (postId: string, prompt: string) => Promise<string>;
   repoFullName?: string;
 }) {
   const [platform, setPlatform] = useState<Platform>("linkedin");
@@ -119,6 +120,9 @@ export function PostEditor(props: {
   const [manualSiteUrl, setManualSiteUrl] = useState("");
   const [score, setScore] = useState<PostScore | null>(null);
   const [scoreLoading, setScoreLoading] = useState(false);
+  const [regenPrompt, setRegenPrompt] = useState("");
+  const [regenLoading, setRegenLoading] = useState(false);
+  const [regenError, setRegenError] = useState("");
   const [, startTransition] = useTransition();
 
   const over = content.length > MAX;
@@ -180,6 +184,22 @@ export function PostEditor(props: {
       setScore(result);
     } finally {
       setScoreLoading(false);
+    }
+  }
+
+  async function handleRegenerate() {
+    if (!props.onRegenerate) return;
+    setRegenError("");
+    setRegenLoading(true);
+    try {
+      const updated = await props.onRegenerate(props.postId, regenPrompt);
+      setContent(updated);
+      setScore(null);
+      setRegenPrompt("");
+    } catch (err) {
+      setRegenError(err instanceof Error ? err.message : "Regeneration failed.");
+    } finally {
+      setRegenLoading(false);
     }
   }
 
@@ -312,6 +332,36 @@ export function PostEditor(props: {
 
         {/* Score card */}
         <ScoreCard score={score} loading={scoreLoading} />
+
+        {/* Regenerate with AI */}
+        {props.onRegenerate && (
+          <div className="rounded-xl bg-[#0c0c0c] border border-white/[0.08] p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={12} className="text-[#d4ff00]" />
+              <span className="text-xs font-semibold text-[#f0ede8]">Regenerate with AI</span>
+            </div>
+            <p className="text-[11px] text-[#555] leading-snug">
+              Describe what to improve — reference the score feedback above or give your own direction.
+            </p>
+            <textarea
+              value={regenPrompt}
+              onChange={(e) => setRegenPrompt(e.target.value)}
+              rows={3}
+              placeholder={`e.g. "make the hook stronger", "cut to 200 words", "less jargon, more story", "add a specific metric from the diff"`}
+              className="w-full bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-2.5 text-xs text-[#f0ede8] placeholder:text-[#444] outline-none focus:border-[#d4ff00]/50 transition-colors resize-none"
+            />
+            {regenError && <p className="text-xs text-red-400">{regenError}</p>}
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={regenLoading}
+              className="self-start inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[#d4ff00]/10 hover:bg-[#d4ff00]/20 border border-[#d4ff00]/20 text-[#d4ff00] rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={11} className={regenLoading ? "animate-spin" : ""} />
+              {regenLoading ? "Regenerating…" : "Regenerate"}
+            </button>
+          </div>
+        )}
 
         {/* Image helper */}
         <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-4">

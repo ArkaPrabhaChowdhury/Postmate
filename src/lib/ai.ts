@@ -175,7 +175,7 @@ function getOpenAIClient() {
 }
 
 // Groq model to use — fast, free, high quality
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 async function chat(
   client: OpenAI,
@@ -244,6 +244,7 @@ export async function generateLinkedInPost(input: {
   voiceMemory?: string;
   tone?: string;
   platform?: "linkedin" | "x";
+  additionalPrompt?: string;
 }): Promise<string> {
   const styleGuide = Prompts.getLinkedInPostStyleGuide(input.style);
 
@@ -276,6 +277,7 @@ export async function generateLinkedInPost(input: {
     input.commit.authoredAt ? `Date: ${input.commit.authoredAt}` : "",
     input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
     input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    input.additionalPrompt ? `Additional instruction: ${input.additionalPrompt}` : "",
     "",
     "Files changed:",
     filesSummary,
@@ -397,8 +399,15 @@ export async function generateJourneyPosts(input: {
     max_tokens: 1600,
   });
 
-  // Strip accidental code fences
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  // Strip markdown fences, then fix unquoted emoji values before parsing
+  const cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim()
+    // Quote unquoted emoji values: "emoji": 😩  →  "emoji": "😩"
+    .replace(/"emoji"\s*:\s*([^",\s\[][^\n,}]*)/g, (_, v) => `"emoji": "${v.trim()}"`)
+    // Fix literal newlines inside string values
+    .replace(/("(?:[^"\\]|\\.)*")/g, (m) => m.replace(/\n/g, "\\n").replace(/\r/g, ""));
 
   try {
     const parsed = JSON.parse(cleaned) as JourneyPost[];
@@ -543,38 +552,26 @@ export async function generateVoiceFingerprint(input: {
   });
 }
 
-export async function generateTweetVariants(input: {
+export async function generateNewsTweet(input: {
   title: string;
   summary: string;
   voiceMemory?: string;
-  tone?: string;
-  preferredTone?: string;
-}): Promise<Array<{ tone: "informative" | "hot_take" | "thread_opener"; tweet: string }>> {
-  const system = Prompts.tweetGeneratorSystem;
+  tasteProfile?: string;
+  additionalPrompt?: string;
+}): Promise<string> {
   const userMsg = [
     `Title: ${input.title}`,
-    `Summary: ${input.summary}`,
-    input.preferredTone ? `Preferred format: ${input.preferredTone}` : "",
+    input.summary ? `Summary: ${input.summary}` : "",
+    input.tasteProfile ? `Writing style/taste: ${input.tasteProfile}` : "",
     input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    input.additionalPrompt ? `Additional instruction: ${input.additionalPrompt}` : "",
   ]
     .filter(Boolean)
     .join("\n");
 
   const client = getOpenAIClient();
-  const raw = await chat(client, system, userMsg, { temperature: 0.6, max_tokens: 500 });
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-
-  try {
-    const parsed = JSON.parse(cleaned) as Array<{ tone: "informative" | "hot_take" | "thread_opener"; tweet: string }>;
-    if (!Array.isArray(parsed) || parsed.length !== 3) throw new Error("Invalid tweet variants");
-    return parsed.map((t) => ({
-      tone: t.tone,
-      tweet: t.tweet?.trim?.() ?? "",
-    }));
-  } catch {
-    throw new Error(`Failed to parse tweet variants JSON: ${cleaned.slice(0, 200)}`);
-  }
+  const raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.7, max_tokens: 400 });
+  return raw.trim();
 }
 
 // ─── generateClusteredPosts ──────────────────────────────────────────────────

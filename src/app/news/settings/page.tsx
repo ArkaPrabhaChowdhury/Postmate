@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { saveNewsSettings } from "../actions";
+import { saveNewsSettings, flushNews } from "../actions";
+import { SendDigestButton } from "./SendDigestButton";
 
 export default async function NewsSettingsPage() {
   const userId = await requireUserId();
@@ -34,6 +35,24 @@ export default async function NewsSettingsPage() {
         <form action={saveNewsSettings} className="grid gap-4">
           <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
             <div className="px-5 py-3.5 border-b border-white/[0.06]">
+              <h2 className="text-sm font-semibold text-[#f0ede8]">News taste profile</h2>
+              <p className="text-xs text-[#666] mt-0.5">
+                Describe how you want your news tweets to sound. This applies only to news — not your commit posts.
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <textarea
+                name="newsTasteProfile"
+                defaultValue={settings?.newsTasteProfile ?? ""}
+                rows={4}
+                placeholder="e.g. Write like a thoughtful senior engineer. Be direct and opinionated. Avoid hype. Use dry wit when relevant. Lead with the technical implication, not the announcement."
+                className="w-full bg-[#090909] border border-white/[0.1] rounded-xl px-3 py-2.5 text-sm text-[#f0ede8] placeholder:text-[#444] outline-none focus:border-[#d4ff00]/50 transition-colors resize-none"
+              />
+            </div>
+          </section>
+
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/[0.06]">
               <h2 className="text-sm font-semibold text-[#f0ede8]">Your interests</h2>
               <p className="text-xs text-[#666] mt-0.5">
                 Companies, topics, or tech stacks you care about — comma-separated. News is filtered and scored around these.
@@ -52,25 +71,7 @@ export default async function NewsSettingsPage() {
             </div>
           </section>
 
-          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-white/[0.06]">
-              <h2 className="text-sm font-semibold text-[#f0ede8]">Tweet format</h2>
-              <p className="text-xs text-[#666] mt-0.5">Choose which tweet styles are generated per article.</p>
-            </div>
-            <div className="px-5 py-4">
-              <select
-                name="newsTone"
-                defaultValue={settings?.newsTone ?? "mixed"}
-                className="w-full bg-[#090909] border border-white/[0.1] rounded-xl px-3 py-2 text-sm text-[#f0ede8] outline-none focus:border-[#d4ff00]/50 transition-colors"
-              >
-                <option value="mixed">A/B mixed (question + hot take)</option>
-                <option value="question">Questions only</option>
-                <option value="hot_take">Hot takes only</option>
-              </select>
-            </div>
-          </section>
-
-          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+<section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
             <div className="px-5 py-4 flex flex-col gap-4">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -139,6 +140,36 @@ export default async function NewsSettingsPage() {
               Save settings
             </button>
           </div>
+        </form>
+
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-white/[0.06]">
+            <h2 className="text-sm font-semibold text-[#f0ede8]">Email digest</h2>
+            <p className="text-xs text-[#666] mt-0.5">Send your current pending queue to your account email right now.</p>
+          </div>
+          <div className="px-5 py-4">
+            <SendDigestButton />
+          </div>
+        </section>
+
+        <form action={flushNews}>
+          <section className="bg-[#0c0c0c] border border-red-900/40 rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-red-900/30">
+              <h2 className="text-sm font-semibold text-red-400">Danger zone</h2>
+            </div>
+            <div className="px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-sm text-[#f0ede8]">Clear all news</p>
+                <p className="text-xs text-[#555] mt-0.5">Deletes your entire queue and seen history. Next fetch starts fresh.</p>
+              </div>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-red-900/40 hover:bg-red-800/60 border border-red-700/40 text-red-400 text-sm font-semibold rounded-xl transition-colors shrink-0"
+              >
+                Clear queue
+              </button>
+            </div>
+          </section>
         </form>
       </div>
     </div>

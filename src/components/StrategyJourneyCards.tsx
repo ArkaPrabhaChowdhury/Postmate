@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useTransition } from "react";
-import { Linkedin, Check, MessageCircle, Repeat2, Heart, BarChart2,
+import { Check, MessageCircle, Repeat2, Heart, BarChart2,
          Bookmark, Share, MoreHorizontal, BadgeCheck, ArrowRight, X as XIcon } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 
@@ -22,7 +22,7 @@ const stageStyles: Record<string, { dot: string; badge: string; border: string }
     reflection: { dot: "bg-[#555]",     badge: "bg-white/[0.06] text-[#888] border-white/[0.1]",           border: "border-white/[0.1]" },
 };
 
-const MAX_X = 280;
+const MAX_X = 270;
 
 function getStyle(stage: string) {
     return stageStyles[stage] ?? stageStyles.reflection;
@@ -241,21 +241,12 @@ function ThreadPoster({ posts, onExit }: { posts: JourneyPostData[]; onExit: () 
 // ─── Post Card (normal view) ──────────────────────────────────────────────────
 
 function PostCard({ post, index, total }: { post: JourneyPostData; index: number; total: number }) {
-    const [copied, setCopied] = useState(false);
     const [copiedX, setCopiedX] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [, startTransition] = useTransition();
     const s = getStyle(post.stage);
     const isLast = index === total - 1;
     const preview = post.content.length > 240 ? post.content.slice(0, 240) + "…" : post.content;
-
-    function handlePost() {
-        navigator.clipboard.writeText(post.content).catch(() => {});
-        setCopied(true);
-        startTransition(() => {});
-        setTimeout(() => window.open("https://www.linkedin.com/feed/", "_blank", "noopener"), 300);
-        setTimeout(() => setCopied(false), 3500);
-    }
 
     function handlePostX() {
         const text = encodeURIComponent(post.content);
@@ -352,29 +343,18 @@ function PostCard({ post, index, total }: { post: JourneyPostData; index: number
 
                 {/* Footer */}
                 <div className="px-4 py-3 flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-[#555]">
-                        {post.content.length.toLocaleString()} chars
+                    <span className={`text-[11px] font-mono ${post.content.length > MAX_X ? "text-red-400" : "text-[#555]"}`}>
+                        {post.content.length}/{MAX_X}
                     </span>
-                    <div className="flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={handlePost}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex-shrink-0 ${
-                                copied ? "bg-emerald-500 text-white" : "bg-[#0A66C2] hover:bg-[#004182] text-white"
-                            }`}
-                        >
-                            {copied ? <><Check size={11} /> Copied</> : <><Linkedin size={12} /> LinkedIn</>}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handlePostX}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex-shrink-0 ${
-                                copiedX ? "bg-emerald-500 text-white" : "bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2]"
-                            }`}
-                        >
-                            {copiedX ? <><Check size={11} /> Opening X…</> : <><XLogo size={12} /> Post to X</>}
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={handlePostX}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors flex-shrink-0 ${
+                            copiedX ? "bg-emerald-500 text-white" : "bg-black hover:bg-white/[0.06] text-white border border-white/[0.12] hover:border-white/[0.2]"
+                        }`}
+                    >
+                        {copiedX ? <><Check size={11} /> Opening X…</> : <><XLogo size={12} /> Post to X</>}
+                    </button>
                 </div>
             </div>
         </div>
