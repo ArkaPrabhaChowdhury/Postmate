@@ -396,7 +396,7 @@ export async function generateJourneyPosts(input: {
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
     temperature: 0.75,
-    max_tokens: 1600,
+    max_tokens: 800,
   });
 
   // Strip markdown fences, then fix unquoted emoji values before parsing

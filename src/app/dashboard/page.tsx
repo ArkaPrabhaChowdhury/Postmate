@@ -272,14 +272,17 @@ export default async function DashboardPage() {
               </div>
               <StopPropagation>
                 <form action={generateClusteredPostsAction} className="flex items-center gap-2">
-                  <select
-                    name="platform"
-                    defaultValue="linkedin"
-                    className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
-                  >
-                    <option value="linkedin">LinkedIn</option>
-                    <option value="x">X / Twitter</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      name="platform"
+                      defaultValue="linkedin"
+                      className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                    >
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="x">X / Twitter</option>
+                    </select>
+                    <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                  </div>
                   <SubmitButton
                     pendingText="Clustering…"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
@@ -344,23 +347,29 @@ export default async function DashboardPage() {
                         )}
                         <form action={generatePostFromCommit} className="flex items-center gap-2 flex-wrap">
                           <input type="hidden" name="sha" value={e.externalId} />
-                          <select
-                            name="platform"
-                            defaultValue="linkedin"
-                            className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
-                          >
-                            <option value="linkedin">LinkedIn</option>
-                            <option value="x">X / Twitter</option>
-                          </select>
-                          <select
-                            name="style"
-                            defaultValue="progress"
-                            className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg px-2 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer"
-                          >
-                            <option value="progress">Progress update</option>
-                            <option value="insight">Technical insight</option>
-                            <option value="build_in_public">Build in public</option>
-                          </select>
+                          <div className="relative">
+                            <select
+                              name="platform"
+                              defaultValue="linkedin"
+                              className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                            >
+                              <option value="linkedin">LinkedIn</option>
+                              <option value="x">X / Twitter</option>
+                            </select>
+                            <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                          </div>
+                          <div className="relative">
+                            <select
+                              name="style"
+                              defaultValue="progress"
+                              className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                            >
+                              <option value="progress">Progress update</option>
+                              <option value="insight">Technical insight</option>
+                              <option value="build_in_public">Build in public</option>
+                            </select>
+                            <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                          </div>
                           <SubmitButton
                             pendingText="Generating…"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
