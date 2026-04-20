@@ -74,12 +74,7 @@ const AI_BLOGS: string[] = [
   "https://www.wired.com/feed/tag/artificial-intelligence/latest/rss",
 ];
 
-// Hacker News — only high-voted items (100+ points = widely noticed)
-const HN_FEEDS: string[] = [
-  "https://hnrss.org/frontpage?points=100",
-  "https://hnrss.org/newest?q=Show+HN&points=50",
-  "https://hnrss.org/newest?q=Ask+HN&points=75",
-];
+// Hacker News — fetched via Algolia API (see fetchHNAlgoliaItems), not RSS
 
 // GitHub Trending — community-curated viral projects
 const TRENDING_FEEDS: string[] = [
@@ -95,7 +90,6 @@ const DISCOVERY_FEEDS: string[] = [
 export const DEFAULT_SOURCES: string[] = [
   ...AI_BLOGS,
   ...OFFICIAL_BLOGS,
-  ...HN_FEEDS,
   ...TRENDING_FEEDS,
   ...DISCOVERY_FEEDS,
 ];
@@ -182,6 +176,66 @@ export function parseRss(xml: string): RssItem[] {
   }
 
   return items;
+}
+
+type HNAlgoliaHit = {
+  objectID: string;
+  title?: string;
+  story_title?: string;
+  url?: string;
+  points?: number;
+  story_text?: string;
+  created_at?: string;
+};
+
+/**
+ * Fetch HN stories via Algolia search API.
+ * queries: search terms (fetched in parallel, results merged + deduped)
+ * minPoints: minimum score filter
+ */
+export async function fetchHNAlgoliaItems(
+  queries: string[],
+  minPoints = 50,
+): Promise<RssItem[]> {
+  if (queries.length === 0) return [];
+
+  const results = await Promise.allSettled(
+    queries.map((q) => {
+      const params = new URLSearchParams({
+        query: q,
+        tags: "story",
+        numericFilters: `points>=${minPoints}`,
+        hitsPerPage: "30",
+      });
+      return fetch(`https://hn.algolia.com/api/v1/search?${params}`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10_000),
+      })
+        .then((r) => (r.ok ? r.json() : { hits: [] }))
+        .catch(() => ({ hits: [] }));
+    }),
+  );
+
+  const items: RssItem[] = [];
+  for (const res of results) {
+    if (res.status !== "fulfilled") continue;
+    const hits: HNAlgoliaHit[] = res.value?.hits ?? [];
+    for (const hit of hits) {
+      const title = hit.title ?? hit.story_title ?? "";
+      if (!title) continue;
+      const link = hit.url
+        ? normalizeUrl(hit.url)
+        : `https://news.ycombinator.com/item?id=${hit.objectID}`;
+      items.push({
+        title,
+        link,
+        description: hit.story_text ? stripHtml(hit.story_text).slice(0, 300) : "",
+        pubDate: hit.created_at,
+      });
+    }
+  }
+
+  return uniqueByUrl(items);
 }
 
 export function uniqueByUrl(items: RssItem[]): RssItem[] {

@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import dns from "dns";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_SOURCES, parseRss, uniqueByUrl, type RssItem } from "@/lib/news-rss";
+import { DEFAULT_SOURCES, fetchHNAlgoliaItems, parseRss, uniqueByUrl, type RssItem } from "@/lib/news-rss";
 import { generateTweetVariants } from "@/lib/ai";
 
 // Force IPv4 — same fix as ai.ts
@@ -109,29 +109,34 @@ async function getUserNewsSettings(userId: string) {
 export async function runNewsIngestForUser(userId: string): Promise<IngestResult> {
   const settings = await getUserNewsSettings(userId);
 
-  // Build keyword-specific HN search feeds from user interests
-  const keywordFeeds: string[] = [];
-  if (settings.newsKeywords) {
-    const terms = settings.newsKeywords.split(",").map((k) => k.trim()).filter(Boolean).slice(0, 5);
-    for (const term of terms) {
-      keywordFeeds.push(`https://hnrss.org/newest?q=${encodeURIComponent(term)}&points=50`);
-    }
-  }
+  const userKeywords = settings.newsKeywords
+    ? settings.newsKeywords.split(",").map((k) => k.trim()).filter(Boolean).slice(0, 5)
+    : [];
 
-  const allSources = [...DEFAULT_SOURCES, ...keywordFeeds];
+  // Default HN queries — high-signal frontpage topics
+  const defaultHNQueries = ["Show HN", "Ask HN", "release"];
 
-  // Fetch all sources in parallel
-  const feeds = await Promise.allSettled(
-    allSources.map((url) =>
-      fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) })
-        .then((r) => (r.ok ? r.text() : ""))
-        .catch(() => ""),
+  const [feeds, hnItems] = await Promise.all([
+    // RSS sources in parallel
+    Promise.allSettled(
+      DEFAULT_SOURCES.map((url) =>
+        fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) })
+          .then((r) => (r.ok ? r.text() : ""))
+          .catch(() => ""),
+      ),
     ),
-  );
+    // HN Algolia: default queries (100+ points) + user keywords (50+ points)
+    fetchHNAlgoliaItems(
+      [...defaultHNQueries, ...userKeywords],
+      userKeywords.length > 0 ? 50 : 100,
+    ),
+  ]);
 
-  const items = feeds.flatMap((res) =>
+  const rssItems = feeds.flatMap((res) =>
     res.status === "fulfilled" && res.value ? parseRss(res.value) : [],
   );
+
+  const items = [...rssItems, ...hnItems];
 
   const deduped = uniqueByUrl(items).slice(0, 300);
 
