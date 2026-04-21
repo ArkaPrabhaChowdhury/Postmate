@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw } from "lucide-react";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 
 type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
@@ -200,6 +200,28 @@ export function PostEditor(props: {
       setRegenError(err instanceof Error ? err.message : "Regeneration failed.");
     } finally {
       setRegenLoading(false);
+    }
+  }
+
+  async function handleDownloadImage() {
+    if (!imageUrl) return;
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      // Extract filename or use default
+      const filename = imageUrl.split("/").pop()?.split("?")[0] || "image.png";
+      a.download = filename.includes(".") ? filename : `${filename}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error("Download failed", err);
+      // Fallback: open in new tab
+      window.open(imageUrl, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -417,13 +439,14 @@ export function PostEditor(props: {
                 >
                   Copy image URL
                 </button>
-                <a
-                  href={imageUrl}
-                  download
+                <button
+                  type="button"
+                  onClick={handleDownloadImage}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors"
                 >
+                  <Download size={12} />
                   Download image
-                </a>
+                </button>
                 <a
                   href={imageUrl}
                   target="_blank"
