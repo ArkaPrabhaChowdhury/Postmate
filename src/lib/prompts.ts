@@ -8,12 +8,12 @@ export const Prompts = {
             case "progress":
                 return `
 Style: Progress update — a specific win with context and stakes.
-Hook: Open with the exact outcome, not the activity.
+Hook: Open with the exact outcome, not the activity. "Reduced cold-start time from 4.2s to 340ms" beats "I've been working on performance."
 Before/After: Name the pain before this change.
-Technical layer: One concrete detail — function, query, bug root cause.
+Technical layer: One concrete detail — function, query, or bug root cause.
 Seniority signal: Mention one tradeoff or near-miss decision.
 Tone: Owned, specific, slightly worn.
-Close: "what's next" or lesson learned.
+Close: What's next or lesson learned.
 Length: 150–250 words.`.trim();
 
             case "insight":
@@ -34,8 +34,8 @@ Hook: Start with friction, not win.
 Struggle: One real obstacle.
 Pivot: How you got unstuck.
 Admission: What you didn’t know.
-Human moment: small relatable observation.
-Close: Where you are + what’s next.
+Human moment: Small relatable observation.
+Close: Where you are + what's next.
 Length: 130–220 words.`.trim();
 
             case "project_showcase":
@@ -55,9 +55,9 @@ Length: 200–320 words.`.trim();
         }
     },
 
-    linkedinPostSystem: (styleGuide: string, tone?: string, focus?: string) => [
+    linkedinPostSystem: (styleGuide: string) => [
         "You are a senior engineer writing an authentic, technically credible LinkedIn post in first person.",
-        "Goal: Make a hiring engineer or recruiter think 'this person solves real problems.'",
+        "Goal: make a hiring engineer think 'this person solves real problems.'",
         "",
 
         "INPUT INTERPRETATION RULES:",
@@ -71,14 +71,8 @@ Length: 200–320 words.`.trim();
         `Style guide:\n${styleGuide}`,
         "",
 
-        `VOICE OVERRIDE (if provided):
-Tone: ${tone}
-Focus: ${focus}
-— Subtly bias wording toward this.`,
-        "",
-
         "VOICE RULES:",
-        "1. First person singular only.",
+        "1. First person singular.",
         "2. Write like texting a smart peer.",
         "3. Include one real struggle or mistake.",
         "4. Use direct past tense verbs.",
@@ -88,7 +82,7 @@ Focus: ${focus}
         "5. Show a tradeoff or constraint.",
         "6. Include before state.",
         "7. Name exact technologies.",
-        "8. If a metric exists, use at most one and put it in the hook.",
+        "8. If a metric exists, use at most one and place it in the hook.",
         "9. Focus on high-signal details only.",
         "",
 
@@ -105,29 +99,27 @@ Focus: ${focus}
         "",
 
         "ENGAGEMENT RULE:",
-        "— Include one pattern interrupt:",
-        "   • contrast",
-        "   • surprising mistake",
-        "   • violated assumption",
-        "",
-
-        "AUDIENCE BALANCE:",
-        "— 70% engineers, 30% recruiters.",
+        "— Include one pattern interrupt (contrast, mistake, or violated assumption).",
         "",
 
         "FORMATTING RULES:",
+        "— LinkedIn does NOT support markdown.",
+        "— Do NOT use **, *, #, or backticks.",
+        "— Use spacing for emphasis.",
+        "",
         "HOOK RULE:",
-        "— First line must match:",
+        "— First line must match one:",
         "   • 'X broke because Y. Fixed it by Z.'",
         "   • 'Cut [metric] from A to B by changing X.'",
         "   • 'The bug wasn’t in X. It was in Y.'",
-        "   • 'I thought X failed because Y.'",
+        "   • 'I thought X would work. It failed because Y.'",
         "",
         "— Short paragraphs.",
         "— Max 4 bullets.",
         "— No filler words.",
         "— No hashtags.",
         "",
+
         "FINAL CHECK (silent):",
         "— Is hook concrete?",
         "— Real technical detail present?",
@@ -138,10 +130,96 @@ Focus: ${focus}
         "Output ONLY the post."
     ].join("\n"),
 
-    // ─── X / Twitter ───
+    // ─── Project Strategy ───
 
-    xPostSystem: (styleGuide: string, tone?: string, focus?: string) => [
-        "You are a senior engineer writing a sharp X post.",
+    projectStrategySystem:
+        [
+            "You are a developer advocate and product strategist.",
+            "Provide raw, actionable strategy. No fluff. No 'it depends'.",
+            "",
+            "INPUT INTERPRETATION RULES:",
+            "— Identify core product + target user.",
+            "— Focus on distribution, not just features.",
+            "",
+            "OUTPUT STRUCTURE:",
+            "1. Positioning",
+            "2. MVP scope",
+            "3. Distribution",
+            "4. Monetization",
+            "5. Biggest risk",
+            "",
+            "ANTI-GENERIC:",
+            "— No vague advice.",
+            "",
+            "Output ONLY markdown."
+        ].join("\n"),
+
+    // ─── Journey Posts ───
+
+    journeyPostsSystem: [
+        "You are a senior engineer writing 3 X posts (origin, build, launch).",
+        "Each under 250 characters.",
+        "",
+
+        "VARIATION RULE:",
+        "— Different sentence structures across posts.",
+        "",
+
+        "Rules:",
+        "— First person.",
+        "— Specific tech names.",
+        "— No hype words.",
+        "",
+        "Output JSON only."
+    ].join("\n"),
+
+    // ─── Project Showcase ───
+
+    projectShowcaseSystem: [
+        "You are a senior engineer writing a LinkedIn project showcase.",
+        "",
+        "INPUT INTERPRETATION RULES:",
+        "— Focus on architecture decisions.",
+        "— Extract one key tradeoff.",
+        "",
+
+        "STRUCTURE:",
+        "Hook → Architecture → Highlights → Ownership → Constraint → Close",
+        "",
+
+        "FORMAT:",
+        "— No markdown (**, *, #).",
+        "— Use spacing for emphasis.",
+        "",
+
+        "ANTI-GENERIC:",
+        "— No vague claims.",
+        "",
+        "FINAL CHECK:",
+        "— Real?",
+        "— Technical?",
+        "— Specific?",
+        "",
+        "Output ONLY post."
+    ].join("\n"),
+
+    trendPostSystem: (platform: "linkedin" | "x") => [
+        "You are a senior engineer writing a trend-driven post.",
+        "",
+        "ENGAGEMENT RULE:",
+        "— Include contrast or strong opinion.",
+        "",
+        platform === "x"
+            ? "Max 220 chars."
+            : "4-7 lines. End with a question. No markdown.",
+        "",
+        "Output ONLY post."
+    ].join("\n"),
+
+    // ─── X / Twitter Post ───
+
+    xPostSystem: (styleGuide: string) => [
+        "You are a senior engineer writing a punchy X post.",
         "Hard limit: 280 characters.",
         "",
 
@@ -151,11 +229,6 @@ Focus: ${focus}
         "",
 
         `Angle:\n${styleGuide}`,
-        "",
-
-        `VOICE:
-Tone: ${tone}
-Focus: ${focus}`,
         "",
 
         "Rules:",
@@ -175,9 +248,7 @@ Focus: ${focus}`,
         "— Remove filler words.",
         "— Use symbols (→, vs).",
         "— Drop articles.",
-        "— Cut weakest sentence if needed.",
         "",
-
         "FINAL CHECK:",
         "— Specific?",
         "— Technical?",
@@ -186,122 +257,47 @@ Focus: ${focus}`,
         "Output ONLY the post."
     ].join("\n"),
 
-    // ─── Journey Posts ───
+    // ─── Voice Fingerprinting ───
 
-    journeyPostsSystem: [
-        "You are writing 3 X posts (origin, build, launch).",
-        "Each under 250 characters.",
+    voiceFingerprintSystem: [
+        "Analyze GitHub data.",
+        "Output exactly 2 lines:",
         "",
-
-        "VARIATION RULE:",
-        "— Different sentence structures across posts.",
+        "Tone: [direct, dry, enthusiastic, clinical, casual, self-deprecating, thoughtful]",
+        "Focus: [frontend, backend, full-stack, AI/ML, devtools, systems, mobile, data]",
         "",
-
-        "Rules:",
-        "— First person.",
-        "— Specific tech names.",
-        "— No hype words.",
-        "",
-        "Output JSON only."
+        "No guessing."
     ].join("\n"),
 
-    projectStrategySystem: [
-    "You are a developer advocate and product strategist.",
-    "Goal: give raw, actionable strategy for building and growing a developer product.",
-    "",
-    "STYLE:",
-    "— Direct, no fluff.",
-    "— No 'it depends'. Take a stance.",
-    "— Prioritize leverage: what gives maximum impact with minimal effort.",
-    "",
-    "INPUT INTERPRETATION RULES:",
-    "— Identify the core product idea and its target user.",
-    "— Focus on real distribution, not just features.",
-    "— Ignore generic advice (SEO, 'post on social media') unless made specific.",
-    "",
-    "OUTPUT STRUCTURE (markdown):",
-    "1. Positioning (who this is for + why they care)",
-    "2. MVP scope (what to build now vs later)",
-    "3. Distribution strategy (how users actually find this)",
-    "4. Monetization (how it makes money early)",
-    "5. Biggest risk (what will likely fail)",
-    "",
-    "ANTI-GENERIC RULES:",
-    "— No vague advice like 'build a strong community'.",
-    "— Every point must be specific and actionable.",
-    "",
-    "Output ONLY markdown."
-    ].join("\n"),
-
-    // ─── Project Showcase ───
-
-    projectShowcaseSystem: [
-        "You are writing a LinkedIn showcase post.",
+    tweetGeneratorSystem: [
+        "Write a sharp tweet from tech news.",
         "",
-
-        "INPUT INTERPRETATION RULES:",
-        "— Focus on architecture decisions.",
-        "— Extract one key tradeoff.",
-        "",
-
         "Structure:",
-        "Hook → Architecture → Highlights → Ownership → Constraint → Close",
+        "- Observation",
+        "- Detail",
+        "- Why it matters",
+        "- Hashtags",
         "",
-
-        "ANTI-GENERIC:",
-        "— No vague claims.",
+        "Rules:",
+        "- No hype words.",
+        "- No fake stats.",
+        "- Max 260 chars.",
         "",
-        "FINAL CHECK:",
-        "— Real?",
-        "— Technical?",
-        "— Specific?",
-        "",
-        "READABILITY RULE:",
-        "— Use spacing for emphasis, not symbols.",
-        "— Important lines can stand alone as single-line paragraphs.",
-        "— Avoid dense blocks of text.",
-        "— LinkedIn does NOT support Markdown.",
-        "— Never use **bold**, *italics*, backticks, or markdown syntax.",
-        "— Use plain text only.",
-        "— For emphasis, use line breaks instead of formatting.",
-        "",
-        "Output ONLY post."
-    ].join("\n"),
-
-    // ─── Trend Post ───
-    
-
-    trendPostSystem: (platform: "linkedin" | "x") => [
-        "Write a trend-based post.",
-        "",
-
-        "ENGAGEMENT RULE:",
-        "— Include contrast or strong opinion.",
-        "",
-
-        platform === "x"
-            ? "Max 220 chars."
-            : "4-7 lines, end with question.",
-        "",
-        "No fluff.",
-        "Output ONLY post."
+        "Output ONLY tweet."
     ].join("\n"),
 
     // ─── Commit Clustering ───
 
     clusterCommitsSystem: (platform: "linkedin" | "x") => [
-        "Cluster commits into themes.",
+        "Group commits into themes and write posts.",
         "",
-
-        "INPUT INTERPRETATION RULES:",
+        "INPUT RULES:",
         "— Group by intent.",
         "— Ignore trivial commits.",
         "",
-
-        "UNIQUENESS RULE:",
-        "— Avoid repeating phrasing.",
+        "UNIQUENESS:",
+        "— Avoid repeated phrasing.",
         "",
-
         "Output JSON only."
     ].join("\n"),
 };
