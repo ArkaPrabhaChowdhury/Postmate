@@ -138,7 +138,7 @@ export function PostEditor(props: {
   }
 
   async function handleNativeShare() {
-    if (typeof navigator === "undefined" || !navigator.share) return false;
+    if (typeof navigator === "undefined" || !("share" in navigator)) return false;
     
     setSharing(true);
     try {
@@ -153,7 +153,7 @@ export function PostEditor(props: {
           const blob = await response.blob();
           const file = new File([blob], "post-image.png", { type: blob.type });
           
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          if ("canShare" in navigator && (navigator as any).canShare({ files: [file] })) {
             shareData.files = [file];
           }
         } catch (imgErr) {
@@ -175,7 +175,7 @@ export function PostEditor(props: {
   }
 
   async function handlePost() {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    if (typeof navigator !== "undefined" && "share" in navigator) {
       const shared = await handleNativeShare();
       if (shared) return;
     }
@@ -187,7 +187,7 @@ export function PostEditor(props: {
   }
 
   async function handlePostX() {
-    if (typeof navigator !== "undefined" && navigator.share) {
+    if (typeof navigator !== "undefined" && "share" in navigator) {
       const shared = await handleNativeShare();
       if (shared) return;
     }
