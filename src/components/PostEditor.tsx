@@ -534,13 +534,13 @@ export function PostEditor(props: {
             {/* X Engagement */}
             <div className="border-t border-white/[0.06] px-4 py-2 flex items-center gap-5">
               {[
-                { icon: MessageSquare, count: "0" },
-                { icon: Repeat2, count: "0" },
-                { icon: Heart, count: "0" },
-                { icon: BarChart2, count: "0" },
-              ].map(({ icon: Icon, count }) => (
+                { icon: MessageSquare, count: "0", label: "reply" },
+                { icon: Repeat2, count: "0", label: "repost" },
+                { icon: Heart, count: "0", label: "like" },
+                { icon: BarChart2, count: "0", label: "view" },
+              ].map(({ icon: Icon, count, label }) => (
                 <button
-                  key={count + Icon.name}
+                  key={label}
                   type="button"
                   className="flex items-center gap-1.5 text-[#71767b] hover:text-[#1d9bf0] cursor-default text-xs"
                 >

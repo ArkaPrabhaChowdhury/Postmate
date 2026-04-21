@@ -128,13 +128,13 @@ export default async function DashboardPage() {
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
-      take: 20,
+      take: 5,
       select: { id: true, externalId: true, title: true, url: true, authorLogin: true, authoredAt: true, createdAt: true },
     }),
     prisma.generatedPost.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      take: 12,
+      take: 8,
       select: { id: true, repoId: true, sourceId: true, style: true, status: true, createdAt: true },
     }),
     strategyModel

@@ -158,7 +158,7 @@ export default function Home() {
                   <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]/70" />
                   <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]/70" />
                   <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]/70" />
-                  <span className="ml-3 text-[11px] font-mono text-[#444]">
+                  <span className="ml-3 text-[11px] font-mono text-[#525252]">
                     postmate — dashboard
                   </span>
                 </div>
@@ -549,19 +549,9 @@ export default function Home() {
               Postmate
             </span>
           </div>
-          <div className="flex gap-8 text-xs font-medium text-[#555]">
-            {["Twitter", "GitHub", "Privacy", "Terms"].map((label) => (
-              <Link
-                key={label}
-                href="#"
-                className="hover:text-[#f0ede8] transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
+
           <p className="text-[13px] text-[#666] font-mono">
-            © 2025 Postmate. Built for builders.
+            © 2026 Postmate. Built for builders.
           </p>
         </div>
       </footer>
