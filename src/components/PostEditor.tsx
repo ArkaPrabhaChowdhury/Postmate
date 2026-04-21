@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Share2, Loader } from "lucide-react";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 
 type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
@@ -123,7 +123,6 @@ export function PostEditor(props: {
   const [regenPrompt, setRegenPrompt] = useState("");
   const [regenLoading, setRegenLoading] = useState(false);
   const [regenError, setRegenError] = useState("");
-  const [sharing, setSharing] = useState(false);
   const [, startTransition] = useTransition();
 
   const over = content.length > MAX;
@@ -137,48 +136,7 @@ export function PostEditor(props: {
     setTimeout(() => setSaved(false), 2500);
   }
 
-  async function handleNativeShare() {
-    if (typeof navigator === "undefined" || !("share" in navigator)) return false;
-    
-    setSharing(true);
-    try {
-      const shareData: ShareData = {
-        text: content,
-        title: "Postmate Share",
-      };
-
-      if (imageUrl) {
-        try {
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          const file = new File([blob], "post-image.png", { type: blob.type });
-          
-          if ("canShare" in navigator && (navigator as any).canShare({ files: [file] })) {
-            shareData.files = [file];
-          }
-        } catch (imgErr) {
-          console.error("Failed to include image in share:", imgErr);
-        }
-      }
-
-      await navigator.share(shareData);
-      startTransition(() => props.onMarkCopied(props.postId));
-      return true;
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        console.error("Share failed:", err);
-      }
-      return false;
-    } finally {
-      setSharing(false);
-    }
-  }
-
   async function handlePost() {
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      const shared = await handleNativeShare();
-      if (shared) return;
-    }
     navigator.clipboard.writeText(content).catch(() => { });
     startTransition(() => props.onMarkCopied(props.postId));
     setCopied(true);
@@ -187,12 +145,8 @@ export function PostEditor(props: {
   }
 
   async function handlePostX() {
-    if (typeof navigator !== "undefined" && "share" in navigator) {
-      const shared = await handleNativeShare();
-      if (shared) return;
-    }
     const text = encodeURIComponent(content);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener");
+    window.open(`https://x.com/intent/tweet?text=${text}`, "_blank", "noopener");
     setCopiedX(true);
     setTimeout(() => setCopiedX(false), 3500);
   }
