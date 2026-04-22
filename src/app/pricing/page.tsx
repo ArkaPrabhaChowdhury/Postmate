@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Check, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { PLANS } from "@/lib/stripe";
+import { PLANS } from "@/lib/plans";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
