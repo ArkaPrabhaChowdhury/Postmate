@@ -10,6 +10,7 @@ import {
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock,
 } from "lucide-react";
 import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
+import { syncUserFromCheckoutSession } from "@/lib/stripe-sync";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
@@ -47,8 +48,16 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
   const userId = await requireUserId();
+
+  const upgraded = searchParams?.upgraded === "1";
+  const sessionIdParam = searchParams?.session_id;
+  const checkoutSessionId = typeof sessionIdParam === "string" ? sessionIdParam : undefined;
+  if (upgraded && checkoutSessionId) {
+    await syncUserFromCheckoutSession(userId, checkoutSessionId).catch(() => {});
+  }
+
   const activeRepo = await prisma.repo.findFirst({
     where: { userId, isActive: true },
     select: { id: true, fullName: true },

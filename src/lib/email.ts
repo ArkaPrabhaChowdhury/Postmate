@@ -9,7 +9,7 @@ export async function sendNewsDigestEmail(params: {
   articles: IngestArticle[];
 }): Promise<void> {
   const { to, name, articles } = params;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://postmate-six.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://postmate.arkocodes.dev/";
   const greeting = name ? `Hi ${name.split(" ")[0]},` : "Hi,";
 
   const articleRows = articles
