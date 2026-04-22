@@ -140,9 +140,36 @@ export default async function RootLayout({
         </header>
 
         {/* Page */}
-        <main className="relative pt-14">
+        <main className="relative pt-14 min-h-[calc(100dvh-5rem)]">
           <Providers>{children}</Providers>
         </main>
+
+        {/* Global Footer */}
+        <footer className="w-full py-10 border-t border-white/[0.04] bg-[#0a0a0a]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-2">
+              <PostmateLogo size={20} />
+              <span
+                className="font-bold text-sm tracking-tight text-[#f0ede8]"
+                style={{ fontFamily: "var(--font-syne)" }}
+              >
+                Postmate
+              </span>
+            </div>
+
+            <div className="flex items-center gap-8">
+              <Link
+                href="/privacy"
+                className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
+              >
+                Privacy Policy
+              </Link>
+              <p className="text-[12px] text-[#525252] font-mono tracking-tight">
+                © 2026 Postmate. Built for builders.
+              </p>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

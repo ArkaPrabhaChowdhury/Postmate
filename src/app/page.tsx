@@ -531,30 +531,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────── */}
-      <footer className="w-full py-10 border-t border-white/[0.04] bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
-              <rect width="28" height="28" rx="7" fill="#d4ff00" />
-              <rect x="5" y="7.5" width="12" height="2.5" rx="1.25" fill="#090909" />
-              <rect x="5" y="12.75" width="9" height="2.5" rx="1.25" fill="#090909" />
-              <rect x="5" y="18" width="6" height="2.5" rx="1.25" fill="#090909" />
-              <path d="M22.5 14L18 9.5V18.5L22.5 14Z" fill="#090909" />
-            </svg>
-            <span
-              className="font-bold text-sm tracking-tight text-[#f0ede8]"
-              style={{ fontFamily: "var(--font-syne)" }}
-            >
-              Postmate
-            </span>
-          </div>
-
-          <p className="text-[13px] text-[#666] font-mono">
-            © 2026 Postmate. Built for builders.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
