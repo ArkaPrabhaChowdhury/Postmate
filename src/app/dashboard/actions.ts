@@ -7,6 +7,7 @@ import { requireUserId } from "@/lib/requireUser";
 import { getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprintData } from "@/lib/github";
 import { fetchDevNews } from "@/lib/news";
 import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, generateClusteredPosts, type PostStyle } from "@/lib/ai";
+import { assertCanGeneratePost, assertProPlan } from "@/lib/plan-limits";
 
 function firstLine(s: string): string {
   return s.split(/\r?\n/)[0]?.trim() ?? s;
@@ -72,6 +73,7 @@ export async function generatePostFromCommit(formData: FormData) {
   const style = String(formData.get("style") ?? "progress").trim() as PostStyle;
   const platform = (String(formData.get("platform") ?? "linkedin").trim() || "linkedin") as "linkedin" | "x";
   if (!sha) throw new Error("Missing commit SHA.");
+  await assertCanGeneratePost(userId, style);
 
   const repo = await prisma.repo.findFirst({
     where: { userId, isActive: true },
@@ -145,6 +147,7 @@ export async function generatePostFromCommit(formData: FormData) {
 
 export async function generateStrategyForRepo() {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const repo = await prisma.repo.findFirst({
     where: { userId, isActive: true },
     select: { id: true, owner: true, name: true, fullName: true },
@@ -192,6 +195,7 @@ export async function generateStrategyForRepo() {
 
 export async function generateProjectShowcaseForRepo() {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const repo = await prisma.repo.findFirst({
     where: { userId, isActive: true },
     select: { id: true, owner: true, name: true, fullName: true },
@@ -313,6 +317,7 @@ export async function saveVoiceSettings(formData: FormData) {
 
 export async function generateClusteredPostsAction(formData: FormData) {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const platform = (String(formData.get("platform") ?? "linkedin").trim() || "linkedin") as "linkedin" | "x";
 
   const repo = await prisma.repo.findFirst({
@@ -434,6 +439,7 @@ async function fetchRecentTrends(): Promise<string[]> {
 
 export async function generateTrendPostFromRepo(formData: FormData) {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const topic = String(formData.get("topic") ?? "").trim();
   const headline = String(formData.get("headline") ?? "").trim();
   const platform = String(formData.get("platform") ?? "linkedin").trim().toLowerCase() as "linkedin" | "x";
