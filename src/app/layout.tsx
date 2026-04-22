@@ -92,6 +92,7 @@ export default async function RootLayout({
                 {[
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/news", label: "News" },
+                  { href: "/pricing", label: "Pricing" },
                   { href: "/settings", label: "Settings" },
                 ].map(({ href, label }) => (
                   <Link
@@ -124,16 +125,24 @@ export default async function RootLayout({
                   <SignOutButton />
                 </>
               ) : (
-                <Link
-                  href="/signin"
-                  className="group inline-flex items-center gap-1.5 px-4 py-2 bg-[#d4ff00] text-[#090909] text-sm font-bold rounded-xl hover:bg-[#c4ef00] transition-colors"
-                >
-                  Get Started
-                  <ArrowRight
-                    size={14}
-                    className="group-hover:translate-x-0.5 transition-transform"
-                  />
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    href="/pricing"
+                    className="text-sm font-medium text-[#666] hover:text-[#f0ede8] transition-colors hidden sm:block"
+                  >
+                    Pricing
+                  </Link>
+                  <Link
+                    href="/signin"
+                    className="group inline-flex items-center gap-1.5 px-4 py-2 bg-[#d4ff00] text-[#090909] text-sm font-bold rounded-xl hover:bg-[#c4ef00] transition-colors"
+                  >
+                    Get Started
+                    <ArrowRight
+                      size={14}
+                      className="group-hover:translate-x-0.5 transition-transform"
+                    />
+                  </Link>
+                </div>
               )}
             </div>
           </div>
@@ -158,6 +167,12 @@ export default async function RootLayout({
             </div>
 
             <div className="flex items-center gap-8">
+              <Link
+                href="/pricing"
+                className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
+              >
+                Pricing
+              </Link>
               <Link
                 href="/privacy"
                 className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"

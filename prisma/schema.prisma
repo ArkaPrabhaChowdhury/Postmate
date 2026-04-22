@@ -19,6 +19,12 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  plan                    String    @default("free") // free | pro | growth
+  stripeCustomerId        String?   @unique
+  stripeSubscriptionId    String?   @unique
+  stripePriceId           String?
+  stripeCurrentPeriodEnd  DateTime?
+
   accounts  Account[]
   sessions  Session[]
 
