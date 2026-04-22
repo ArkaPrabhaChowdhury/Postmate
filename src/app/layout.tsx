@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import { SignOutButton } from "@/components/AuthButtons";
 import { ArrowRight } from "lucide-react";
 import { Providers } from "@/components/Providers";
+import { Analytics } from "@vercel/analytics/next";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -185,6 +186,7 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
