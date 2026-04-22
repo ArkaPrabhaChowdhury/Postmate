@@ -17,7 +17,7 @@ const stagger = {
   show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } },
 };
 
-type Plan = "free" | "pro" | "growth";
+type Plan = "free" | "pro";
 
 export default function PricingPage() {
   const { data: session } = useSession();
