@@ -6,6 +6,7 @@ import { requireUserId } from "@/lib/requireUser";
 import { getRepoContext, parseFullName } from "@/lib/github";
 import { scorePost, generateLinkedInPost, type PostScore } from "@/lib/ai";
 import { logExtraction } from "@/lib/logger";
+import { postToLinkedIn } from "@/lib/linkedin";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -216,4 +217,59 @@ export async function findPostImage(formData: FormData): Promise<string> {
   const screenshotUrl = await takeScreenshot(siteUrl);
   logExtraction("image_lookup_screenshot", { screenshotUrl });
   return screenshotUrl;
+}
+
+export async function postToLinkedInNow(postId: string): Promise<{ ok: boolean; error?: string }> {
+  const userId = await requireUserId();
+  const post = await prisma.generatedPost.findFirst({
+    where: { id: postId, userId },
+    select: { content: true },
+  });
+  if (!post) return { ok: false, error: "Post not found." };
+
+  try {
+    const linkedinPostId = await postToLinkedIn(userId, post.content);
+    await prisma.generatedPost.update({
+      where: { id: postId },
+      data: { linkedinStatus: "posted", linkedinPostId, status: "posted" },
+    });
+    revalidatePath(`/posts/${postId}`);
+    return { ok: true };
+  } catch (err) {
+    await prisma.generatedPost.update({
+      where: { id: postId },
+      data: { linkedinStatus: "failed" },
+    });
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function scheduleLinkedInPost(postId: string, scheduledAt: string): Promise<{ ok: boolean; error?: string }> {
+  const userId = await requireUserId();
+  const post = await prisma.generatedPost.findFirst({
+    where: { id: postId, userId },
+    select: { id: true },
+  });
+  if (!post) return { ok: false, error: "Post not found." };
+
+  const date = new Date(scheduledAt);
+  if (isNaN(date.getTime()) || date <= new Date()) {
+    return { ok: false, error: "Scheduled time must be in the future." };
+  }
+
+  await prisma.generatedPost.update({
+    where: { id: postId },
+    data: { linkedinStatus: "scheduled", scheduledAt: date },
+  });
+  revalidatePath(`/posts/${postId}`);
+  return { ok: true };
+}
+
+export async function cancelLinkedInSchedule(postId: string): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.generatedPost.updateMany({
+    where: { id: postId, userId },
+    data: { linkedinStatus: "none", scheduledAt: null },
+  });
+  revalidatePath(`/posts/${postId}`);
 }

@@ -88,11 +88,20 @@ export default function PricingPage() {
         </motion.div>
 
         {/* Pricing cards */}
+        <div className="relative max-w-3xl mx-auto mt-10 pt-5">
+          {/* Most Popular badge — positioned above the Pro card */}
+          <div className="absolute top-0 left-3/4 -translate-x-1/2 z-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-full tracking-wide uppercase shadow-lg">
+              <Zap size={9} />
+              Most popular
+            </div>
+          </div>
+
         <motion.div
           variants={stagger}
           initial="hidden"
           animate="show"
-          className="grid md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl overflow-hidden border border-white/[0.04] max-w-3xl mx-auto"
+          className="grid md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl border border-white/[0.04]"
         >
           {tiers.map(({ key, highlight }) => {
             const plan = PLANS[key];
@@ -104,20 +113,10 @@ export default function PricingPage() {
               <motion.div
                 key={key}
                 variants={fadeUp}
-                className={`relative flex flex-col p-8 bg-[#090909] ${isHighlight ? "bg-[#0d0d0d]" : ""}`}
+                className={`relative flex flex-col p-8 ${isHighlight ? "bg-[#0d0d0d]" : "bg-[#090909]"}`}
               >
                 {isHighlight && (
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#d4ff00]/40 to-transparent" />
-                )}
-
-                {/* Popular badge */}
-                {isHighlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-full tracking-wide uppercase">
-                      <Zap size={9} />
-                      Most popular
-                    </div>
-                  </div>
                 )}
 
                 {/* Plan name + price */}
@@ -192,6 +191,7 @@ export default function PricingPage() {
             );
           })}
         </motion.div>
+        </div>
 
         {/* Bottom note */}
         <motion.p

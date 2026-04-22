@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { ArrowRight, RefreshCw } from "lucide-react";
-import { ingestNews, getPendingTweets, getLastFetchTime } from "./actions";
+import { ingestNews, getPendingTweets, getLastFetchTime, getLinkedInStatus } from "./actions";
 import { TweetCard } from "./TweetCard";
 
 type NewsItem = {
@@ -12,6 +12,8 @@ type NewsItem = {
   articleTitle: string;
   tweet: string;
   createdAt: Date;
+  linkedinStatus: string;
+  scheduledAt: Date | null;
 };
 
 export default function NewsPage() {
@@ -19,10 +21,12 @@ export default function NewsPage() {
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState("");
+  const [linkedinConnected, setLinkedinConnected] = useState(false);
 
   useEffect(() => {
     async function init() {
-      const [data, lastFetch] = await Promise.all([getPendingTweets(), getLastFetchTime()]);
+      const [data, lastFetch, liConnected] = await Promise.all([getPendingTweets(), getLastFetchTime(), getLinkedInStatus()]);
+      setLinkedinConnected(liConnected);
       setItems(data);
       setLoaded(true);
 
@@ -122,6 +126,9 @@ export default function NewsPage() {
                 articleUrl={item.articleUrl}
                 articleTitle={item.articleTitle}
                 tweet={item.tweet}
+                linkedinConnected={linkedinConnected}
+                linkedinStatus={item.linkedinStatus}
+                scheduledAt={item.scheduledAt?.toISOString() ?? null}
               />
             ))}
           </div>

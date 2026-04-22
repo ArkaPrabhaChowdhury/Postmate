@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { PostEditor } from "@/components/PostEditor";
-import { markPostCopied, savePost, findPostImage, scorePostAction, regeneratePostAction } from "../actions";
+import { markPostCopied, savePost, findPostImage, scorePostAction, regeneratePostAction, postToLinkedInNow, scheduleLinkedInPost, cancelLinkedInSchedule } from "../actions";
+import { getLinkedInAccount } from "@/lib/linkedin";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 
 const styleConfig: Record<string, { label: string; cls: string }> = {
@@ -24,14 +25,18 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const userId = await requireUserId();
   const { id } = await params;
 
-  const post = await prisma.generatedPost.findFirst({
-    where: { id, userId },
-    select: {
-      id: true, content: true, style: true, status: true,
-      sourceType: true, sourceId: true, createdAt: true,
-      repo: { select: { fullName: true } },
-    },
-  });
+  const [post, linkedinAccount] = await Promise.all([
+    prisma.generatedPost.findFirst({
+      where: { id, userId },
+      select: {
+        id: true, content: true, style: true, status: true,
+        sourceType: true, sourceId: true, createdAt: true,
+        linkedinStatus: true, scheduledAt: true,
+        repo: { select: { fullName: true } },
+      },
+    }),
+    getLinkedInAccount(userId),
+  ]);
   if (!post) notFound();
 
   const sc = styleConfig[post.style] ?? styleConfig.progress;
@@ -89,8 +94,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <PostEditor
             postId={post.id}
             initialContent={post.content}
+            initialLinkedinStatus={post.linkedinStatus}
+            initialScheduledAt={post.scheduledAt?.toISOString() ?? null}
+            linkedinConnected={!!linkedinAccount?.access_token}
             onSave={savePost}
             onMarkCopied={markPostCopied}
+            onPostLinkedIn={postToLinkedInNow}
+            onScheduleLinkedIn={scheduleLinkedInPost}
+            onCancelSchedule={cancelLinkedInSchedule}
             onFindImage={findPostImage}
             onScore={scorePostAction}
             onRegenerate={regeneratePostAction}

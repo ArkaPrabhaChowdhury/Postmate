@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download } from "lucide-react";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Calendar, X as XIcon } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 
 type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
@@ -101,8 +101,14 @@ function CharRing({ count, max }: { count: number; max: number }) {
 export function PostEditor(props: {
   postId: string;
   initialContent: string;
+  initialLinkedinStatus?: string;
+  initialScheduledAt?: string | null;
+  linkedinConnected?: boolean;
   onSave: (fd: FormData) => Promise<void>;
   onMarkCopied: (id: string) => Promise<void>;
+  onPostLinkedIn?: (postId: string) => Promise<{ ok: boolean; error?: string }>;
+  onScheduleLinkedIn?: (postId: string, scheduledAt: string) => Promise<{ ok: boolean; error?: string }>;
+  onCancelSchedule?: (postId: string) => Promise<void>;
   onFindImage?: (fd: FormData) => Promise<string>;
   onScore?: (content: string) => Promise<PostScore>;
   onRegenerate?: (postId: string, prompt: string) => Promise<string>;
@@ -114,6 +120,12 @@ export function PostEditor(props: {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedX, setCopiedX] = useState(false);
+  const [linkedinStatus, setLinkedinStatus] = useState(props.initialLinkedinStatus ?? "none");
+  const [linkedinError, setLinkedinError] = useState("");
+  const [linkedinPosting, setLinkedinPosting] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [scheduleDateTime, setScheduleDateTime] = useState("");
+  const [scheduledAt, setScheduledAt] = useState(props.initialScheduledAt ?? null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string>("");
@@ -137,11 +149,49 @@ export function PostEditor(props: {
   }
 
   async function handlePost() {
-    navigator.clipboard.writeText(content).catch(() => { });
-    startTransition(() => props.onMarkCopied(props.postId));
-    setCopied(true);
-    setTimeout(() => window.open("https://www.linkedin.com/feed/?shareActive=true", "_blank", "noopener"), 300);
-    setTimeout(() => setCopied(false), 3500);
+    if (props.onPostLinkedIn && props.linkedinConnected) {
+      setLinkedinError("");
+      setLinkedinPosting(true);
+      try {
+        const result = await props.onPostLinkedIn(props.postId);
+        if (result.ok) {
+          setLinkedinStatus("posted");
+          setCopied(true);
+          setTimeout(() => setCopied(false), 3500);
+        } else {
+          setLinkedinError(result.error ?? "Post failed.");
+        }
+      } finally {
+        setLinkedinPosting(false);
+      }
+    } else {
+      navigator.clipboard.writeText(content).catch(() => { });
+      startTransition(() => props.onMarkCopied(props.postId));
+      setCopied(true);
+      setTimeout(() => window.open("https://www.linkedin.com/feed/?shareActive=true", "_blank", "noopener"), 300);
+      setTimeout(() => setCopied(false), 3500);
+    }
+  }
+
+  async function handleScheduleLinkedIn() {
+    if (!props.onScheduleLinkedIn || !scheduleDateTime) return;
+    setLinkedinError("");
+    const result = await props.onScheduleLinkedIn(props.postId, scheduleDateTime);
+    if (result.ok) {
+      setLinkedinStatus("scheduled");
+      setScheduledAt(scheduleDateTime);
+      setShowScheduler(false);
+      setScheduleDateTime("");
+    } else {
+      setLinkedinError(result.error ?? "Failed to schedule.");
+    }
+  }
+
+  async function handleCancelSchedule() {
+    if (!props.onCancelSchedule) return;
+    await props.onCancelSchedule(props.postId);
+    setLinkedinStatus("none");
+    setScheduledAt(null);
   }
 
   async function handlePostX() {
@@ -293,24 +343,81 @@ export function PostEditor(props: {
               {saved ? <><Check size={12} /> Saved</> : "Save draft"}
             </button>
 
-            <button
-              type="button"
-              onClick={handlePost}
-              disabled={over}
-              className={`
-                inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
-                ${copied
-                  ? "bg-emerald-500 text-white"
-                  : "bg-[#0A66C2] hover:bg-[#004182] text-white"
-                }
-                disabled:opacity-40 disabled:cursor-not-allowed
-              `}
-            >
-              {copied
-                ? <><Check size={12} /> Copied — LinkedIn opening…</>
-                : <><Linkedin size={13} /> Post to LinkedIn</>
-              }
-            </button>
+            {linkedinStatus === "scheduled" && scheduledAt ? (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <Calendar size={12} />
+                  Scheduled {new Date(scheduledAt).toLocaleString()}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCancelSchedule}
+                  className="inline-flex items-center gap-1 px-2 py-2 text-xs text-[#666] hover:text-red-400 transition-colors"
+                >
+                  <XIcon size={11} /> Cancel
+                </button>
+              </div>
+            ) : linkedinStatus === "posted" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <Check size={12} /> Posted to LinkedIn
+              </span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePost}
+                  disabled={over || linkedinPosting}
+                  className={`
+                    inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
+                    ${copied
+                      ? "bg-emerald-500 text-white"
+                      : "bg-[#0A66C2] hover:bg-[#004182] text-white"
+                    }
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                  `}
+                >
+                  {linkedinPosting
+                    ? <><Sparkles size={12} className="animate-pulse" /> Posting…</>
+                    : copied
+                    ? <><Check size={12} /> {props.linkedinConnected ? "Posted!" : "Copied — LinkedIn opening…"}</>
+                    : <><Linkedin size={13} /> {props.linkedinConnected ? "Post to LinkedIn" : "Copy & Open LinkedIn"}</>
+                  }
+                </button>
+                {props.linkedinConnected && props.onScheduleLinkedIn && (
+                  <button
+                    type="button"
+                    onClick={() => setShowScheduler(!showScheduler)}
+                    disabled={over}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-colors bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] disabled:opacity-40"
+                  >
+                    <Calendar size={12} /> Schedule
+                  </button>
+                )}
+              </>
+            )}
+            {showScheduler && (
+              <div className="flex items-center gap-2 w-full mt-1">
+                <input
+                  type="datetime-local"
+                  value={scheduleDateTime}
+                  onChange={(e) => setScheduleDateTime(e.target.value)}
+                  min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+                  className="flex-1 bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-[#f0ede8] outline-none focus:border-[#d4ff00]/50 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={handleScheduleLinkedIn}
+                  disabled={!scheduleDateTime}
+                  className="px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors disabled:opacity-40"
+                >
+                  Confirm
+                </button>
+                <button type="button" onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa] transition-colors">
+                  <XIcon size={13} />
+                </button>
+              </div>
+            )}
+            {linkedinError && <p className="text-xs text-red-400 w-full mt-1">{linkedinError}</p>}
 
             <button
               type="button"
@@ -584,7 +691,9 @@ export function PostEditor(props: {
           <Copy size={13} className="text-[#555] flex-shrink-0 mt-0.5" />
           <p className="text-xs text-[#666] leading-relaxed">
             {platform === "linkedin" ? (
-              <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to LinkedIn&rdquo; to copy the text, then paste it when the LinkedIn tab opens. The LinkedIn API doesn&apos;t allow 3rd-party posting.</>
+              props.linkedinConnected
+                ? <><strong className="text-[#aaa]">Tip:</strong> LinkedIn connected — posts go live directly via API. Use &ldquo;Schedule&rdquo; to queue at a specific time.</>
+                : <><strong className="text-[#aaa]">Tip:</strong> Connect LinkedIn in <a href="/settings" className="text-[#d4ff00]/70 hover:text-[#d4ff00]">Settings</a> to enable direct posting. For now, copy + open LinkedIn.</>
             ) : (
               <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to X&rdquo; to pre-fill the tweet composer. Trim to 280 chars first if needed.</>
             )}

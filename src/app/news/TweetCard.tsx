@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Pencil, RefreshCw, Check, X } from "lucide-react";
-import { updateNewsTweet, regenerateNewsTweet } from "./actions";
+import { Pencil, RefreshCw, Check, X, Linkedin, Calendar } from "lucide-react";
+import { updateNewsTweet, regenerateNewsTweet, postLinkedInTweetNow, scheduleLinkedInTweet } from "./actions";
 
 function XLogo({ size = 12 }: { size?: number }) {
   return (
@@ -17,14 +17,23 @@ type Props = {
   articleUrl: string;
   articleTitle: string;
   tweet: string;
+  linkedinConnected?: boolean;
+  linkedinStatus?: string;
+  scheduledAt?: string | null;
 };
 
-export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet }: Props) {
+export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, linkedinConnected, linkedinStatus: initialLinkedinStatus, scheduledAt: initialScheduledAt }: Props) {
   const [tweet, setTweet] = useState(initialTweet);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(initialTweet);
   const [regenPrompt, setRegenPrompt] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [linkedinStatus, setLinkedinStatus] = useState(initialLinkedinStatus ?? "none");
+  const [linkedinError, setLinkedinError] = useState("");
+  const [linkedinPosting, setLinkedinPosting] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [scheduleDateTime, setScheduleDateTime] = useState("");
+  const [scheduledAt, setScheduledAt] = useState(initialScheduledAt ?? null);
 
   function startEdit() {
     setDraft(tweet);
@@ -52,6 +61,30 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet }:
       setEditing(false);
       setRegenPrompt("");
     });
+  }
+
+  async function handlePostLinkedIn() {
+    setLinkedinError("");
+    setLinkedinPosting(true);
+    try {
+      const result = await postLinkedInTweetNow(id);
+      if (result.ok) setLinkedinStatus("posted");
+      else setLinkedinError(result.error ?? "Post failed.");
+    } finally {
+      setLinkedinPosting(false);
+    }
+  }
+
+  async function handleScheduleLinkedIn() {
+    if (!scheduleDateTime) return;
+    const result = await scheduleLinkedInTweet(id, scheduleDateTime);
+    if (result.ok) {
+      setLinkedinStatus("scheduled");
+      setScheduledAt(scheduleDateTime);
+      setShowScheduler(false);
+    } else {
+      setLinkedinError(result.error ?? "Failed to schedule.");
+    }
   }
 
   let hostname = "";
@@ -139,6 +172,34 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet }:
               Edit
             </button>
           )}
+          {linkedinConnected && (
+            linkedinStatus === "posted" ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg">
+                <Check size={11} /> LinkedIn posted
+              </span>
+            ) : linkedinStatus === "scheduled" && scheduledAt ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg">
+                <Calendar size={11} /> Scheduled
+              </span>
+            ) : (
+              <>
+                <button
+                  onClick={handlePostLinkedIn}
+                  disabled={linkedinPosting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {linkedinPosting ? <RefreshCw size={11} className="animate-spin" /> : <Linkedin size={11} />}
+                  {linkedinPosting ? "Posting…" : "LinkedIn"}
+                </button>
+                <button
+                  onClick={() => setShowScheduler(!showScheduler)}
+                  className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] text-[#666] hover:text-[#aaa] border border-white/[0.08] rounded-lg transition-colors"
+                >
+                  <Calendar size={11} />
+                </button>
+              </>
+            )
+          )}
           <a
             href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}`}
             target="_blank"
@@ -150,6 +211,28 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet }:
           </a>
         </div>
       </div>
+      {showScheduler && (
+        <div className="px-4 pb-3 flex items-center gap-2">
+          <input
+            type="datetime-local"
+            value={scheduleDateTime}
+            onChange={(e) => setScheduleDateTime(e.target.value)}
+            min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
+            className="flex-1 bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-[#f0ede8] outline-none focus:border-[#d4ff00]/50 transition-colors"
+          />
+          <button
+            onClick={handleScheduleLinkedIn}
+            disabled={!scheduleDateTime}
+            className="px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg disabled:opacity-40"
+          >
+            Confirm
+          </button>
+          <button onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa]">
+            <X size={13} />
+          </button>
+        </div>
+      )}
+      {linkedinError && <p className="px-4 pb-3 text-xs text-red-400">{linkedinError}</p>}
     </div>
   );
 }

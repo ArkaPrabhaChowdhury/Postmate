@@ -2,7 +2,8 @@ import { requireUserId } from "@/lib/requireUser";
 import { getOctokitForUser } from "@/lib/github";
 import { prisma } from "@/lib/prisma";
 import { setActiveRepo } from "./actions";
-import { Lock, Star, GitBranch, Check } from "lucide-react";
+import { getLinkedInAccount } from "@/lib/linkedin";
+import { Lock, Star, GitBranch, Check, Linkedin } from "lucide-react";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5",
@@ -14,8 +15,9 @@ const LANG_COLORS: Record<string, string> = {
 export default async function SettingsPage() {
   const userId = await requireUserId();
 
-  const [activeRepo, ghRepos] = await Promise.all([
+  const [activeRepo, linkedinAccount, ghRepos] = await Promise.all([
     prisma.repo.findFirst({ where: { userId, isActive: true }, select: { fullName: true } }),
+    getLinkedInAccount(userId),
     (async () => {
       const octokit = await getOctokitForUser(userId);
       const res = await octokit.rest.repos.listForAuthenticatedUser({
@@ -58,6 +60,42 @@ export default async function SettingsPage() {
             Select a GitHub repo to sync commits from.
           </p>
         </div>
+
+        {/* LinkedIn connect */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-2">
+            <Linkedin size={14} className="text-[#0A66C2]" />
+            <h2 className="text-sm font-semibold text-[#f0ede8]">LinkedIn</h2>
+          </div>
+          <div className="px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+            {linkedinAccount?.access_token ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Check size={14} className="text-emerald-400" />
+                  <span className="text-sm text-[#f0ede8]">Connected</span>
+                  <span className="text-xs text-[#555]">— posts go live directly via API</span>
+                </div>
+                <a
+                  href="/api/auth/linkedin"
+                  className="px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#888] rounded-lg transition-colors"
+                >
+                  Reconnect
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-[#666]">Connect LinkedIn to auto-post and schedule directly from Postmate.</p>
+                <a
+                  href="/api/auth/linkedin"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors"
+                >
+                  <Linkedin size={13} />
+                  Connect LinkedIn
+                </a>
+              </>
+            )}
+          </div>
+        </section>
 
         {/* Active repo banner */}
         {activeRepo && (
