@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token ?? null,
         expires_at: expiresAt,
-        scope: "r_liteprofile w_member_social",
+        scope: "openid profile email w_member_social",
       },
       update: {
         userId,

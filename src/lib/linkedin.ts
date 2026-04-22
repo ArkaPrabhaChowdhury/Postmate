@@ -15,9 +15,9 @@ export async function getLinkedInAuthUrl(state: string): Promise<string> {
     response_type: "code",
     client_id: process.env.LINKEDIN_CLIENT_ID!,
     redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
-    // Use LinkedIn v2 scopes by default. OIDC scopes like "openid" require enabling the
-    // "Sign In with LinkedIn using OpenID Connect" product on your LinkedIn app.
-    scope: "r_liteprofile w_member_social",
+    // OIDC scopes require enabling "Sign In with LinkedIn using OpenID Connect"
+    // in your LinkedIn app's Products.
+    scope: "openid profile email w_member_social",
     state,
   });
   return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
@@ -43,17 +43,11 @@ export async function exchangeLinkedInCode(code: string): Promise<LinkedInTokens
 }
 
 export async function getLinkedInProfile(accessToken: string): Promise<{ sub: string; name: string }> {
-  const res = await fetch(`${LINKEDIN_API}/me`, {
+  const res = await fetch(`${LINKEDIN_API}/userinfo`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error("Failed to fetch LinkedIn profile");
-  const data = (await res.json()) as {
-    id?: string;
-    localizedFirstName?: string;
-    localizedLastName?: string;
-  };
-  const name = [data.localizedFirstName, data.localizedLastName].filter(Boolean).join(" ").trim();
-  return { sub: data.id ?? "", name: name || "LinkedIn user" };
+  return res.json();
 }
 
 export async function getLinkedInAccount(userId: string) {
