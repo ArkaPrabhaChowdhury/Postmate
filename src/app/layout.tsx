@@ -92,24 +92,28 @@ export default async function RootLayout({
             </Link>
 
             {/* Center nav */}
-            {user && (
-              <nav className="hidden md:flex items-center gap-0.5 bg-white/[0.04] p-1 rounded-xl border border-white/[0.05]">
-                {[
-                  { href: "/dashboard", label: "Dashboard" },
-                  { href: "/news", label: "News" },
-                  ...(!isPro ? [{ href: "/pricing", label: "Pricing" }] : []),
-                  { href: "/settings", label: "Settings" },
-                ].map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="px-4 py-1.5 text-sm font-medium text-[#525252] hover:text-[#f0ede8] hover:bg-white/[0.06] rounded-lg transition-all duration-150"
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            <nav className="hidden md:flex items-center gap-0.5 bg-white/[0.04] p-1 rounded-xl border border-white/[0.05]">
+              {(user
+                ? [
+                    { href: "/dashboard", label: "Dashboard" },
+                    { href: "/news", label: "News" },
+                    ...(!isPro ? [{ href: "/pricing", label: "Pricing" }] : []),
+                    { href: "/settings", label: "Settings" },
+                  ]
+                : [
+                    { href: "/#features", label: "Features" },
+                    { href: "/pricing", label: "Pricing" },
+                  ]
+              ).map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="px-4 py-1.5 text-sm font-medium text-[#525252] hover:text-[#f0ede8] hover:bg-white/[0.06] rounded-lg transition-all duration-150"
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
 
             {/* Right */}
             <div className="flex items-center gap-3">
@@ -130,24 +134,16 @@ export default async function RootLayout({
                   <SignOutButton />
                 </>
               ) : (
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/pricing"
-                    className="text-sm font-medium text-[#666] hover:text-[#f0ede8] transition-colors hidden sm:block"
-                  >
-                    Pricing
-                  </Link>
-                  <Link
-                    href="/signin"
-                    className="group inline-flex items-center gap-1.5 px-4 py-2 bg-[#d4ff00] text-[#090909] text-sm font-bold rounded-xl hover:bg-[#c4ef00] transition-colors"
-                  >
-                    Get Started
-                    <ArrowRight
-                      size={14}
-                      className="group-hover:translate-x-0.5 transition-transform"
-                    />
-                  </Link>
-                </div>
+                <Link
+                  href="/signin"
+                  className="group inline-flex items-center gap-1.5 px-4 py-2 bg-[#d4ff00] text-[#090909] text-sm font-bold rounded-xl hover:bg-[#c4ef00] transition-colors"
+                >
+                  Get Started
+                  <ArrowRight
+                    size={14}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                  />
+                </Link>
               )}
             </div>
           </div>
