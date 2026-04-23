@@ -7,7 +7,7 @@ import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
 import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
-  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock,
+  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock, Calendar,
 } from "lucide-react";
 import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
 import { syncUserFromCheckoutSession } from "@/lib/stripe-sync";
@@ -134,7 +134,13 @@ export default async function DashboardPage({ searchParams }: { searchParams?: R
     };
   };
 
-  const [events, posts, strategy, settings, suggestion, plan, monthlyPostCount] = await Promise.all([
+  const newsTweetModel = (prisma as unknown as {
+    newsTweet?: {
+      findMany: (args: object) => Promise<{ id: string; articleTitle: string; scheduledAt: Date | null }[]>;
+    };
+  }).newsTweet;
+
+  const [events, posts, strategy, settings, suggestion, plan, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
@@ -158,6 +164,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: R
     getPostingSuggestion(userId),
     getUserPlan(userId),
     getMonthlyPostCount(userId),
+    prisma.generatedPost.findMany({
+      where: { userId, linkedinStatus: "scheduled" },
+      orderBy: { scheduledAt: "asc" },
+      select: { id: true, scheduledAt: true, style: true },
+    }),
+    newsTweetModel
+      ? newsTweetModel.findMany({ where: { userId, linkedinStatus: "scheduled" }, orderBy: { scheduledAt: "asc" }, select: { id: true, articleTitle: true, scheduledAt: true } })
+      : Promise.resolve([] as { id: string; articleTitle: string; scheduledAt: Date | null }[]),
   ]);
 
   const isPro = plan === "pro";
@@ -254,6 +268,73 @@ export default async function DashboardPage({ searchParams }: { searchParams?: R
             </Link>
           </div>
         )}
+
+        {/* Scheduled Posts */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3">
+            <Calendar size={14} className="text-amber-400/70 shrink-0" />
+            <div>
+              <h2 className="text-sm font-semibold text-[#f0ede8]">Scheduled Posts</h2>
+              <p className="text-xs text-[#666] mt-0.5">Upcoming posts queued for auto-publishing.</p>
+            </div>
+          </div>
+          {scheduledPosts.length === 0 && scheduledNews.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center px-6">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                <Calendar size={18} className="text-[#444]" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#888]">No scheduled posts yet</p>
+                <p className="text-xs text-[#555] mt-0.5">When you schedule a post, it automatically posts at the date and time you choose.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/[0.05]">
+              {scheduledPosts.map((p) => {
+                const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
+                return (
+                  <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Calendar size={13} className="text-amber-400 shrink-0" />
+                      <Badge cls={sc.cls}>{sc.label}</Badge>
+                      {p.scheduledAt && (
+                        <span className="text-xs text-amber-400/80 font-mono whitespace-nowrap">
+                          {new Date(p.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href={`/posts/${p.id}`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                    >
+                      View <ChevronRight size={12} />
+                    </Link>
+                  </div>
+                );
+              })}
+              {scheduledNews.map((n) => (
+                <div key={n.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Calendar size={13} className="text-amber-400 shrink-0" />
+                    <Badge cls="bg-amber-500/10 text-amber-400 border-amber-500/20">News</Badge>
+                    <span className="text-xs text-[#f0ede8] truncate">{n.articleTitle}</span>
+                    {n.scheduledAt && (
+                      <span className="text-xs text-amber-400/80 font-mono whitespace-nowrap hidden sm:block">
+                        {new Date(n.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href="/news"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                  >
+                    View <ChevronRight size={12} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Suggested today */}
         {suggestion && suggestion.topCommitSha && (

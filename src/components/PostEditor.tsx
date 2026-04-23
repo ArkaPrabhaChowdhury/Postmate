@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Calendar, X as XIcon } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
+import { LinkedInSchedulePicker } from "@/components/LinkedInSchedulePicker";
 
 type PostScore = { hook: number; clarity: number; cta: number; tips: string[] };
 
@@ -116,6 +117,7 @@ export function PostEditor(props: {
 }) {
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const MAX = LIMITS[platform];
+  const minSchedule = useMemo(() => new Date(Date.now() + 60000), []);
   const [content, setContent] = useState(props.initialContent);
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -397,13 +399,13 @@ export function PostEditor(props: {
             )}
             {showScheduler && (
               <div className="flex items-center gap-2 w-full mt-1">
-                <input
-                  type="datetime-local"
-                  value={scheduleDateTime}
-                  onChange={(e) => setScheduleDateTime(e.target.value)}
-                  min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-                  className="flex-1 bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-[#f0ede8] outline-none focus:border-[#d4ff00]/50 transition-colors"
-                />
+                <div className="flex-1">
+                  <LinkedInSchedulePicker
+                    value={scheduleDateTime}
+                    onChange={setScheduleDateTime}
+                    min={minSchedule}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleScheduleLinkedIn}

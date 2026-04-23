@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Pencil, RefreshCw, Check, X, Linkedin, Calendar } from "lucide-react";
 import { updateNewsTweet, regenerateNewsTweet, postLinkedInTweetNow, scheduleLinkedInTweet } from "./actions";
+import { LinkedInSchedulePicker } from "@/components/LinkedInSchedulePicker";
 
 function XLogo({ size = 12 }: { size?: number }) {
   return (
@@ -34,6 +35,7 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, l
   const [showScheduler, setShowScheduler] = useState(false);
   const [scheduleDateTime, setScheduleDateTime] = useState("");
   const [scheduledAt, setScheduledAt] = useState(initialScheduledAt ?? null);
+  const minSchedule = useMemo(() => new Date(Date.now() + 60000), []);
 
   function startEdit() {
     setDraft(tweet);
@@ -213,13 +215,9 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, l
       </div>
       {showScheduler && (
         <div className="px-4 pb-3 flex items-center gap-2">
-          <input
-            type="datetime-local"
-            value={scheduleDateTime}
-            onChange={(e) => setScheduleDateTime(e.target.value)}
-            min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-            className="flex-1 bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-1.5 text-xs text-[#f0ede8] outline-none focus:border-[#d4ff00]/50 transition-colors"
-          />
+          <div className="flex-1">
+            <LinkedInSchedulePicker value={scheduleDateTime} onChange={setScheduleDateTime} min={minSchedule} />
+          </div>
           <button
             onClick={handleScheduleLinkedIn}
             disabled={!scheduleDateTime}
