@@ -4,12 +4,26 @@ import { postToLinkedIn } from "@/lib/linkedin";
 
 export const maxDuration = 60;
 
-export async function GET(req: NextRequest) {
-  if (process.env.CRON_SECRET) {
-    const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+function isAuthorizedCronRequest(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return true;
+
+  const authHeader = req.headers.get("authorization");
+  if (authHeader === `Bearer ${secret}`) return true;
+
+  const headerSecret = req.headers.get("x-cron-secret");
+  if (headerSecret === secret) return true;
+
+  const url = new URL(req.url);
+  const querySecret = url.searchParams.get("secret");
+  if (querySecret === secret) return true;
+
+  return false;
+}
+
+async function run(req: NextRequest) {
+  if (!isAuthorizedCronRequest(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const now = new Date();
@@ -68,4 +82,12 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ processed: results.length, results });
+}
+
+export async function GET(req: NextRequest) {
+  return run(req);
+}
+
+export async function POST(req: NextRequest) {
+  return run(req);
 }
