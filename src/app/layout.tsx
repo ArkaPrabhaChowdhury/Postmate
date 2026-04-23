@@ -8,6 +8,7 @@ import { SignOutButton } from "@/components/AuthButtons";
 import { ArrowRight } from "lucide-react";
 import { Providers } from "@/components/Providers";
 import { Analytics } from "@vercel/analytics/next";
+import { prisma } from "@/lib/prisma";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -57,6 +58,9 @@ export default async function RootLayout({
 }) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
+  const isPro = user?.id
+    ? (await prisma.user.findUnique({ where: { id: user.id }, select: { plan: true } }))?.plan === "pro"
+    : false;
 
   return (
     <html
@@ -93,7 +97,7 @@ export default async function RootLayout({
                 {[
                   { href: "/dashboard", label: "Dashboard" },
                   { href: "/news", label: "News" },
-                  { href: "/pricing", label: "Pricing" },
+                  ...(!isPro ? [{ href: "/pricing", label: "Pricing" }] : []),
                   { href: "/settings", label: "Settings" },
                 ].map(({ href, label }) => (
                   <Link
