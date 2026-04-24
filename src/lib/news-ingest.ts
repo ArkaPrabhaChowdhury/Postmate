@@ -9,7 +9,7 @@ dns.setDefaultResultOrder("ipv4first");
 
 const MAX_ARTICLES_PER_RUN = 15;
 const GROQ_DELAY_MS = 1500;
-const AI_SCORE_THRESHOLD = 8; // out of 10
+const AI_SCORE_THRESHOLD = 7; // out of 10
 
 export type IngestArticle = {
   title: string;
