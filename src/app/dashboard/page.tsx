@@ -48,11 +48,12 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
   );
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams?: Record<string, string | string[] | undefined> }) {
+export default async function DashboardPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const userId = await requireUserId();
+  const params = await searchParams;
 
-  const upgraded = searchParams?.upgraded === "1";
-  const sessionIdParam = searchParams?.session_id;
+  const upgraded = params?.upgraded === "1";
+  const sessionIdParam = params?.session_id;
   const checkoutSessionId = typeof sessionIdParam === "string" ? sessionIdParam : undefined;
   if (upgraded && checkoutSessionId) {
     await syncUserFromCheckoutSession(userId, checkoutSessionId).catch(() => {});

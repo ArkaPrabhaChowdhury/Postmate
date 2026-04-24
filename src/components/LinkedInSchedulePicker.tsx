@@ -17,16 +17,17 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function toLocalInputValue(date: Date) {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
-}
+function parseDateValue(value: string) {
+  // Preferred format: ISO string with timezone (e.g. 2026-04-23T13:20:00.000Z)
+  const iso = new Date(value);
+  if (!Number.isNaN(iso.getTime())) return iso;
 
-function parseLocalInputValue(value: string) {
+  // Backwards compatibility: local "datetime-local" style without timezone.
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
   if (!match) return null;
   const [, y, m, d, hh, mm] = match;
-  const date = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0, 0);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const local = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), 0, 0);
+  return Number.isNaN(local.getTime()) ? null : local;
 }
 
 function clampToMin(date: Date, min: Date) {
@@ -39,7 +40,9 @@ function buildTimeOptions(stepMinutes: number) {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     const value = `${pad2(hours)}:${pad2(mins)}`;
-    const label = `${pad2(hours)}:${pad2(mins)}`;
+    const hour12 = ((hours + 11) % 12) + 1;
+    const ampm = hours < 12 ? "AM" : "PM";
+    const label = `${hour12}:${pad2(mins)} ${ampm}`;
     options.push({ value, label, minutes });
   }
   return options;
@@ -56,7 +59,7 @@ export function LinkedInSchedulePicker(props: {
   const minTs = props.min?.getTime();
   const min = useMemo(() => new Date(minTs ?? Date.now() + 60_000), [minTs]);
 
-  const parsed = useMemo(() => parseLocalInputValue(props.value), [props.value]);
+  const parsed = useMemo(() => parseDateValue(props.value), [props.value]);
   const initial = useMemo(() => clampToMin(parsed ?? min, min), [parsed, min]);
 
   const [open, setOpen] = useState(false);
@@ -107,6 +110,13 @@ export function LinkedInSchedulePicker(props: {
 
   const minDay = useMemo(() => startOfDay(min), [min]);
 
+  function commit(nextDate: Date) {
+    const clamped = clampToMin(nextDate, min);
+    setDraftDate(clamped);
+    setViewMonth(new Date(clamped.getFullYear(), clamped.getMonth(), 1));
+    props.onChange(clamped.toISOString());
+  }
+
   const calendarDays = useMemo(() => {
     const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
     const startWeekday = (firstOfMonth.getDay() + 6) % 7; // Monday=0
@@ -125,14 +135,8 @@ export function LinkedInSchedulePicker(props: {
   const formattedSummary = useMemo(() => {
     const d = parsed ?? null;
     if (!d) return "Pick date & time";
-    return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
   }, [parsed]);
-
-  function commit(next: Date) {
-    const clamped = clampToMin(next, min);
-    setDraftDate(clamped);
-    props.onChange(toLocalInputValue(clamped));
-  }
 
   function pickDay(day: Date) {
     const next = new Date(draftDate);
@@ -156,7 +160,7 @@ export function LinkedInSchedulePicker(props: {
       <button
         type="button"
         onClick={() => {
-          if (!props.value) props.onChange(toLocalInputValue(initial));
+          if (!props.value) props.onChange(initial.toISOString());
           setOpen((v) => !v);
         }}
         className="w-full inline-flex items-center justify-between gap-2 bg-[#090909] border border-white/[0.1] rounded-lg px-3 py-2 text-xs text-[#f0ede8] outline-none hover:border-[#0A66C2]/50 transition-colors"

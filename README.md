@@ -1,26 +1,60 @@
-# Postmate
+﻿# Postmate
 
-Turn GitHub commits into LinkedIn and X posts — in your voice.
+Turn GitHub commits into LinkedIn and X posts - in your voice.
 
-## What it does
+## What it is
 
-**Postmate** is a Next.js app that reads your GitHub activity and uses AI to generate social media content. It connects with GitHub OAuth (read-only), pulls commit history and repo context, and generates polished drafts via Groq's LLM API.
+**Postmate** is a Next.js app that turns your GitHub activity into ready-to-post drafts (LinkedIn + X) and helps you ship consistently:
 
-### Generation modes
+- Sync recent commits from a connected repo (read-only GitHub OAuth)
+- Generate posts from a single commit (diff-aware: files changed + patch snippets when available)
+- Generate higher-level content from your repo (showcase, journey thread, trend/news tie-in)
+- Run a curated developer-news pipeline that drafts posts and queues them for review
 
-- **Single commit post** — pick a commit, choose a style (progress update, technical insight, or build-in-public), get a LinkedIn-ready draft
-- **Project showcase** — AI reads your full repo (README, commits, languages) and writes a comprehensive LinkedIn post
-- **X journey thread** — 3-post arc covering your project from origin → build → launch
-- **Trend post** — ties your work to live Google Trends topics or news headlines; outputs LinkedIn or X format
-- **News-to-tweet** — ingests 15+ RSS feeds (TechCrunch, Hacker News, Anthropic, OpenAI, etc.), generates tweet variants per article, queues them for your review
+## Features (exactly what's implemented)
 
-### Voice & tone system
+### GitHub -> posts
 
-Set a **voice memory** prompt (your writing quirks, phrases to use/avoid) and a **tone slider** (0 = concise, 100 = bold). Applied to every generated post.
+- **GitHub OAuth (read-only)** via NextAuth + Octokit; connects 1+ repos and marks one as active
+- **Auto-sync commits** (last ~20) on dashboard load; stored in `GitHubEvent`
+- **Single-commit post generation** for **LinkedIn or X**, with styles:
+ - `progress`
+ - `insight` (Pro)
+ - `build_in_public` (Pro)
+ - `project_showcase` (Pro)
+ - `trend` (Pro)
+- **Commit clustering -> multiple drafts**: groups recent commits into themes and generates one draft per cluster (Pro)
+- **Post editor workflow**: save edits, track status (`draft` -> `copied` -> `posted`), and re-score writing quality (hook/clarity/CTA + tips)
 
-### News queue
+### Voice system
 
-The `/news` page shows pending tweet drafts grouped by article. Approve, reject, or mark as posted. History is tracked at `/news/history`. Configure RSS sources, keyword filters, and exclusion lists at `/news/settings`.
+- **Voice memory** + **tone** applied to every generation
+- **Auto voice fingerprint**: derives a starter "voice memory" from your GitHub profile, repo descriptions, recent commit messages, and README excerpts (Pro)
+
+### Visuals (post image helper)
+
+- **Find a relevant image** by:
+ - extracting non-badge images from the repo README (resolved to raw GitHub URLs), or
+ - taking a **Playwright screenshot** of the repo's homepage / first external site URL found in the README
+
+### LinkedIn (optional)
+
+- **Connect LinkedIn** (OIDC scopes: `openid profile email w_member_social`)
+- **Post to LinkedIn now** for:
+ - generated commit posts, and
+ - news drafts
+- **Schedule LinkedIn posts** (stored in DB) and publish them via a cron endpoint (`/api/cron/linkedin`)
+- **Auto-post approved news** to LinkedIn when `linkedinAutoPost` is enabled
+
+### News pipeline (Pro)
+
+- **Fetch + dedupe** RSS + Hacker News (Algolia search + high-signal queries)
+- **Recency filter** (keeps roughly the last 7 days of RSS items when dates exist)
+- **AI impact scoring (1-10)**; only **scores ≥ 8** enter the queue (unless you use keyword filtering, which skips AI scoring)
+- **Queue UI** at `/news`: approve/reject/edit/regenerate, plus schedule/post-to-LinkedIn
+- **History UI** at `/news/history`
+- **Auto-fetch** via cron endpoint (`/api/cron/news`) when `newsAutoFetch` is enabled
+- **Email digest** (Resend): optional notifications on new items + manual "send digest now" from settings
 
 ## Setup
 
@@ -35,22 +69,38 @@ npm install
 Copy `.env.example` to `.env` and fill in:
 
 ```bash
-# Database (PostgreSQL via Neon, or SQLite for local dev)
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL recommended)
+DATABASE_URL="postgresql://..."
 
 # NextAuth
-NEXTAUTH_SECRET="your-secret"
 NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="replace_me_with_a_long_random_string"
 
-# GitHub OAuth App (read-only scope)
-GITHUB_CLIENT_ID="..."
-GITHUB_CLIENT_SECRET="..."
+# GitHub OAuth App (read-only)
+GITHUB_CLIENT_ID="replace_me"
+GITHUB_CLIENT_SECRET="replace_me"
 
-# Groq API (LLM generation — llama-3.3-70b-versatile)
-GROQ_API_KEY="..."
+# Groq API (LLM generation; OpenAI-compatible)
+GROQ_API_KEY="replace_me"
 
-# Optional: email notifications for news queue
-RESEND_API_KEY="..."
+# LinkedIn (optional; enables posting + scheduling)
+LINKEDIN_CLIENT_ID="..."
+LINKEDIN_CLIENT_SECRET="..."
+LINKEDIN_REDIRECT_URI="http://localhost:3000/api/auth/linkedin/callback"
+
+# Cron protection (optional, recommended in production)
+CRON_SECRET="replace_me_with_random_32_char_hex"
+
+# Optional: email digest for news queue
+RESEND_API_KEY="re_replace_me"
+RESEND_FROM_EMAIL="you@yourdomain.com"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Stripe (optional; enables Pro billing flow)
+STRIPE_SECRET_KEY="sk_test_replace_me"
+STRIPE_PUBLISHABLE_KEY="pk_test_replace_me"
+STRIPE_PRO_PRICE_ID="price_replace_me"
+STRIPE_WEBHOOK_SECRET="whsec_replace_me"
 ```
 
 Create a GitHub OAuth App at `github.com/settings/developers`. Set the callback URL to `http://localhost:3000/api/auth/callback/github`.
@@ -74,24 +124,26 @@ Open `http://localhost:3000`.
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (Next.js + Turbopack)
-npm run build        # prisma generate && next build
-npm run start        # Production server
-npm run lint         # ESLint
-npx prisma migrate dev   # Run migrations
-npx prisma studio        # Open Prisma GUI
+npm run dev # Start dev server
+npm run build # prisma generate && next build
+npm run start # Production server
+npm run lint # ESLint
+npx prisma migrate dev # Run migrations
+npx prisma studio # Open Prisma GUI
 ```
 
 ## Architecture
 
-**Stack:** Next.js 16 App Router · PostgreSQL (Neon) · Prisma · NextAuth v4 · Groq API · Tailwind CSS
+**Stack:** Next.js 16 App Router - React 19 - Prisma (PostgreSQL) - NextAuth v4 - Groq (OpenAI-compatible) - Tailwind CSS - Playwright (screenshots) - Stripe (billing)
 
 ### Data flow
 
-1. **GitHub OAuth** (NextAuth, `database` strategy) — access token stored in `Account` table via `@auth/prisma-adapter`
-2. **Repo sync** — user selects repo in `/settings` → Octokit fetches commits, README, languages → stored as `GitHubEvent` rows
-3. **Post generation** — server actions in `src/app/*/actions.ts` call functions in `src/lib/ai.ts` → Groq API → stored as `GeneratedPost`
-4. **News ingestion** — RSS feeds parsed in `src/lib/news-rss.ts` → tweet variants generated → stored as `NewsTweet` (pending review at `/news`)
+1. **Sign in**: NextAuth stores OAuth tokens in `Account` via `@auth/prisma-adapter`.
+2. **Connect repo**: set active repo in `/settings`.
+3. **Sync commits**: dashboard fetches recent commits -> persisted as `GitHubEvent`.
+4. **Generate drafts**: server actions call `src/lib/ai.ts` -> Groq -> persisted as `GeneratedPost`.
+5. **News ingest**: RSS + HN -> dedupe + scoring -> persisted as `NewsTweet` (review in `/news`).
+6. **LinkedIn publish**: manual post, auto-post-on-approve, or scheduled via `/api/cron/linkedin`.
 
 ### Key directories
 
@@ -99,31 +151,24 @@ npx prisma studio        # Open Prisma GUI
 |------|---------|
 | `src/app/` | Next.js App Router pages and API routes |
 | `src/app/*/actions.ts` | Server actions (mutations, AI calls) |
-| `src/lib/ai.ts` | All Groq generation functions |
-| `src/lib/github.ts` | Octokit wrapper, repo context builders |
-| `src/lib/news-rss.ts` | RSS ingestion, keyword filtering, deduplication |
-| `src/lib/prompts.ts` | LLM system prompts |
+| `src/lib/ai.ts` | Groq-backed generation + scoring |
+| `src/lib/github.ts` | Octokit wrapper + repo context builders |
+| `src/lib/news-rss.ts` | RSS parsing, keyword filtering, deduplication |
+| `src/lib/news-ingest.ts` | News fetching + scoring + queue persistence |
+| `src/lib/linkedin.ts` | LinkedIn OAuth + posting |
 | `src/components/` | Shared UI components |
 | `prisma/schema.prisma` | Database schema |
 
-### AI functions (`src/lib/ai.ts`)
+## Operational notes
 
-| Function | Input | Output |
-|----------|-------|--------|
-| `generateLinkedInPost()` | commit + style | single LinkedIn post |
-| `generateProjectShowcase()` | full repo context | comprehensive LinkedIn post |
-| `generateJourneyPosts()` | repo context | 3-post JSON arc (origin/build/launch) |
-| `generateProjectStrategy()` | repo context | markdown strategy guide |
-| `generateTrendPost()` | trend/headline + profile | LinkedIn or X post |
-| `generateTweetVariants()` | article title | 3 tweet variants (informative / hot take / thread opener) |
+### Cron endpoints
 
-All functions use Groq's OpenAI-compatible endpoint (`llama-3.3-70b-versatile`), have 3-attempt retry logic with 1s backoff, and apply the user's `voiceMemory` and `tone` settings.
+- `/api/cron/news`: ingests news for users with `newsAutoFetch=true` and optionally emails a digest
+- `/api/cron/linkedin`: posts any due scheduled LinkedIn items
+- Set `CRON_SECRET` to require a bearer/header/query secret for both endpoints.
 
-## Posting
+### Posting behavior
 
-Postmate does **not** auto-post. All generation is manual:
-
-- LinkedIn: draft is copied to clipboard and LinkedIn feed opens in a new tab
-- X/Twitter: opens `twitter.com/intent/tweet` with the post pre-filled
-
-Read-only GitHub OAuth means we never touch your repos.
+- **X**: drafts are generated for X, but posting is manual (intent/share flow).
+- **LinkedIn**: can post immediately or schedule to post later (requires LinkedIn connection).
+- **GitHub access**: read-only; Postmate never writes to your repos.

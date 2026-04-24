@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Calendar, X as XIcon } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 import { LinkedInSchedulePicker } from "@/components/LinkedInSchedulePicker";
@@ -128,6 +128,11 @@ export function PostEditor(props: {
   const [showScheduler, setShowScheduler] = useState(false);
   const [scheduleDateTime, setScheduleDateTime] = useState("");
   const [scheduledAt, setScheduledAt] = useState(props.initialScheduledAt ?? null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string>("");
@@ -349,7 +354,9 @@ export function PostEditor(props: {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <Calendar size={12} />
-                  Scheduled {new Date(scheduledAt).toLocaleString()}
+                  <span suppressHydrationWarning>
+                    Scheduled {isMounted ? new Date(scheduledAt).toLocaleString(undefined, { hour12: true }) : ""}
+                  </span>
                 </span>
                 <button
                   type="button"
