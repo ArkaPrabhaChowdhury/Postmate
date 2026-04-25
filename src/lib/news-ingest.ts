@@ -7,9 +7,14 @@ import { generateNewsTweet } from "@/lib/ai";
 // Force IPv4 — same fix as ai.ts
 dns.setDefaultResultOrder("ipv4first");
 
-const MAX_ARTICLES_PER_RUN = 15;
+const MAX_ARTICLES_PER_RUN = Math.min(
+  50,
+  Math.max(1, Number(process.env.NEWS_MAX_ARTICLES_PER_RUN ?? "25") || 25),
+);
 const GROQ_DELAY_MS = 1500;
 const AI_SCORE_THRESHOLD = 7; // out of 10
+const ARTICLE_FETCH_TIMEOUT_MS = 8_000;
+const MAX_SUMMARY_CHARS = 2000;
 
 export type IngestArticle = {
   title: string;
@@ -24,6 +29,45 @@ export type IngestResult = {
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function stripHtml(input: string): string {
+  return input.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function clampText(input: string, maxChars: number) {
+  const trimmed = input.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  return trimmed.slice(0, maxChars - 1).trimEnd() + "…";
+}
+
+async function fetchArticleBlurb(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, {
+      cache: "no-store",
+      redirect: "follow",
+      signal: AbortSignal.timeout(ARTICLE_FETCH_TIMEOUT_MS),
+      headers: {
+        "user-agent": "PostmateBot/1.0 (+https://github.com/ArkaPrabhaChowdhury/Postmate)",
+      },
+    });
+    if (!res.ok) return "";
+
+    const html = await res.text();
+    // Keep parsing simple/cheap: meta description + first paragraph.
+    const og =
+      html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] ??
+      "";
+    const meta =
+      html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1] ??
+      "";
+    const firstP = html.match(/<p[^>]*>([\s\S]{0,800}?)<\/p>/i)?.[1] ?? "";
+
+    const combined = [og, meta, stripHtml(firstP)].filter(Boolean).join(" ");
+    return clampText(stripHtml(combined), 900);
+  } catch {
+    return "";
+  }
 }
 
 function getGroqClient() {
@@ -147,7 +191,7 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
 
   console.log(`[ingest] rss=${rssItems.length} hn=${hnItems.length} total=${items.length}`);
 
-  const deduped = uniqueByUrl(items).slice(0, userKeywords.length > 0 ? 2000 : 300);
+  const deduped = uniqueByUrl(items).slice(0, userKeywords.length > 0 ? 2500 : 800);
 
   // Filter already-seen URLs
   const existingUrls = await prisma.seenUrl.findMany({
@@ -208,7 +252,9 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
     });
     if (Date.now() - claim.seenAt.getTime() > 1000) continue;
 
-    const summary = (item.description || "").slice(0, 1200);
+    const rssSummary = (item.description || "").trim();
+    const pageBlurb = await fetchArticleBlurb(item.link);
+    const summary = clampText([rssSummary, pageBlurb].filter(Boolean).join("\n\n"), MAX_SUMMARY_CHARS);
     const tweet = await generateNewsTweet({
       title: item.title,
       summary,

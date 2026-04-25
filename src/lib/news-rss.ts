@@ -48,6 +48,13 @@ const OFFICIAL_BLOGS: string[] = [
   "https://vercel.com/blog/rss.xml",
   "https://blog.cloudflare.com/rss/",
   "https://github.blog/feed/",
+  "https://engineering.fb.com/feed/",
+  "https://developer.apple.com/news/rss/news.rss",
+  "https://netflixtechblog.com/feed",
+  "https://slack.engineering/feed/",
+  "https://dropbox.tech/feed",
+  "https://eng.lyft.com/feed",
+  "https://engineering.atspotify.com/feed/",
 ];
 
 // AI company blogs — every new model, API, or feature announcement
@@ -85,13 +92,21 @@ const TRENDING_FEEDS: string[] = [
 const DISCOVERY_FEEDS: string[] = [
   "https://www.producthunt.com/feed?category=developer-tools",
   "https://lobste.rs/s/rss",
+  "https://www.reddit.com/r/programming/.rss",
+  "https://www.reddit.com/r/MachineLearning/.rss",
+  "https://www.reddit.com/r/selfhosted/.rss",
 ];
 
 export const DEFAULT_SOURCES: string[] = [
+  ...GITHUB_RELEASES,
   ...AI_BLOGS,
   ...OFFICIAL_BLOGS,
   ...TRENDING_FEEDS,
   ...DISCOVERY_FEEDS,
+  "https://arxiv.org/rss/cs.AI",
+  "https://arxiv.org/rss/cs.LG",
+  "https://arxiv.org/rss/cs.SE",
+  "https://arxiv.org/rss/cs.CR",
 ];
 
 function stripHtml(input: string): string {
