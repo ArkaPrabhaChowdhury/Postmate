@@ -395,7 +395,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                 <div>
                   <h2 className="text-sm font-semibold text-[#f0ede8]">Recent commits</h2>
                   <p className="text-xs text-[#666] mt-0.5">
-                    Select a commit and generate a LinkedIn-ready draft.
+                    Select a commit and generate a LinkedIn or X draft (X is capped at 280 chars).
                   </p>
                 </div>
                 <ChevronDown size={14} className="text-[#555] chevron sm:hidden mt-1 shrink-0" />

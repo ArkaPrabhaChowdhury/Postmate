@@ -161,6 +161,16 @@ function toneLabel(raw?: string): string | undefined {
   return "Bold / punchy";
 }
 
+function enforceMaxChars(text: string, maxChars: number): string {
+  const normalized = text.replace(/\s+\n/g, "\n").trim();
+  if (normalized.length <= maxChars) return normalized;
+
+  const hard = normalized.slice(0, maxChars).trimEnd();
+  const lastBreak = Math.max(hard.lastIndexOf(" "), hard.lastIndexOf("\n"));
+  if (lastBreak > Math.floor(maxChars * 0.75)) return hard.slice(0, lastBreak).trimEnd();
+  return hard;
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing environment variable: ${name}`);
@@ -297,7 +307,8 @@ export async function generateLinkedInPost(input: {
     temperature: 0.75,
     max_tokens: isX ? 150 : 800,
   });
-  return normalizePostVoice(raw);
+  const voiced = normalizePostVoice(raw);
+  return isX ? enforceMaxChars(voiced, 280) : voiced;
 }
 
 // ─── generateProjectStrategy ─────────────────────────────────────────────────
@@ -521,7 +532,8 @@ export async function generateTrendPost(input: {
     temperature: 0.7,
     max_tokens: input.platform === "x" ? 220 : 700,
   });
-  return normalizePostVoice(raw);
+  const voiced = normalizePostVoice(raw);
+  return input.platform === "x" ? enforceMaxChars(voiced, 280) : voiced;
 }
 
 export async function generateVoiceFingerprint(input: {
