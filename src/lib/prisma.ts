@@ -24,6 +24,7 @@ function normalizeDatabaseUrl(url: string | undefined) {
     if (!parsed.searchParams.has("pgbouncer")) parsed.searchParams.set("pgbouncer", "true");
     if (!parsed.searchParams.has("connection_limit")) parsed.searchParams.set("connection_limit", "1");
     if (!parsed.searchParams.has("pool_timeout")) parsed.searchParams.set("pool_timeout", "0");
+    if (!parsed.searchParams.has("connect_timeout")) parsed.searchParams.set("connect_timeout", "30");
 
     // Avoid passing uncommon params that can break older poolers/clients.
     if (parsed.searchParams.has("channel_binding")) parsed.searchParams.delete("channel_binding");
