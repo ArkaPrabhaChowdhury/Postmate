@@ -571,6 +571,13 @@ export async function generateNewsTweet(input: {
   tasteProfile?: string;
   additionalPrompt?: string;
 }): Promise<string> {
+  const stripEdgeQuotes = (text: string) => {
+    const trimmed = text.trim();
+    const withoutLeading = trimmed.replace(/^[\"“”]+/, "");
+    const withoutTrailing = withoutLeading.replace(/[\"“”]+$/, "");
+    return withoutTrailing.trim();
+  };
+
   const userMsg = [
     `Title: ${input.title}`,
     input.summary ? `Summary: ${input.summary}` : "",
@@ -583,7 +590,7 @@ export async function generateNewsTweet(input: {
 
   const client = getOpenAIClient();
   const raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.7, max_tokens: 400 });
-  return raw.trim();
+  return stripEdgeQuotes(raw);
 }
 
 // ─── generateClusteredPosts ──────────────────────────────────────────────────
