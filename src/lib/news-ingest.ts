@@ -200,7 +200,13 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
   const articles: IngestArticle[] = [];
 
   for (const item of toProcess) {
-    await prisma.seenUrl.create({ data: { userId, url: item.link } });
+    const claim = await prisma.seenUrl.upsert({
+      where: { userId_url: { userId, url: item.link } },
+      create: { userId, url: item.link },
+      update: {},
+      select: { seenAt: true },
+    });
+    if (Date.now() - claim.seenAt.getTime() > 1000) continue;
 
     const summary = (item.description || "").slice(0, 1200);
     const tweet = await generateNewsTweet({

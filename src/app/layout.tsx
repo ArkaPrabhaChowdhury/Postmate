@@ -9,6 +9,7 @@ import { ArrowRight } from "lucide-react";
 import { Providers } from "@/components/Providers";
 import { Analytics } from "@vercel/analytics/next";
 import { prisma } from "@/lib/prisma";
+import { MobileNavPill } from "@/components/MobileNavPill";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -150,9 +151,12 @@ export default async function RootLayout({
         </header>
 
         {/* Page */}
-        <main className="relative pt-14 min-h-[calc(100dvh-5rem)]">
+        <main className="relative pt-14 pb-24 md:pb-0 min-h-[calc(100dvh-5rem)]">
           <Providers>{children}</Providers>
         </main>
+
+        {/* Mobile floating nav pill */}
+        <MobileNavPill loggedIn={!!user} isPro={isPro} />
 
         {/* Global Footer */}
         <footer className="w-full py-10 border-t border-white/[0.04] bg-[#0a0a0a]">
