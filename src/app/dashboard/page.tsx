@@ -271,25 +271,15 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
         )}
 
         {/* Scheduled Posts */}
-        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3">
-            <Calendar size={14} className="text-amber-400/70 shrink-0" />
-            <div>
-              <h2 className="text-sm font-semibold text-[#f0ede8]">Scheduled Posts</h2>
-              <p className="text-xs text-[#666] mt-0.5">Upcoming posts queued for auto-publishing.</p>
-            </div>
-          </div>
-          {scheduledPosts.length === 0 && scheduledNews.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-10 text-center px-6">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
-                <Calendar size={18} className="text-[#444]" />
-              </div>
+        {(scheduledPosts.length > 0 || scheduledNews.length > 0) && (
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3">
+              <Calendar size={14} className="text-amber-400/70 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-[#888]">No scheduled posts yet</p>
-                <p className="text-xs text-[#555] mt-0.5">When you schedule a post, it automatically posts at the date and time you choose.</p>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Scheduled Posts</h2>
+                <p className="text-xs text-[#666] mt-0.5">Upcoming posts queued for auto-publishing.</p>
               </div>
             </div>
-          ) : (
             <div className="divide-y divide-white/[0.05]">
               {scheduledPosts.map((p) => {
                 const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
@@ -334,8 +324,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                 </div>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {/* Suggested today */}
         {suggestion && suggestion.topCommitSha && (
