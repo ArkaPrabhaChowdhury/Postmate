@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { setActiveRepo } from "./actions";
 import { getLinkedInAccount } from "@/lib/linkedin";
 import { Lock, Star, GitBranch, Check, Linkedin } from "lucide-react";
+import BillingSection from "./sections/BillingSection";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5",
@@ -96,6 +97,8 @@ export default async function SettingsPage() {
             )}
           </div>
         </section>
+
+        <BillingSection />
 
         {/* Active repo banner */}
         {activeRepo && (
