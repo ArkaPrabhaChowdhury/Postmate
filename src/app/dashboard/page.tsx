@@ -189,7 +189,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -222,13 +222,13 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {[
             { label: "Commits synced", value: events.length, icon: GitCommit },
             { label: "Drafts created", value: posts.length, icon: FileText },
             { label: "Journey posts", value: journeyPosts.length, icon: Route },
           ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-4 flex items-center gap-3">
+            <div key={label} className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
                 <Icon size={14} className="text-[#d4ff00]/60" />
               </div>
@@ -390,46 +390,51 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
         {/* Commits */}
         <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
           <details open>
-            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 cursor-pointer select-none">
-              <div>
-                <h2 className="text-sm font-semibold text-[#f0ede8]">Recent commits</h2>
-                <p className="text-xs text-[#666] mt-0.5">
-                  Select a commit and generate a LinkedIn-ready draft.
-                </p>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer select-none">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-[#f0ede8]">Recent commits</h2>
+                  <p className="text-xs text-[#666] mt-0.5">
+                    Select a commit and generate a LinkedIn-ready draft.
+                  </p>
+                </div>
+                <ChevronDown size={14} className="text-[#555] chevron sm:hidden mt-1 shrink-0" />
               </div>
-              <StopPropagation>
-                {isPro ? (
-                  <form action={generateClusteredPostsAction} className="flex items-center gap-2">
-                    <div className="relative">
-                      <select
-                        name="platform"
-                        defaultValue="linkedin"
-                        className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+              <div className="flex items-center gap-2">
+                <StopPropagation>
+                  {isPro ? (
+                    <form action={generateClusteredPostsAction} className="flex items-center gap-2 flex-1 sm:flex-none">
+                      <div className="relative flex-1 sm:flex-none">
+                        <select
+                          name="platform"
+                          defaultValue="linkedin"
+                          className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                        >
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="x">X</option>
+                        </select>
+                        <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                      </div>
+                      <SubmitButton
+                        pendingText="Clustering…"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
                       >
-                        <option value="linkedin">LinkedIn</option>
-                        <option value="x">X / Twitter</option>
-                      </select>
-                      <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
-                    </div>
-                    <SubmitButton
-                      pendingText="Clustering…"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                        <Layers size={11} />
+                        Cluster commits
+                      </SubmitButton>
+                    </form>
+                  ) : (
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#555] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors w-full sm:w-auto"
                     >
-                      <Layers size={11} />
-                      Cluster commits
-                    </SubmitButton>
-                  </form>
-                ) : (
-                  <Link
-                    href="/pricing"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#555] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors"
-                  >
-                    <Lock size={10} />
-                    Cluster commits · Pro
-                  </Link>
-                )}
-              </StopPropagation>
-              <ChevronDown size={14} className="text-[#555] chevron" />
+                      <Lock size={10} />
+                      Cluster commits · Pro
+                    </Link>
+                  )}
+                </StopPropagation>
+                <ChevronDown size={14} className="text-[#555] chevron hidden sm:block shrink-0" />
+              </div>
             </summary>
 
             {events.length === 0 ? (
@@ -449,15 +454,15 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                   return (
                     <div
                       key={e.id}
-                      className="px-5 py-3.5 flex items-center gap-4 flex-wrap hover:bg-white/[0.02] transition-colors"
+                      className="px-5 py-3.5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#f0ede8] truncate">{e.title}</p>
+                        <p className="text-sm font-medium text-[#f0ede8] line-clamp-2 md:truncate">{e.title}</p>
                         <div className="flex items-center gap-2 mt-1 text-[11px] text-[#555] flex-wrap">
                           <code className="font-mono bg-white/[0.05] px-1.5 py-0.5 rounded text-[#888]">
                             {e.externalId.slice(0, 7)}
                           </code>
-                          {e.authorLogin && <span>{e.authorLogin}</span>}
+                          {e.authorLogin && <span className="truncate max-w-[120px]">{e.authorLogin}</span>}
                           {e.authoredAt && <span>{timeAgo(new Date(e.authoredAt))}</span>}
                           {e.url && (
                             <a
@@ -469,60 +474,58 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                               view <ExternalLink size={9} />
                             </a>
                           )}
+                          {existing && (
+                            <Link
+                              href={`/posts/${existing.id}`}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors uppercase tracking-wide"
+                            >
+                              <CheckCircle2 size={10} />
+                              Draft
+                            </Link>
+                          )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                        {existing && (
-                          <Link
-                            href={`/posts/${existing.id}`}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors"
+                      <form action={generatePostFromCommit} className="grid grid-cols-2 md:flex md:items-center gap-2 md:flex-shrink-0">
+                        <input type="hidden" name="sha" value={e.externalId} />
+                        <div className="relative">
+                          <select
+                            name="platform"
+                            defaultValue="linkedin"
+                            className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
                           >
-                            <CheckCircle2 size={11} />
-                            Draft exists
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="x">X</option>
+                          </select>
+                          <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                        </div>
+                        <div className="relative">
+                          <select
+                            name="style"
+                            defaultValue="progress"
+                            disabled={!isPro}
+                            className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="progress">Progress update</option>
+                            {isPro && <option value="insight">Technical insight</option>}
+                            {isPro && <option value="build_in_public">Build in public</option>}
+                          </select>
+                          <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                        </div>
+                        {!isPro && freePostsLeft === 0 ? (
+                          <Link href="/pricing" className="col-span-2 md:col-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap">
+                            <Lock size={11} /> Limit reached
                           </Link>
+                        ) : (
+                          <SubmitButton
+                            pendingText="Generating…"
+                            className="col-span-2 md:col-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                          >
+                            <Sparkles size={11} />
+                            Generate
+                          </SubmitButton>
                         )}
-                        <form action={generatePostFromCommit} className="flex items-center gap-2 flex-wrap">
-                          <input type="hidden" name="sha" value={e.externalId} />
-                          <div className="relative">
-                            <select
-                              name="platform"
-                              defaultValue="linkedin"
-                              className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
-                            >
-                              <option value="linkedin">LinkedIn</option>
-                              <option value="x">X / Twitter</option>
-                            </select>
-                            <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
-                          </div>
-                          <div className="relative">
-                            <select
-                              name="style"
-                              defaultValue="progress"
-                              disabled={!isPro}
-                              className="text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <option value="progress">Progress update</option>
-                              {isPro && <option value="insight">Technical insight</option>}
-                              {isPro && <option value="build_in_public">Build in public</option>}
-                            </select>
-                            <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
-                          </div>
-                          {!isPro && freePostsLeft === 0 ? (
-                            <Link href="/pricing" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap">
-                              <Lock size={11} /> Limit reached
-                            </Link>
-                          ) : (
-                            <SubmitButton
-                              pendingText="Generating…"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
-                            >
-                              <Sparkles size={11} />
-                              Generate
-                            </SubmitButton>
-                          )}
-                        </form>
-                      </div>
+                      </form>
                     </div>
                   );
                 })}

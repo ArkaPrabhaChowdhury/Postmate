@@ -155,7 +155,7 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, l
         </div>
       )}
 
-      <div className="px-4 pb-4 flex items-center justify-between gap-3">
+      <div className="px-4 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <a
           href={articleUrl}
           target="_blank"
@@ -164,7 +164,7 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, l
         >
           {hostname}
         </a>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0">
           {!editing && (
             <button
               onClick={startEdit}
@@ -214,20 +214,22 @@ export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, l
         </div>
       </div>
       {showScheduler && (
-        <div className="px-4 pb-3 flex items-center gap-2">
-          <div className="flex-1">
+        <div className="px-4 pb-3 flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="flex-1 min-w-0">
             <LinkedInSchedulePicker value={scheduleDateTime} onChange={setScheduleDateTime} min={minSchedule} />
           </div>
-          <button
-            onClick={handleScheduleLinkedIn}
-            disabled={!scheduleDateTime}
-            className="px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg disabled:opacity-40"
-          >
-            Confirm
-          </button>
-          <button onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa]">
-            <X size={13} />
-          </button>
+          <div className="flex items-center gap-2 sm:shrink-0">
+            <button
+              onClick={handleScheduleLinkedIn}
+              disabled={!scheduleDateTime}
+              className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg disabled:opacity-40"
+            >
+              Confirm
+            </button>
+            <button onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa] p-1.5">
+              <X size={13} />
+            </button>
+          </div>
         </div>
       )}
       {linkedinError && <p className="px-4 pb-3 text-xs text-red-400">{linkedinError}</p>}

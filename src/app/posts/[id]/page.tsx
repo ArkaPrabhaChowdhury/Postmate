@@ -43,7 +43,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const st = statusConfig[post.status] ?? statusConfig.draft;
 
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col gap-3">
@@ -90,7 +90,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Editor */}
-        <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-5">
+        <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-3 sm:p-5">
           <PostEditor
             postId={post.id}
             initialContent={post.content}

@@ -405,25 +405,27 @@ export function PostEditor(props: {
               </>
             )}
             {showScheduler && (
-              <div className="flex items-center gap-2 w-full mt-1">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full mt-1">
+                <div className="flex-1 min-w-0">
                   <LinkedInSchedulePicker
                     value={scheduleDateTime}
                     onChange={setScheduleDateTime}
                     min={minSchedule}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={handleScheduleLinkedIn}
-                  disabled={!scheduleDateTime}
-                  className="px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors disabled:opacity-40"
-                >
-                  Confirm
-                </button>
-                <button type="button" onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa] transition-colors">
-                  <XIcon size={13} />
-                </button>
+                <div className="flex items-center gap-2 sm:shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleScheduleLinkedIn}
+                    disabled={!scheduleDateTime}
+                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold bg-[#0A66C2] hover:bg-[#004182] text-white rounded-lg transition-colors disabled:opacity-40"
+                  >
+                    Confirm
+                  </button>
+                  <button type="button" onClick={() => setShowScheduler(false)} className="text-[#666] hover:text-[#aaa] transition-colors p-1.5">
+                    <XIcon size={13} />
+                  </button>
+                </div>
               </div>
             )}
             {linkedinError && <p className="text-xs text-red-400 w-full mt-1">{linkedinError}</p>}

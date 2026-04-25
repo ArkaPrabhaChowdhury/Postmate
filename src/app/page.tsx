@@ -278,7 +278,7 @@ export default function Home() {
             <div className="flex items-center gap-2.5 text-[#f0ede8]">
               <XLogo size={18} />
               <span className="text-sm font-bold tracking-tight italic">
-                X / Twitter
+                X
               </span>
             </div>
           </div>
