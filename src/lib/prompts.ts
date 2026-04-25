@@ -183,6 +183,7 @@ Length: 200–320 words.`.trim();
         "- 280 chars max.",
         "- Start with the impact, not the headline.",
         "- Use the USER'S SAVED VOICE.",
+        "- IMPORTANT: You are sharing news about other people's products. You did NOT build or develop them. Never use 'I built', 'I developed', or 'my team' when referring to the product.",
         "",
         "Output ONLY the tweet.",
     ].join("\n"),
