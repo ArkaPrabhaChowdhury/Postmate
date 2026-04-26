@@ -18,11 +18,13 @@ const stagger = {
 };
 
 type Plan = "free" | "pro";
+type BillingInterval = "monthly" | "yearly";
 
 export default function PricingPage() {
   const { data: session } = useSession();
   const authed = !!session?.user;
   const [loading, setLoading] = useState<Plan | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
   async function handleUpgrade(plan: Plan) {
     if (plan === "free") return;
@@ -35,7 +37,7 @@ export default function PricingPage() {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, billingInterval }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
@@ -89,6 +91,24 @@ export default function PricingPage() {
 
         {/* Pricing cards */}
         <div className="relative max-w-3xl mx-auto mt-10 pt-5">
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center p-1 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+              <button
+                type="button"
+                onClick={() => setBillingInterval("monthly")}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${billingInterval === "monthly" ? "bg-[#d4ff00] text-[#090909] font-semibold" : "text-[#888] hover:text-[#f0ede8]"}`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingInterval("yearly")}
+                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${billingInterval === "yearly" ? "bg-[#d4ff00] text-[#090909] font-semibold" : "text-[#888] hover:text-[#f0ede8]"}`}
+              >
+                Yearly <span className="text-[10px] ml-1 opacity-80">(save 20%)</span>
+              </button>
+            </div>
+          </div>
           {/* Most Popular badge - positioned above the Pro card */}
           <motion.div
             variants={stagger}
@@ -126,12 +146,24 @@ export default function PricingPage() {
                     {plan.name}
                   </div>
                   <div className="flex items-end gap-1.5">
+                    {key === "pro" && billingInterval === "yearly" ? (
+                      <>
+                        <span
+                          className="text-5xl font-extrabold text-[#f0ede8] tracking-tight"
+                          style={{ fontFamily: "var(--font-syne)" }}
+                        >
+                          ${plan.yearlyMonthlyEquivalent}
+                        </span>
+                        <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
+                      </>
+                    ) : (
                     <span
                       className="text-5xl font-extrabold text-[#f0ede8] tracking-tight"
                       style={{ fontFamily: "var(--font-syne)" }}
                     >
                       ${plan.monthlyPrice}
                     </span>
+                    )}
                     {plan.monthlyPrice > 0 && (
                       <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
                     )}
@@ -139,6 +171,9 @@ export default function PricingPage() {
                       <span className="text-[#555] text-sm mb-2 font-mono">forever</span>
                     )}
                   </div>
+                  {key === "pro" && billingInterval === "yearly" && (
+                    <p className="text-[11px] text-[#666] mt-2">Billed annually at ${plan.yearlyPrice}/year.</p>
+                  )}
                 </div>
 
                 {/* CTA */}
@@ -201,7 +236,7 @@ export default function PricingPage() {
           animate="show"
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          No contracts · Cancel anytime · Billed monthly · Secure checkout via Stripe
+          No contracts · Cancel anytime · Billed {billingInterval} · Secure checkout via Stripe
         </motion.p>
 
         {/* FAQ section */}

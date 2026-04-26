@@ -10,9 +10,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { plan } = (await req.json()) as { plan: Plan };
+  const { plan, billingInterval } = (await req.json()) as { plan: Plan; billingInterval?: "monthly" | "yearly" };
   const planConfig = PLANS[plan];
-  if (!planConfig || !planConfig.priceId) {
+  const interval = billingInterval === "yearly" ? "yearly" : "monthly";
+  const priceId = planConfig?.priceIds?.[interval] ?? null;
+
+  if (!planConfig || !priceId) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
@@ -40,11 +43,11 @@ export async function POST(req: NextRequest) {
     customer: customerId,
     mode: "subscription",
     payment_method_types: ["card"],
-    line_items: [{ price: planConfig.priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${process.env.NEXTAUTH_URL}/dashboard?upgraded=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXTAUTH_URL}/pricing`,
-    metadata: { userId: user.id, plan },
-    subscription_data: { metadata: { userId: user.id, plan } },
+    metadata: { userId: user.id, plan, billingInterval: interval },
+    subscription_data: { metadata: { userId: user.id, plan, billingInterval: interval } },
   });
 
   return NextResponse.json({ url: checkoutSession.url });
