@@ -1,8 +1,13 @@
 export const PLANS = {
   free: {
     name: "Free",
-    priceId: null,
+    priceIds: {
+      monthly: null,
+      yearly: null,
+    },
     monthlyPrice: 0,
+    yearlyPrice: 0,
+    yearlyMonthlyEquivalent: 0,
     repos: 1,
     postsPerMonth: 5,
     features: [
@@ -13,8 +18,13 @@ export const PLANS = {
   },
   pro: {
     name: "Pro",
-    priceId: process.env.STRIPE_PRO_PRICE_ID,
+    priceIds: {
+      monthly: process.env.STRIPE_PRO_PRICE_ID,
+      yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
+    },
     monthlyPrice: 8,
+    yearlyPrice: 77,
+    yearlyMonthlyEquivalent: 6.4,
     repos: Infinity,
     postsPerMonth: Infinity,
     features: [
@@ -35,5 +45,6 @@ export type Plan = keyof typeof PLANS;
 
 export function getPlanFromPriceId(priceId: string): Plan {
   if (priceId === process.env.STRIPE_PRO_PRICE_ID) return "pro";
+  if (priceId === process.env.STRIPE_PRO_YEARLY_PRICE_ID) return "pro";
   return "free";
 }
