@@ -19,6 +19,50 @@ export type PostingSuggestion = {
   topCommitSha: string | null;
 };
 
+export type WeeklyDigestCommit = {
+  sha: string;
+  title: string;
+  authoredAt: Date | null;
+  url: string | null;
+  score: number;
+  reasons: string[];
+  hasDraft: boolean;
+};
+
+export type WeeklyShippingDigest = {
+  totalCommits: number;
+  worthPostingCount: number;
+  worthPosting: WeeklyDigestCommit[];
+};
+
+const LOW_SIGNAL_PREFIXES = [
+  "merge",
+  "chore",
+  "docs",
+  "bump",
+  "typo",
+  "wip",
+  "refactor",
+  "test",
+];
+
+const HIGH_SIGNAL_KEYWORDS = [
+  "feat",
+  "fix",
+  "ship",
+  "launch",
+  "release",
+  "improve",
+  "perf",
+  "ai",
+  "auth",
+  "billing",
+  "dashboard",
+  "api",
+  "automation",
+  "integration",
+];
+
 export async function getPostingSuggestion(userId: string): Promise<PostingSuggestion | null> {
   const repos = await prisma.repo.findMany({
     where: { userId },
@@ -78,4 +122,73 @@ export async function getPostingSuggestion(userId: string): Promise<PostingSugge
   const best = scored.sort((a, b) => b.score - a.score)[0];
   if (!best || !best.topCommitSha) return null;
   return best;
+}
+
+export async function getWeeklyShippingDigest(userId: string, repoId: string): Promise<WeeklyShippingDigest> {
+  const weekAgo = new Date(Date.now() - 7 * MS_PER_DAY);
+  const commits = await prisma.gitHubEvent.findMany({
+    where: { repoId, type: "commit", authoredAt: { gte: weekAgo } },
+    orderBy: { authoredAt: "desc" },
+    select: { externalId: true, title: true, authoredAt: true, url: true },
+    take: 120,
+  });
+
+  if (commits.length === 0) {
+    return { totalCommits: 0, worthPostingCount: 0, worthPosting: [] };
+  }
+
+  const draftedShas = await prisma.generatedPost.findMany({
+    where: {
+      userId,
+      sourceType: "commit",
+      sourceId: { in: commits.map((c) => c.externalId) },
+    },
+    select: { sourceId: true },
+  });
+  const draftedSet = new Set(draftedShas.map((p) => p.sourceId));
+
+  const scored = commits.map((commit): WeeklyDigestCommit => {
+    const normalized = commit.title.trim().toLowerCase();
+    const hasDraft = draftedSet.has(commit.externalId);
+    let score = 0;
+    const reasons: string[] = [];
+
+    if (!LOW_SIGNAL_PREFIXES.some((prefix) => normalized.startsWith(prefix))) {
+      score += 2;
+      reasons.push("substantive update");
+    }
+    if (HIGH_SIGNAL_KEYWORDS.some((keyword) => normalized.includes(keyword))) {
+      score += 2;
+      reasons.push("high-impact keyword");
+    }
+    if (commit.title.length > 42) {
+      score += 1;
+      reasons.push("specific commit context");
+    }
+    if (hasDraft) {
+      score -= 3;
+      reasons.push("already drafted");
+    }
+
+    return {
+      sha: commit.externalId,
+      title: commit.title,
+      authoredAt: commit.authoredAt,
+      url: commit.url,
+      score,
+      reasons,
+      hasDraft,
+    };
+  });
+
+  const worthPosting = scored
+    .filter((c) => !c.hasDraft && c.score >= 3)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  return {
+    totalCommits: commits.length,
+    worthPostingCount: worthPosting.length,
+    worthPosting,
+  };
 }
