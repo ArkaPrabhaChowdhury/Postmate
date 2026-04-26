@@ -92,32 +92,44 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     );
   }
 
-  // Auto-sync commits on every page load
-  try {
-    const [owner, name] = activeRepo.fullName.split("/");
-    const octokit = await getOctokitForUser(userId);
-    const res = await octokit.rest.repos.listCommits({ owner, repo: name, per_page: 20 });
-    for (const c of res.data) {
-      const message = c.commit?.message ?? "";
-      const authoredAt = c.commit?.author?.date ?? null;
-      const authorLogin = c.author?.login ?? null;
-      const row = {
-        repoId: activeRepo.id,
-        type: "commit",
-        externalId: c.sha,
-        title: message.split(/\r?\n/)[0]?.trim() ?? message,
-        url: c.html_url ?? null,
-        authorLogin,
-        authoredAt: authoredAt ? new Date(authoredAt) : null,
-        payloadJson: JSON.stringify({ sha: c.sha, message, html_url: c.html_url, authoredAt, authorLogin }),
-      };
-      await prisma.gitHubEvent.upsert({
-        where: { repoId_type_externalId: { repoId: row.repoId, type: row.type, externalId: row.externalId } },
-        create: row,
-        update: { title: row.title, url: row.url, authorLogin: row.authorLogin, authoredAt: row.authoredAt, payloadJson: row.payloadJson },
+  // Auto-sync commits — at most once every 5 minutes to avoid waterfall on every load
+  const lastSync = await prisma.repo.findUnique({
+    where: { id: activeRepo.id },
+    select: { updatedAt: true },
+  });
+  const staleSince = Date.now() - (lastSync?.updatedAt?.getTime() ?? 0);
+  if (staleSince > 5 * 60 * 1000) {
+    try {
+      const [owner, name] = activeRepo.fullName.split("/");
+      const octokit = await getOctokitForUser(userId);
+      const res = await octokit.rest.repos.listCommits({ owner, repo: name, per_page: 20 });
+      const rows = res.data.map((c) => {
+        const message = c.commit?.message ?? "";
+        const authoredAt = c.commit?.author?.date ?? null;
+        const authorLogin = c.author?.login ?? null;
+        return {
+          repoId: activeRepo.id,
+          type: "commit",
+          externalId: c.sha,
+          title: message.split(/\r?\n/)[0]?.trim() ?? message,
+          url: c.html_url ?? null,
+          authorLogin,
+          authoredAt: authoredAt ? new Date(authoredAt) : null,
+          payloadJson: JSON.stringify({ sha: c.sha, message, html_url: c.html_url, authoredAt, authorLogin }),
+        };
       });
-    }
-  } catch { /* silent fail — stale data still renders */ }
+      await Promise.all([
+        ...rows.map((row) =>
+          prisma.gitHubEvent.upsert({
+            where: { repoId_type_externalId: { repoId: row.repoId, type: row.type, externalId: row.externalId } },
+            create: row,
+            update: { title: row.title, url: row.url, authorLogin: row.authorLogin, authoredAt: row.authoredAt, payloadJson: row.payloadJson },
+          })
+        ),
+        prisma.repo.update({ where: { id: activeRepo.id }, data: {} }),
+      ]);
+    } catch { /* silent fail — stale data still renders */ }
+  }
 
   const strategyModel = (prisma as unknown as {
     projectStrategy?: {

@@ -100,7 +100,7 @@ Length: 200–320 words.`.trim();
         "POST 3 (The Ship): Focus on the result + a call to action or link.",
         "",
         "STRICT X RULES:",
-        "- MAX 280 characters per post.",
+        "- HARD 280 character limit per post. Count characters. End each post as a complete sentence within the limit.",
         "- HOOK: The first 8 words must be high-stakes or high-curiosity.",
         "- No hashtags. No emojis (unless they add technical context).",
         "- Match the USER'S SAVED VOICE fingerprint perfectly.",
@@ -157,13 +157,14 @@ Length: 200–320 words.`.trim();
         `ANGLE:\n${styleGuide}`,
         "",
         "CONSTRAINTS:",
-        "1. 280 character hard limit.",
-        "2. Hook must be a punch to the gut or a total surprise.",
-        "3. Match the USER'S SAVED VOICE.",
-        "4. No corporate 'we'. Use 'I'.",
-        "5. Avoid hashtags and generic threads.",
+        "1. HARD 280 CHARACTER LIMIT. Count every character including spaces. If your draft exceeds 280 characters, rewrite it shorter — never truncate mid-sentence.",
+        "2. Write a complete, standalone thought that ends naturally within 280 characters.",
+        "3. Hook must be a punch to the gut or a total surprise.",
+        "4. Match the USER'S SAVED VOICE.",
+        "5. No corporate 'we'. Use 'I'.",
+        "6. Avoid hashtags and generic threads.",
         "",
-        "Output ONLY the post.",
+        "Output ONLY the post. It MUST be a complete sentence under 280 characters.",
     ].join("\n"),
 
     // ─── Voice Fingerprinting ───
@@ -202,7 +203,7 @@ Length: 200–320 words.`.trim();
               ].join("\n")
             : [
                 "X Post:",
-                "- 280 chars max.",
+                "- HARD 280 char limit. Write a complete thought that ends naturally within the limit.",
                 "- Focus on the 'What': 'I just merged X and it feels Y.'",
                 "- Use the USER'S SAVED VOICE.",
               ].join("\n"),

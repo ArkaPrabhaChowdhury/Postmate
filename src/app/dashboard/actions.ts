@@ -103,14 +103,7 @@ export async function generatePostFromCommit(formData: FormData) {
       patch: f.patch,
     })) ?? [];
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
-    };
-  };
-  const settings = settingsClient.userSettings
-    ? await settingsClient.userSettings.findUnique({ where: { userId } })
-    : null;
+  const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
   const content = await generateLinkedInPost({
     repoFullName: repo.fullName,
@@ -126,6 +119,7 @@ export async function generatePostFromCommit(formData: FormData) {
     },
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,
+    enforce280: platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
   });
 
   const post = await prisma.generatedPost.create({
@@ -208,14 +202,7 @@ export async function generateProjectShowcaseForRepo() {
     repo: repo.name,
   });
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
-    };
-  };
-  const settings = settingsClient.userSettings
-    ? await settingsClient.userSettings.findUnique({ where: { userId } })
-    : null;
+  const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
   const content = await generateProjectShowcase({
     repoFullName: repo.fullName,
@@ -260,23 +247,11 @@ export async function autoGenerateVoice(): Promise<string> {
     ? `${existing.voiceMemory}\n${generated}`
     : generated;
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      upsert: (args: {
-        where: { userId: string };
-        create: { userId: string; voiceMemory?: string | null; tone?: string | null };
-        update: { voiceMemory?: string | null; tone?: string | null };
-      }) => Promise<unknown>;
-    };
-  };
-
-  if (settingsClient.userSettings) {
-    await settingsClient.userSettings.upsert({
-      where: { userId },
-      create: { userId, voiceMemory },
-      update: { voiceMemory },
-    });
-  }
+  await prisma.userSettings.upsert({
+    where: { userId },
+    create: { userId, voiceMemory },
+    update: { voiceMemory },
+  });
 
   revalidatePath("/dashboard");
   return voiceMemory;
@@ -287,30 +262,11 @@ export async function saveVoiceSettings(formData: FormData) {
   const voiceMemory = String(formData.get("voiceMemory") ?? "").trim();
   const tone = String(formData.get("tone") ?? "").trim();
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      upsert: (args: {
-        where: { userId: string };
-        create: { userId: string; voiceMemory?: string | null; tone?: string | null };
-        update: { voiceMemory?: string | null; tone?: string | null };
-      }) => Promise<unknown>;
-    };
-  };
-
-  if (settingsClient.userSettings) {
-    await settingsClient.userSettings.upsert({
-      where: { userId },
-      create: {
-        userId,
-        voiceMemory: voiceMemory || null,
-        tone: tone || null,
-      },
-      update: {
-        voiceMemory: voiceMemory || null,
-        tone: tone || null,
-      },
-    });
-  }
+  await prisma.userSettings.upsert({
+    where: { userId },
+    create: { userId, voiceMemory: voiceMemory || null, tone: tone || null },
+    update: { voiceMemory: voiceMemory || null, tone: tone || null },
+  });
 
   revalidatePath("/dashboard");
 }
@@ -451,17 +407,11 @@ export async function generateTrendPostFromRepo(formData: FormData) {
   });
   if (!repo) redirect("/settings");
 
-  const settingsClient = prisma as unknown as {
-    userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
-    };
-  };
-
   const [profile, trends, devNews, settings] = await Promise.all([
     getGitHubProfile(userId),
     fetchRecentTrends(),
     fetchDevNews(),
-    settingsClient.userSettings ? settingsClient.userSettings.findUnique({ where: { userId } }) : Promise.resolve(null),
+    prisma.userSettings.findUnique({ where: { userId } }),
   ]);
 
   const content = await generateTrendPost({
@@ -473,6 +423,7 @@ export async function generateTrendPostFromRepo(formData: FormData) {
     profile,
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,
+    enforce280: platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
   });
 
   const post = await prisma.generatedPost.create({

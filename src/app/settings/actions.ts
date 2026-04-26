@@ -6,6 +6,16 @@ import { prisma } from "@/lib/prisma";
 import { parseFullName } from "@/lib/github";
 import { requireUserId } from "@/lib/requireUser";
 
+export async function saveXSettings(enforce280: boolean) {
+  const userId = await requireUserId();
+  await prisma.userSettings.upsert({
+    where: { userId },
+    create: { userId, xEnforce280: enforce280 },
+    update: { xEnforce280: enforce280 },
+  });
+  revalidatePath("/settings");
+}
+
 export async function setActiveRepo(formData: FormData) {
   const userId = await requireUserId();
   const fullNameRaw = String(formData.get("fullName") ?? "").trim();

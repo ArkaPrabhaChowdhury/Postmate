@@ -50,6 +50,7 @@ model UserSettings {
   newsAutoFetch     Boolean  @default(false)
   newsEmailEnabled  Boolean  @default(false)
   linkedinAutoPost  Boolean  @default(false)
+  xEnforce280       Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

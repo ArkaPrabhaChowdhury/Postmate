@@ -165,10 +165,21 @@ function enforceMaxChars(text: string, maxChars: number): string {
   const normalized = text.replace(/\s+\n/g, "\n").trim();
   if (normalized.length <= maxChars) return normalized;
 
-  const hard = normalized.slice(0, maxChars).trimEnd();
+  const hard = normalized.slice(0, maxChars);
+  // Prefer sentence boundary
+  const sentenceEnd = Math.max(
+    hard.lastIndexOf(". "),
+    hard.lastIndexOf("! "),
+    hard.lastIndexOf("? "),
+    hard.lastIndexOf(".\n"),
+  );
+  if (sentenceEnd > Math.floor(maxChars * 0.6)) {
+    return hard.slice(0, sentenceEnd + 1).trimEnd();
+  }
+  // Fall back to word boundary
   const lastBreak = Math.max(hard.lastIndexOf(" "), hard.lastIndexOf("\n"));
   if (lastBreak > Math.floor(maxChars * 0.75)) return hard.slice(0, lastBreak).trimEnd();
-  return hard;
+  return hard.trimEnd();
 }
 
 function requiredEnv(name: string): string {
@@ -255,6 +266,7 @@ export async function generateLinkedInPost(input: {
   tone?: string;
   platform?: "linkedin" | "x";
   additionalPrompt?: string;
+  enforce280?: boolean;
 }): Promise<string> {
   const styleGuide = Prompts.getLinkedInPostStyleGuide(input.style);
 
@@ -308,7 +320,8 @@ export async function generateLinkedInPost(input: {
     max_tokens: isX ? 150 : 800,
   });
   const voiced = normalizePostVoice(raw);
-  return isX ? enforceMaxChars(voiced, 280) : voiced;
+  const shouldEnforce = input.enforce280 !== false;
+  return isX && shouldEnforce ? enforceMaxChars(voiced, 280) : voiced;
 }
 
 // ─── generateProjectStrategy ─────────────────────────────────────────────────
@@ -502,6 +515,7 @@ export async function generateTrendPost(input: {
   };
   voiceMemory?: string;
   tone?: string;
+  enforce280?: boolean;
 }): Promise<string> {
   const system = Prompts.trendPostSystem(input.platform);
   const userMsg = [
@@ -533,7 +547,8 @@ export async function generateTrendPost(input: {
     max_tokens: input.platform === "x" ? 220 : 700,
   });
   const voiced = normalizePostVoice(raw);
-  return input.platform === "x" ? enforceMaxChars(voiced, 280) : voiced;
+  const shouldEnforce = input.enforce280 !== false;
+  return input.platform === "x" && shouldEnforce ? enforceMaxChars(voiced, 280) : voiced;
 }
 
 export async function generateVoiceFingerprint(input: {

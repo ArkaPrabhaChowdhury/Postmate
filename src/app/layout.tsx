@@ -184,6 +184,12 @@ export default async function RootLayout({
               >
                 Privacy Policy
               </Link>
+              <Link
+                href="/support"
+                className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
+              >
+                Support
+              </Link>
               <p className="text-[12px] text-[#525252] font-mono tracking-tight">
                 © 2026 Postmate. Built for builders.
               </p>

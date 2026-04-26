@@ -5,6 +5,7 @@ import { setActiveRepo } from "./actions";
 import { getLinkedInAccount } from "@/lib/linkedin";
 import { Lock, Star, GitBranch, Check, Linkedin } from "lucide-react";
 import BillingSection from "./sections/BillingSection";
+import XPostSettingsSection from "./sections/XPostSettingsSection";
 
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5",
@@ -16,9 +17,11 @@ const LANG_COLORS: Record<string, string> = {
 export default async function SettingsPage() {
   const userId = await requireUserId();
 
-  const [activeRepo, linkedinAccount, ghRepos] = await Promise.all([
+  const [activeRepo, linkedinAccount, xSettings, userPlan, ghRepos] = await Promise.all([
     prisma.repo.findFirst({ where: { userId, isActive: true }, select: { fullName: true } }),
     getLinkedInAccount(userId),
+    prisma.userSettings.findUnique({ where: { userId }, select: { xEnforce280: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
     (async () => {
       const octokit = await getOctokitForUser(userId);
       const res = await octokit.rest.repos.listForAuthenticatedUser({
@@ -99,6 +102,11 @@ export default async function SettingsPage() {
         </section>
 
         <BillingSection />
+
+        <XPostSettingsSection
+          xEnforce280={xSettings?.xEnforce280 ?? true}
+          isPro={userPlan?.plan !== "free"}
+        />
 
         {/* Active repo banner */}
         {activeRepo && (
