@@ -89,26 +89,41 @@ export default function PricingPage() {
           </motion.p>
         </motion.div>
 
+        {/* Billing toggle */}
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          className="w-full flex justify-center"
+        >
+          <div className="inline-flex items-center rounded-xl border border-white/[0.08] bg-[#0d0d0d] p-1">
+            <button
+              type="button"
+              onClick={() => setBillingInterval("monthly")}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                billingInterval === "monthly"
+                  ? "bg-[#d4ff00] text-[#090909] font-semibold"
+                  : "text-[#888] hover:text-[#f0ede8]"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval("yearly")}
+              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                billingInterval === "yearly"
+                  ? "bg-[#d4ff00] text-[#090909] font-semibold"
+                  : "text-[#888] hover:text-[#f0ede8]"
+              }`}
+            >
+              Yearly <span className="text-[11px]">(save 20%)</span>
+            </button>
+          </div>
+        </motion.div>
+
         {/* Pricing cards */}
         <div className="relative max-w-3xl mx-auto mt-10 pt-5">
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center p-1 rounded-xl bg-white/[0.03] border border-white/[0.08]">
-              <button
-                type="button"
-                onClick={() => setBillingInterval("monthly")}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${billingInterval === "monthly" ? "bg-[#d4ff00] text-[#090909] font-semibold" : "text-[#888] hover:text-[#f0ede8]"}`}
-              >
-                Monthly
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingInterval("yearly")}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${billingInterval === "yearly" ? "bg-[#d4ff00] text-[#090909] font-semibold" : "text-[#888] hover:text-[#f0ede8]"}`}
-              >
-                Yearly <span className="text-[10px] ml-1 opacity-80">(save 20%)</span>
-              </button>
-            </div>
-          </div>
           {/* Most Popular badge - positioned above the Pro card */}
           <motion.div
             variants={stagger}
@@ -121,6 +136,11 @@ export default function PricingPage() {
             const isHighlight = highlight;
             const isFree = key === "free";
             const isLoading = loading === key;
+            const shownPrice = isFree
+              ? 0
+              : billingInterval === "yearly"
+                ? plan.yearlyMonthlyEquivalent
+                : plan.monthlyPrice;
 
             return (
               <motion.div
@@ -141,38 +161,32 @@ export default function PricingPage() {
                 )}
 
                 {/* Plan name + price */}
-                <div className="mb-6">
+                <div className="mb-6 min-h-[108px]">
                   <div className="text-[11px] font-mono text-[#555] uppercase tracking-[0.2em] mb-3">
                     {plan.name}
                   </div>
                   <div className="flex items-end gap-1.5">
-                    {key === "pro" && billingInterval === "yearly" ? (
-                      <>
-                        <span
-                          className="text-5xl font-extrabold text-[#f0ede8] tracking-tight"
-                          style={{ fontFamily: "var(--font-syne)" }}
-                        >
-                          ${plan.yearlyMonthlyEquivalent}
-                        </span>
-                        <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
-                      </>
-                    ) : (
                     <span
                       className="text-5xl font-extrabold text-[#f0ede8] tracking-tight"
-                      style={{ fontFamily: "var(--font-syne)" }}
+                      style={{
+                        fontFamily: "var(--font-syne)",
+                        fontVariantNumeric: "lining-nums tabular-nums",
+                        fontFeatureSettings: '"lnum" 1, "tnum" 1',
+                      }}
                     >
-                      ${plan.monthlyPrice}
+                      ${shownPrice}
                     </span>
-                    )}
-                    {plan.monthlyPrice > 0 && !(key === "pro" && billingInterval === "yearly") && (
+                    {!isFree && (
                       <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
                     )}
                     {isFree && (
                       <span className="text-[#555] text-sm mb-2 font-mono">forever</span>
                     )}
                   </div>
-                  {key === "pro" && billingInterval === "yearly" && (
-                    <p className="text-[11px] text-[#666] mt-2">Billed annually at ${plan.yearlyPrice}/year.</p>
+                  {!isFree && (
+                    <div className="h-6 mt-2 text-sm text-[#666]">
+                      {billingInterval === "yearly" ? `Billed annually at $${plan.yearlyPrice}/year.` : ""}
+                    </div>
                   )}
                 </div>
 
@@ -236,7 +250,7 @@ export default function PricingPage() {
           animate="show"
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          No contracts · Cancel anytime · Billed {billingInterval} · Secure checkout via Stripe
+          No contracts · Cancel anytime · Billed monthly · Secure checkout via Stripe
         </motion.p>
 
         {/* FAQ section */}

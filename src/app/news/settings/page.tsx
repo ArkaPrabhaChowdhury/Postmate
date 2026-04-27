@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { saveNewsSettings, flushNews } from "../actions";
 import { SendDigestButton } from "./SendDigestButton";
+import { SaveSettingsButton } from "./SaveSettingsButton";
 
 export default async function NewsSettingsPage() {
   const userId = await requireUserId();
@@ -101,8 +102,6 @@ export default async function NewsSettingsPage() {
                   <span className="text-sm font-semibold text-[#f0ede8]">Email notifications</span>
                   <p className="text-xs text-[#666] mt-0.5">
                     Get emailed when new high-signal articles arrive. Sent to your GitHub account email.
-                    Requires auto-fetch and{" "}
-                    <code className="text-[#888] bg-white/[0.06] px-1 rounded font-mono">RESEND_API_KEY</code>.
                   </p>
                 </div>
               </label>
@@ -136,9 +135,7 @@ export default async function NewsSettingsPage() {
           </section>
 
           <div>
-            <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] text-sm font-bold rounded-xl transition-colors">
-              Save settings
-            </button>
+            <SaveSettingsButton />
           </div>
         </form>
 
