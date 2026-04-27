@@ -6,7 +6,6 @@ import { PostEditor } from "@/components/PostEditor";
 import { markPostCopied, savePost, findPostImage, scorePostAction, regeneratePostAction, postToLinkedInNow, scheduleLinkedInPost, cancelLinkedInSchedule } from "../actions";
 import { getLinkedInAccount } from "@/lib/linkedin";
 import { ChevronLeft, ExternalLink } from "lucide-react";
-
 const styleConfig: Record<string, { label: string; cls: string }> = {
   progress: { label: "Progress update", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
   insight: { label: "Technical insight", cls: "bg-blue-500/10 text-blue-400 border-blue-500/20" },

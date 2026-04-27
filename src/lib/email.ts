@@ -122,6 +122,51 @@ export async function sendWeeklyShippingDigestEmail(params: {
   }
 }
 
+export async function sendTrialExpiredEmail(params: {
+  to: string;
+  name: string | null | undefined;
+}): Promise<void> {
+  const { to, name } = params;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://postmate.arkocodes.dev";
+  const greeting = name ? `Hi ${name.split(" ")[0]},` : "Hi,";
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="background:#09090b;margin:0;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="max-width:580px;margin:0 auto;">
+    <p style="color:#71717a;font-size:12px;margin:0 0 24px;">${greeting}</p>
+    <p style="color:#e4e4e7;font-size:16px;margin:0 0 12px;line-height:1.5;">
+      Your 3-day Postmate Pro trial has ended.
+    </p>
+    <p style="color:#a1a1aa;font-size:14px;margin:0 0 28px;line-height:1.6;">
+      Your account is back on the Free plan, so Pro-only features are paused. Upgrade when you want unlimited posts, news generation, journey posts, and scheduling back.
+    </p>
+    <div style="text-align:center;">
+      <a href="${appUrl}/pricing" style="display:inline-block;padding:11px 24px;background:#d4ff00;color:#090909;font-size:13px;font-weight:800;border-radius:10px;text-decoration:none;">Upgrade to Pro</a>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const from = process.env.RESEND_FROM_EMAIL ?? "Postmate <onboarding@resend.dev>";
+  const sandboxOwner = process.env.RESEND_SANDBOX_EMAIL;
+  const recipient = !process.env.RESEND_FROM_EMAIL && sandboxOwner ? sandboxOwner : to;
+  console.log(`[email] trial expired to=${recipient} (requested=${to}) from=${from}`);
+
+  const result = await resend.emails.send({
+    from,
+    to: recipient,
+    subject: "Your Postmate Pro trial has ended",
+    html,
+  });
+
+  if (result.error) {
+    console.error(`[email] resend trial expired error:`, JSON.stringify(result.error));
+    throw new Error(`Resend error: ${result.error.message}`);
+  }
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

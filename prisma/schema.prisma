@@ -25,6 +25,10 @@ model User {
   stripeSubscriptionId    String?   @unique
   stripePriceId           String?
   stripeCurrentPeriodEnd  DateTime?
+  proTrialStartedAt       DateTime?
+  proTrialEndsAt          DateTime?
+  proTrialExpiredAt       DateTime?
+  proTrialExpiredEmailSentAt DateTime?
 
   accounts  Account[]
   sessions  Session[]
@@ -35,6 +39,8 @@ model User {
   settings  UserSettings?
   seenUrls  SeenUrl[]
   newsTweets NewsTweet[]
+
+  @@index([proTrialEndsAt])
 }
 
 model UserSettings {

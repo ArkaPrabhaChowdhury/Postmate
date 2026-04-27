@@ -35,8 +35,8 @@ export const PLANS = {
       "News tweet generation",
       "Voice memory & tone",
       "Email digest",
-      "Post scheduler (coming soon)",
-      "Auto-post to LinkedIn / X (coming soon)",
+      "Post scheduler for LinkedIn",
+      "Auto-post to LinkedIn",
     ],
   },
 } as const;

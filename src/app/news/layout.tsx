@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { requireUserId } from "@/lib/requireUser";
 import { getUserPlan } from "@/lib/plan-limits";
-
 export default async function NewsLayout({ children }: { children: React.ReactNode }) {
   const userId = await requireUserId();
   const plan = await getUserPlan(userId);
@@ -43,4 +42,3 @@ export default async function NewsLayout({ children }: { children: React.ReactNo
 
   return children;
 }
-

@@ -1,6 +1,5 @@
 import { SignInButton } from "@/components/AuthButtons";
 import { Shield, Lock, EyeOff } from "lucide-react";
-
 export default function SignInPage() {
   return (
     <div className="max-w-sm mx-auto mt-24 px-4">

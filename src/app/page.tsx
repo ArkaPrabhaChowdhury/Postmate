@@ -137,7 +137,7 @@ export default function Home() {
                 variants={itemVariants}
                 className="text-[12px] text-[#777] font-mono tracking-wide"
               >
-                Read-only GitHub access · No posting without approval · Free forever plan
+                Read-only GitHub access · No posting without approval
               </motion.p>
             </motion.div>
 

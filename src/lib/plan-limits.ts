@@ -1,7 +1,9 @@
 import { prisma } from "./prisma";
 import { PLANS, type Plan } from "./plans";
+import { expireTrialForUser } from "./trials";
 
 export async function getUserPlan(userId: string): Promise<Plan> {
+  await expireTrialForUser(userId);
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { plan: true },

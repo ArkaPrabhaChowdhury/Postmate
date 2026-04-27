@@ -14,7 +14,6 @@ import { syncUserFromCheckoutSession } from "@/lib/stripe-sync";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
-
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
   const m = Math.floor(diff / 60000);
@@ -187,8 +186,23 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       : Promise.resolve([] as { id: string; articleTitle: string; scheduledAt: Date | null }[]),
   ]);
 
+  const trialState = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      proTrialStartedAt: true,
+      proTrialEndsAt: true,
+      proTrialExpiredAt: true,
+      stripeSubscriptionId: true,
+    },
+  });
+
   const isPro = plan === "pro";
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
+  const isTrialActive = isPro && !!trialState?.proTrialEndsAt && !trialState.stripeSubscriptionId && trialState.proTrialEndsAt > new Date();
+  const isTrialExpired = !isPro && !!trialState?.proTrialExpiredAt && !trialState.stripeSubscriptionId;
+  const trialDaysLeft = trialState?.proTrialEndsAt
+    ? Math.max(0, Math.ceil((trialState.proTrialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : 0;
 
   const postBySha = new Map(posts.map((p) => [p.sourceId, p]));
 
@@ -251,6 +265,48 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
             </div>
           ))}
         </div>
+
+        {isTrialActive && (
+          <div className="flex items-center justify-between gap-4 px-5 py-4 bg-[#d4ff00]/[0.08] border border-[#d4ff00]/20 rounded-xl flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#d4ff00]/10 border border-[#d4ff00]/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={14} className="text-[#d4ff00]" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#f0ede8]">Pro trial active - {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left</p>
+                <p className="text-[11px] text-[#777] mt-0.5">Upgrade before it ends to keep unlimited posts, news, journey posts, and scheduling.</p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              Upgrade now
+              <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
+
+        {isTrialExpired && (
+          <div className="flex items-center justify-between gap-4 px-5 py-4 bg-amber-500/[0.08] border border-amber-500/20 rounded-xl flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <Lock size={14} className="text-amber-300" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#f0ede8]">Your Pro trial expired</p>
+                <p className="text-[11px] text-[#777] mt-0.5">You are back on the Free plan. Upgrade to restore Pro features.</p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              Upgrade to Pro
+              <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
 
         {/* Free plan usage banner */}
         {!isPro && (

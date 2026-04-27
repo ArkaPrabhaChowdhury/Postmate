@@ -26,7 +26,7 @@ export async function syncUserFromCheckoutSession(userId: string, checkoutSessio
       stripeSubscriptionId: sub.id,
       stripePriceId: priceId,
       stripeCurrentPeriodEnd: new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000),
+      proTrialExpiredAt: null,
     },
   });
 }
-

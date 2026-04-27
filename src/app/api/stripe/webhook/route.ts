@@ -28,6 +28,7 @@ async function syncUserFromSubscription(subscription: Stripe.Subscription) {
       stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? null,
       stripePriceId: priceId ?? null,
       stripeCurrentPeriodEnd: new Date(currentPeriodEnd * 1000),
+      proTrialExpiredAt: null,
     },
   });
 }

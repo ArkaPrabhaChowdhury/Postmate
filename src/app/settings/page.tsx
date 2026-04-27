@@ -6,7 +6,6 @@ import { getLinkedInAccount } from "@/lib/linkedin";
 import { Lock, Star, GitBranch, Check, Linkedin } from "lucide-react";
 import BillingSection from "./sections/BillingSection";
 import XPostSettingsSection from "./sections/XPostSettingsSection";
-
 const LANG_COLORS: Record<string, string> = {
   TypeScript: "#3178c6", JavaScript: "#f1e05a", Python: "#3572A5",
   Rust: "#dea584", Go: "#00ADD8", Java: "#b07219", "C++": "#f34b7d",

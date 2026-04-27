@@ -24,6 +24,7 @@ export default function PricingPage() {
   const { data: session } = useSession();
   const authed = !!session?.user;
   const [loading, setLoading] = useState<Plan | null>(null);
+  const [trialLoading, setTrialLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
   async function handleUpgrade(plan: Plan) {
@@ -43,6 +44,25 @@ export default function PricingPage() {
       if (data.url) window.location.href = data.url;
     } finally {
       setLoading(null);
+    }
+  }
+
+  async function handleStartTrial() {
+    if (!authed) {
+      window.location.href = "/signin";
+      return;
+    }
+
+    setTrialLoading(true);
+    try {
+      const res = await fetch("/api/trial/start", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start trial");
+      window.location.href = "/dashboard?trial=started";
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to start trial");
+    } finally {
+      setTrialLoading(false);
     }
   }
 
@@ -199,27 +219,43 @@ export default function PricingPage() {
                     {authed ? "Current plan" : "Get started free"}
                   </Link>
                 ) : (
-                  <button
-                    onClick={() => handleUpgrade(key)}
-                    disabled={isLoading}
-                    className={`mb-8 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${
-                      isHighlight
-                        ? "bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909]"
-                        : "bg-white/[0.07] hover:bg-white/[0.10] border border-white/[0.08] text-[#f0ede8]"
-                    }`}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                        Redirecting…
-                      </>
-                    ) : (
-                      <>
-                        Upgrade to {plan.name}
-                        <ArrowRight size={14} />
-                      </>
-                    )}
-                  </button>
+                  <div className="mb-8 space-y-2">
+                    <button
+                      onClick={handleStartTrial}
+                      disabled={trialLoading || isLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] transition-all disabled:opacity-60"
+                    >
+                      {trialLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                          Starting trial...
+                        </>
+                      ) : (
+                        <>
+                          Start 3-day free trial
+                          <Sparkles size={14} />
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleUpgrade(key)}
+                      disabled={isLoading || trialLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-60 bg-white/[0.07] hover:bg-white/[0.10] border border-white/[0.08] text-[#f0ede8]"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        <>
+                          Upgrade now
+                          <ArrowRight size={14} />
+                        </>
+                      )}
+                    </button>
+                    <p className="text-[11px] text-[#666] text-center">No card needed for the trial. Upgrade anytime to keep Pro.</p>
+                  </div>
                 )}
 
                 {/* Divider */}
@@ -250,7 +286,7 @@ export default function PricingPage() {
           animate="show"
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          No contracts · Cancel anytime · Billed monthly · Secure checkout via Stripe
+          3-day free trial - No contracts - Cancel anytime - Secure checkout via Stripe
         </motion.p>
 
         {/* FAQ section */}
@@ -301,9 +337,5 @@ const faqs = [
   {
     q: "Is my GitHub data safe?",
     a: "Read-only OAuth scope — we never write to your repos. Commit data is stored encrypted and never shared.",
-  },
-  {
-    q: "When is auto-posting to LinkedIn / X available?",
-    a: "Coming soon as part of Growth. LinkedIn and X OAuth API integrations are actively being built.",
-  },
+  }
 ];
