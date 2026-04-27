@@ -30,8 +30,46 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Postmate", template: "%s — Postmate" },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://postmate.arkocodes.dev"),
+  title: { default: "Postmate", template: "%s | Postmate" },
   description: "Turn GitHub commits into LinkedIn posts in seconds.",
+  applicationName: "Postmate",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Postmate",
+    description: "Turn GitHub commits into LinkedIn posts in seconds.",
+    url: "/",
+    siteName: "Postmate",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Postmate - Turn GitHub commits into LinkedIn posts in seconds.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Postmate",
+    description: "Turn GitHub commits into LinkedIn posts in seconds.",
+    images: ["/twitter-image"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 function PostmateLogo({ size = 28 }: { size?: number }) {
