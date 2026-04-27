@@ -23,8 +23,8 @@ export const PLANS = {
       yearly: process.env.STRIPE_PRO_YEARLY_PRICE_ID,
     },
     monthlyPrice: 8,
-    yearlyPrice: 77,
-    yearlyMonthlyEquivalent: 6.4,
+    yearlyPrice: 60,
+    yearlyMonthlyEquivalent: 5,
     repos: Infinity,
     postsPerMonth: Infinity,
     features: [

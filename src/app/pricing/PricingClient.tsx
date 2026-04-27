@@ -164,7 +164,7 @@ export default function PricingPage() {
                       ${plan.monthlyPrice}
                     </span>
                     )}
-                    {plan.monthlyPrice > 0 && (
+                    {plan.monthlyPrice > 0 && !(key === "pro" && billingInterval === "yearly") && (
                       <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
                     )}
                     {isFree && (
