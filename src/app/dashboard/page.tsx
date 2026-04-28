@@ -14,6 +14,32 @@ import { syncUserFromCheckoutSession } from "@/lib/stripe-sync";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
+
+function normalizeJourneyPost(value: unknown): JourneyPostData | null {
+  if (!value || typeof value !== "object") return null;
+
+  const raw = value as Record<string, unknown>;
+  const title = typeof raw.title === "string" ? raw.title.trim() : "";
+  const stage = typeof raw.stage === "string" ? raw.stage.trim() : "reflection";
+  const emoji = typeof raw.emoji === "string" ? raw.emoji.trim() : "";
+  const content = typeof raw.content === "string"
+    ? raw.content
+    : typeof raw.body === "string"
+      ? raw.body
+      : typeof raw.text === "string"
+        ? raw.text
+        : "";
+
+  if (!title && !content.trim()) return null;
+
+  return {
+    title: title || "Untitled post",
+    stage: stage || "reflection",
+    emoji,
+    content: content.trim(),
+  };
+}
+
 function timeAgo(date: Date) {
   const diff = Date.now() - date.getTime();
   const m = Math.floor(diff / 60000);
@@ -210,7 +236,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   if (strategy?.content) {
     try {
       const parsed = JSON.parse(strategy.content);
-      if (Array.isArray(parsed)) journeyPosts = parsed as JourneyPostData[];
+      if (Array.isArray(parsed)) {
+        journeyPosts = parsed
+          .map(normalizeJourneyPost)
+          .filter((post): post is JourneyPostData => post !== null);
+      }
     } catch { /* ignore */ }
   }
 
