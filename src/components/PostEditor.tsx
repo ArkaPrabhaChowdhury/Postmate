@@ -48,9 +48,9 @@ function ScoreCard({ score, loading }: { score: PostScore | null; loading: boole
         <ScoreBar label="Clarity" value={score.clarity} />
         <ScoreBar label="CTA" value={score.cta} />
       </div>
-      {score.tips.length > 0 && (
+      {(score.tips?.length ?? 0) > 0 && (
         <div className="flex flex-col gap-1 pt-1 border-t border-white/[0.06]">
-          {score.tips.map((tip, i) => (
+          {(score.tips ?? []).map((tip, i) => (
             <p key={i} className="text-[11px] text-[#888] leading-snug">· {tip}</p>
           ))}
         </div>
@@ -118,7 +118,7 @@ export function PostEditor(props: {
   const [platform, setPlatform] = useState<Platform>("linkedin");
   const MAX = LIMITS[platform];
   const minSchedule = useMemo(() => new Date(Date.now() + 60000), []);
-  const [content, setContent] = useState(props.initialContent);
+  const [content, setContent] = useState(props.initialContent ?? "");
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedX, setCopiedX] = useState(false);

@@ -182,6 +182,43 @@ function enforceMaxChars(text: string, maxChars: number): string {
   return hard.trimEnd();
 }
 
+function normalizeForClaimCheck(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, " ");
+}
+
+function hasUnsupportedClaimSignals(output: string, source: string): boolean {
+  const out = normalizeForClaimCheck(output);
+  const src = normalizeForClaimCheck(source);
+
+  const signalRegexes: RegExp[] = [
+    /\b\d+(\.\d+)?\s*%/,
+    /\b(latency|throughput|qps|rps|p95|p99|sla|uptime)\b/,
+    /\b(revenue|arr|mrr|conversion|roi|churn)\b/,
+    /\b(users?|customers?|downloads?|installs?)\b/,
+    /\b(x faster|times faster|improved by|reduced by|increased by)\b/,
+  ];
+
+  return signalRegexes.some((re) => re.test(out) && !re.test(src));
+}
+
+function stripLikelyUnsupportedClaimLines(output: string, source: string): string {
+  const src = normalizeForClaimCheck(source);
+  const lines = output.split(/\r?\n/);
+  const signalRegexes: RegExp[] = [
+    /\b\d+(\.\d+)?\s*%/,
+    /\b(latency|throughput|qps|rps|p95|p99|sla|uptime)\b/,
+    /\b(revenue|arr|mrr|conversion|roi|churn)\b/,
+    /\b(users?|customers?|downloads?|installs?)\b/,
+    /\b(x faster|times faster|improved by|reduced by|increased by)\b/,
+  ];
+
+  const kept = lines.filter((line) => {
+    const n = normalizeForClaimCheck(line);
+    return !signalRegexes.some((re) => re.test(n) && !re.test(src));
+  });
+  return kept.join("\n").trim();
+}
+
 function requiredEnv(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing environment variable: ${name}`);
@@ -319,7 +356,29 @@ export async function generateLinkedInPost(input: {
     temperature: 0.75,
     max_tokens: isX ? 150 : 800,
   });
-  const voiced = normalizePostVoice(raw);
+  const claimSource = [
+    input.commit.message,
+    filesSummary,
+    patchHints,
+    input.additionalPrompt ?? "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  let candidate = raw;
+  if (hasUnsupportedClaimSignals(candidate, claimSource)) {
+    const retry = await chat(
+      client,
+      system,
+      `${userMsg}\n\nCRITICAL REWRITE CONSTRAINT: Rewrite strictly from provided source facts. Remove any invented metrics, performance claims, user counts, business outcomes, or percentages.`,
+      { temperature: 0.2, max_tokens: isX ? 150 : 800 },
+    );
+    candidate = hasUnsupportedClaimSignals(retry, claimSource)
+      ? stripLikelyUnsupportedClaimLines(retry, claimSource)
+      : retry;
+  }
+
+  const voiced = normalizePostVoice(candidate);
   const shouldEnforce = input.enforce280 !== false;
   return isX && shouldEnforce ? enforceMaxChars(voiced, 280) : voiced;
 }
@@ -604,7 +663,15 @@ export async function generateNewsTweet(input: {
     .join("\n");
 
   const client = getOpenAIClient();
-  const raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.7, max_tokens: 400 });
+  const claimSource = [input.title, input.summary, input.additionalPrompt ?? ""].filter(Boolean).join("\n");
+  let raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.7, max_tokens: 400 });
+  if (hasUnsupportedClaimSignals(raw, claimSource)) {
+    const retryMsg = `${userMsg}\n\nCRITICAL REWRITE CONSTRAINT: Use only facts from title/summary. Remove any invented metrics, percentages, user counts, business outcomes, or performance claims.`;
+    const retry = await chat(client, Prompts.tweetGeneratorSystem, retryMsg, { temperature: 0.2, max_tokens: 400 });
+    raw = hasUnsupportedClaimSignals(retry, claimSource)
+      ? stripLikelyUnsupportedClaimLines(retry, claimSource)
+      : retry;
+  }
   return stripEdgeQuotes(raw);
 }
 

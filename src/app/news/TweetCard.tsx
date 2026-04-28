@@ -24,9 +24,9 @@ type Props = {
 };
 
 export function TweetCard({ id, articleUrl, articleTitle, tweet: initialTweet, linkedinConnected, linkedinStatus: initialLinkedinStatus, scheduledAt: initialScheduledAt }: Props) {
-  const [tweet, setTweet] = useState(initialTweet);
+  const [tweet, setTweet] = useState(initialTweet ?? "");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(initialTweet);
+  const [draft, setDraft] = useState(initialTweet ?? "");
   const [regenPrompt, setRegenPrompt] = useState("");
   const [isPending, startTransition] = useTransition();
   const [linkedinStatus, setLinkedinStatus] = useState(initialLinkedinStatus ?? "none");
