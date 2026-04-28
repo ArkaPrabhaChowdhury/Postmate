@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/social-card.png",
+        url: "/social-card-v2.png",
         width: 1200,
         height: 630,
         alt: "Postmate - Turn GitHub commits into LinkedIn posts in seconds.",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Postmate",
     description: "Turn GitHub commits into LinkedIn posts in seconds.",
-    images: ["/social-card.png"],
+    images: ["/social-card-v2.png"],
   },
   robots: {
     index: true,
