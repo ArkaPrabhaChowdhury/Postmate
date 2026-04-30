@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { getPlanFromPriceId } from "./plans";
 
 export { PLANS, getPlanFromPriceId } from "./plans";
 export type { Plan } from "./plans";
@@ -39,6 +40,10 @@ export type PaddleTransaction = {
   items?: Array<{ price?: { id?: string | null } | null }>;
   checkout: { url: string };
 };
+
+function getPriceIdFromItems(items: PaddleTransaction["items"] | PaddleSubscription["items"]) {
+  return items?.[0]?.price?.id ?? "";
+}
 
 function buildUrl(path: string, query?: PaddleRequestOptions["query"]) {
   const url = new URL(`${PADDLE_API_BASE}${path}`);
@@ -121,4 +126,12 @@ export function verifyPaddleWebhookSignature(rawBody: string, signatureHeader: s
   const payload = `${ts}:${rawBody}`;
   const actual = crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
   return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+}
+
+export function getPlanDetailsFromPaddleItems(items: PaddleTransaction["items"] | PaddleSubscription["items"]) {
+  const priceId = getPriceIdFromItems(items);
+  return {
+    priceId,
+    plan: getPlanFromPriceId(priceId),
+  };
 }

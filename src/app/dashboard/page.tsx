@@ -13,6 +13,7 @@ import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
+import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -74,7 +75,14 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 export default async function DashboardPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const userId = await requireUserId();
-  await searchParams;
+  const params = await searchParams;
+  const upgraded = params?.upgraded === "1";
+  const transactionParam = params?._ptxn;
+  const transactionId = typeof transactionParam === "string" ? transactionParam : undefined;
+
+  if (upgraded && transactionId) {
+    await syncUserFromPaddleTransaction(userId, transactionId).catch(() => {});
+  }
 
   const activeRepo = await prisma.repo.findFirst({
     where: { userId, isActive: true },

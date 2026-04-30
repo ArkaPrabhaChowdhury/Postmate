@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPlanFromPriceId } from "@/lib/plans";
 import {
-  getPaddleSubscription,
   getPaddleTransaction,
+  getPlanDetailsFromPaddleItems,
   verifyPaddleWebhookSignature,
   type PaddleSubscription,
 } from "@/lib/paddle";
 import { prisma } from "@/lib/prisma";
+import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 
 export const runtime = "nodejs";
 
@@ -37,11 +37,12 @@ function subscriptionKeepsPaidAccess(status: string) {
 async function upsertFromSubscription(userId: string, subscription: PaddleSubscription) {
   const priceId = getSubscriptionPriceId(subscription);
   const hasPaidAccess = subscriptionKeepsPaidAccess(subscription.status);
+  const plan = hasPaidAccess ? getPlanDetailsFromPaddleItems(subscription.items).plan : "free";
 
   await prisma.user.update({
     where: { id: userId },
     data: {
-      plan: hasPaidAccess ? getPlanFromPriceId(priceId) : "free",
+      plan,
       paddleCustomerId: subscription.customer_id ?? null,
       paddleSubscriptionId: hasPaidAccess ? subscription.id : null,
       paddlePriceId: hasPaidAccess ? priceId || null : null,
@@ -75,35 +76,23 @@ export async function POST(req: NextRequest) {
   }
 
   const custom = data.custom_data ?? data.transaction?.custom_data ?? {};
-  const userId = typeof custom.userId === "string" ? custom.userId : undefined;
+  let userId = typeof custom.userId === "string" ? custom.userId : undefined;
+
+  const customerId = typeof data.customer_id === "string" ? data.customer_id : undefined;
+  if (!userId && customerId) {
+    const existingUser = await prisma.user.findFirst({
+      where: { paddleCustomerId: customerId },
+      select: { id: true },
+    });
+    userId = existingUser?.id;
+  }
+
   if (!userId) return NextResponse.json({ received: true });
 
   if (type === "transaction.completed") {
     const transactionId = typeof data.id === "string" ? data.id : undefined;
-    const transaction = transactionId ? await getPaddleTransaction(transactionId) : null;
-    const subscriptionId = typeof data.subscription_id === "string"
-      ? data.subscription_id
-      : transaction?.subscription_id ?? undefined;
-
-    if (subscriptionId) {
-      const subscription = await getPaddleSubscription(subscriptionId);
-      await upsertFromSubscription(userId, subscription);
-      return NextResponse.json({ received: true });
-    }
-
-    const firstItem = Array.isArray(data.items) ? data.items[0] as { price?: { id?: string } } | undefined : undefined;
-    const priceId = firstItem?.price?.id ?? "";
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        plan: getPlanFromPriceId(priceId),
-        paddleCustomerId: typeof data.customer_id === "string" ? data.customer_id : transaction?.customer_id ?? null,
-        paddlePriceId: priceId || null,
-        proTrialExpiredAt: null,
-      },
-    });
-
+    if (!transactionId) return NextResponse.json({ received: true });
+    await syncUserFromPaddleTransaction(userId, transactionId);
     return NextResponse.json({ received: true });
   }
 
