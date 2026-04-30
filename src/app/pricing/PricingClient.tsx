@@ -35,7 +35,7 @@ export default function PricingPage() {
     }
     setLoading(plan);
     try {
-      const res = await fetch("/api/stripe/checkout", {
+      const res = await fetch("/api/paddle/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, billingInterval }),
@@ -286,7 +286,7 @@ export default function PricingPage() {
           animate="show"
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          3-day free trial - No contracts - Cancel anytime - Secure checkout via Stripe
+          3-day free trial - No contracts - Cancel anytime - Secure checkout via Paddle
         </motion.p>
 
         {/* FAQ section */}
@@ -332,7 +332,7 @@ const faqs = [
   },
   {
     q: "Can I upgrade or downgrade mid-cycle?",
-    a: "Yes. Stripe prorates immediately. You pay only for what you use.",
+    a: "Yes. Paddle handles prorated changes automatically based on your billing cycle.",
   },
   {
     q: "Is my GitHub data safe?",

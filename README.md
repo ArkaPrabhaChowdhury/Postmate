@@ -96,11 +96,11 @@ RESEND_API_KEY="re_replace_me"
 RESEND_FROM_EMAIL="you@yourdomain.com"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Stripe (optional; enables Pro billing flow)
-STRIPE_SECRET_KEY="sk_test_replace_me"
-STRIPE_PUBLISHABLE_KEY="pk_test_replace_me"
-STRIPE_PRO_PRICE_ID="price_replace_me"
-STRIPE_WEBHOOK_SECRET="whsec_replace_me"
+# Paddle (optional; enables Pro billing flow)
+PADDLE_API_KEY="pdl_live_or_sandbox_api_key"
+PADDLE_PRO_PRICE_ID="pri_replace_me"
+PADDLE_PRO_YEARLY_PRICE_ID="pri_replace_me"
+PADDLE_CUSTOMER_PORTAL_URL="https://vendors.paddle.com/subscription/portal"
 ```
 
 Create a GitHub OAuth App at `github.com/settings/developers`. Set the callback URL to `http://localhost:3000/api/auth/callback/github`.
@@ -134,7 +134,7 @@ npx prisma studio # Open Prisma GUI
 
 ## Architecture
 
-**Stack:** Next.js 16 App Router - React 19 - Prisma (PostgreSQL) - NextAuth v4 - Groq (OpenAI-compatible) - Tailwind CSS - Playwright (screenshots) - Stripe (billing)
+**Stack:** Next.js 16 App Router - React 19 - Prisma (PostgreSQL) - NextAuth v4 - Groq (OpenAI-compatible) - Tailwind CSS - Playwright (screenshots) - Paddle (billing)
 
 ### Data flow
 

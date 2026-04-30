@@ -10,7 +10,7 @@ import {
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock, Calendar,
 } from "lucide-react";
 import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
-import { syncUserFromCheckoutSession } from "@/lib/stripe-sync";
+import { syncUserFromCheckoutSession } from "@/lib/paddle-sync";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
