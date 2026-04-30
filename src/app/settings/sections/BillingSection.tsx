@@ -11,7 +11,7 @@ export default function BillingSection() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const res = await fetch("/api/paddle/portal", { method: "POST" });
       const json = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error || "Failed to open billing portal.");
       window.location.href = json.url;
