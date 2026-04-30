@@ -522,9 +522,6 @@ export default function Home() {
                     className="group-hover:translate-x-0.5 transition-transform"
                   />
                 </Link>
-                <p className="text-[13px] text-[#777] font-mono">
-                  Free forever · Read-only · No card required
-                </p>
               </motion.div>
             </motion.div>
           </div>

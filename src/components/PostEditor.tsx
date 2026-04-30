@@ -102,6 +102,7 @@ function CharRing({ count, max }: { count: number; max: number }) {
 export function PostEditor(props: {
   postId: string;
   initialContent: string;
+  initialPlatform?: Platform;
   initialLinkedinStatus?: string;
   initialScheduledAt?: string | null;
   linkedinConnected?: boolean;
@@ -115,7 +116,7 @@ export function PostEditor(props: {
   onRegenerate?: (postId: string, prompt: string) => Promise<string>;
   repoFullName?: string;
 }) {
-  const [platform, setPlatform] = useState<Platform>("linkedin");
+  const [platform] = useState<Platform>(props.initialPlatform ?? "linkedin");
   const MAX = LIMITS[platform];
   const minSchedule = useMemo(() => new Date(Date.now() + 60000), []);
   const [content, setContent] = useState(props.initialContent ?? "");
@@ -350,7 +351,7 @@ export function PostEditor(props: {
               {saved ? <><Check size={12} /> Saved</> : "Save draft"}
             </button>
 
-            {linkedinStatus === "scheduled" && scheduledAt ? (
+            {platform === "linkedin" && (linkedinStatus === "scheduled" && scheduledAt ? (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
                   <Calendar size={12} />
@@ -403,8 +404,8 @@ export function PostEditor(props: {
                   </button>
                 )}
               </>
-            )}
-            {showScheduler && (
+            ))}
+            {platform === "linkedin" && showScheduler && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full mt-1">
                 <div className="flex-1 min-w-0">
                   <LinkedInSchedulePicker
@@ -430,6 +431,7 @@ export function PostEditor(props: {
             )}
             {linkedinError && <p className="text-xs text-red-400 w-full mt-1">{linkedinError}</p>}
 
+            {platform === "x" && (
             <button
               type="button"
               onClick={handlePostX}
@@ -448,6 +450,7 @@ export function PostEditor(props: {
                 : <><XLogo size={13} /> Post to X</>
               }
             </button>
+            )}
           </div>
         </form>
 
@@ -581,27 +584,6 @@ export function PostEditor(props: {
 
       {/* ── Preview ── */}
       <div className="flex flex-col gap-4">
-        {/* Platform toggle */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[#f0ede8]">Preview</h3>
-          <div className="flex items-center gap-1 p-0.5 bg-white/[0.05] border border-white/[0.08] rounded-lg">
-            {(["linkedin", "x"] as Platform[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPlatform(p)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-                  platform === p
-                    ? "bg-[#d4ff00] text-[#090909]"
-                    : "text-[#666] hover:text-[#aaa]"
-                }`}
-              >
-                {p === "linkedin" ? <Linkedin size={11} /> : <XLogo size={11} />}
-                {p === "linkedin" ? "LinkedIn" : "X"}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {platform === "linkedin" ? (
           <div className="bg-[#0c0c0c] rounded-xl overflow-hidden border border-white/[0.08] shadow-sm font-sans">

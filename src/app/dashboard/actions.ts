@@ -128,6 +128,7 @@ export async function generatePostFromCommit(formData: FormData) {
       repoId: repo.id,
       sourceType: "commit",
       sourceId: sha,
+      platform,
       style,
       content,
       status: "draft",

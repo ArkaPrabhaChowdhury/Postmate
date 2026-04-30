@@ -161,6 +161,28 @@ function toneLabel(raw?: string): string | undefined {
   return "Bold / punchy";
 }
 
+function buildPromptContext(input: {
+  voiceMemory?: string;
+  additionalPrompt?: string;
+  tasteProfile?: string;
+  tone?: string;
+} & Record<string, unknown>): string[] {
+  const lines = [
+    "Instruction priority:",
+    "1. Explicit user voice and direct request instructions",
+    "2. Owner global instruction",
+    "3. Base system style rules",
+    `Owner global instruction: ${Prompts.ownerGlobalInstruction}`,
+  ];
+
+  if (input.voiceMemory) lines.push(`Voice memory: ${input.voiceMemory}`);
+  if (input.tasteProfile) lines.push(`Writing style/taste: ${input.tasteProfile}`);
+  if (input.additionalPrompt) lines.push(`Direct request override: ${input.additionalPrompt}`);
+  if (input.tone) lines.push(`Tone: ${toneLabel(input.tone)}`);
+
+  return lines;
+}
+
 function enforceMaxChars(text: string, maxChars: number): string {
   const normalized = text.replace(/\s+\n/g, "\n").trim();
   if (normalized.length <= maxChars) return normalized;
@@ -334,9 +356,7 @@ export async function generateLinkedInPost(input: {
     `Commit: ${input.commit.sha.slice(0, 7)} — ${input.commit.message}`,
     input.commit.authorLogin ? `Author: ${input.commit.authorLogin}` : "",
     input.commit.authoredAt ? `Date: ${input.commit.authoredAt}` : "",
-    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
-    input.additionalPrompt ? `Additional instruction: ${input.additionalPrompt}` : "",
+    ...buildPromptContext(input),
     "",
     "Files changed:",
     filesSummary,
@@ -462,6 +482,7 @@ export async function generateJourneyPosts(input: {
 
   const userMsg = [
     meta,
+    ...buildPromptContext(input),
     "",
     "Top commits:",
     commitLines.join("\n") || "(none)",
@@ -533,8 +554,7 @@ export async function generateProjectShowcase(input: {
 
   const userMsg = [
     meta,
-    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    ...buildPromptContext(input),
     "",
     "Top commits:",
     commitLines.join("\n") || "(none)",
@@ -581,8 +601,7 @@ export async function generateTrendPost(input: {
     `Platform: ${input.platform}`,
     `Topic: ${input.topic}`,
     input.headline ? `Selected headline: ${input.headline}` : "",
-    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    ...buildPromptContext(input),
     input.profile.name ? `Name: ${input.profile.name}` : "",
     input.profile.login ? `Handle: ${input.profile.login}` : "",
     input.profile.bio ? `Bio: ${input.profile.bio}` : "",
@@ -655,9 +674,7 @@ export async function generateNewsTweet(input: {
   const userMsg = [
     `Title: ${input.title}`,
     input.summary ? `Summary: ${input.summary}` : "",
-    input.tasteProfile ? `Writing style/taste: ${input.tasteProfile}` : "",
-    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.additionalPrompt ? `Additional instruction: ${input.additionalPrompt}` : "",
+    ...buildPromptContext(input),
   ]
     .filter(Boolean)
     .join("\n");
@@ -698,8 +715,7 @@ export async function generateClusteredPosts(input: {
 
   const userMsg = [
     `Repo: ${input.repoFullName}`,
-    input.voiceMemory ? `Voice memory: ${input.voiceMemory}` : "",
-    input.tone ? `Tone: ${toneLabel(input.tone)}` : "",
+    ...buildPromptContext(input),
     "",
     "Commits to cluster:",
     commitLines,

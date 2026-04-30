@@ -175,6 +175,7 @@ model GeneratedPost {
   repoId      String?
   sourceType  String   // "commit"
   sourceId    String   // commit SHA
+  platform    String   @default("linkedin") // linkedin | x
   style       String   // "progress" | "insight" | "build_in_public"
   content     String
   status      String   @default("draft") // draft | copied | posted

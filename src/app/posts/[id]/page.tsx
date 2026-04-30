@@ -30,6 +30,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       select: {
         id: true, content: true, style: true, status: true,
         sourceType: true, sourceId: true, createdAt: true,
+        platform: true,
         linkedinStatus: true, scheduledAt: true,
         repo: { select: { fullName: true } },
       },
@@ -93,6 +94,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <PostEditor
             postId={post.id}
             initialContent={post.content}
+            initialPlatform={post.platform === "x" ? "x" : "linkedin"}
             initialLinkedinStatus={post.linkedinStatus}
             initialScheduledAt={post.scheduledAt?.toISOString() ?? null}
             linkedinConnected={!!linkedinAccount?.access_token}

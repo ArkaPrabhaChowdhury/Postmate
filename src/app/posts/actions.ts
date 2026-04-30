@@ -137,6 +137,7 @@ export async function regeneratePostAction(postId: string, additionalPrompt: str
   const post = await prisma.generatedPost.findFirst({
     where: { id: postId, userId },
     select: {
+      platform: true,
       style: true,
       sourceId: true,
       repo: { select: { fullName: true } },
@@ -158,6 +159,7 @@ export async function regeneratePostAction(postId: string, additionalPrompt: str
   const content = await generateLinkedInPost({
     repoFullName: post.repo.fullName,
     style: post.style as Parameters<typeof generateLinkedInPost>[0]["style"],
+    platform: post.platform === "x" ? "x" : "linkedin",
     commit,
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,

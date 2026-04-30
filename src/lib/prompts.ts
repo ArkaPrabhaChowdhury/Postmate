@@ -1,6 +1,7 @@
 import type { PostStyle } from "./ai";
 
 export const Prompts = {
+    ownerGlobalInstruction: "Do not mention source code filenames or file paths unless the user's saved voice or explicit request clearly asks for them.",
     // ─── Single Post Generation ───
 
     getLinkedInPostStyleGuide: (style: PostStyle) => {

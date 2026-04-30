@@ -223,6 +223,18 @@ export default async function RootLayout({
                 Privacy Policy
               </Link>
               <Link
+                href="/terms"
+                className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/refund"
+                className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
+              >
+                Refunds
+              </Link>
+              <Link
                 href="/support"
                 className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"
               >
