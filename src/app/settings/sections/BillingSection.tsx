@@ -39,10 +39,9 @@ export default function BillingSection() {
           className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#f0ede8] rounded-lg transition-colors disabled:opacity-60"
         >
           <ExternalLink size={13} />
-          {loading ? "Opening…" : "Manage billing"}
+          {loading ? "Opening..." : "Manage billing"}
         </button>
       </div>
     </section>
   );
 }
-

@@ -52,7 +52,7 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                If you are not satisfied with Postmate Pro within the first <strong className="text-[#f0ede8]">7 days</strong> of your initial paid subscription, contact us for a full refund — no questions asked.
+                If you are not satisfied with Postmate Pro within the first <strong className="text-[#f0ede8]">7 days</strong> of your initial paid subscription, contact us for a full refund - no questions asked.
               </p>
               <p>
                 This guarantee applies to first-time Pro subscribers only. It does not apply to renewals or accounts that previously received a refund.
@@ -69,7 +69,7 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                You may cancel your subscription at any time from your account settings. Cancellation stops future renewals — your Pro access continues until the end of your current billing period.
+                You may cancel your subscription at any time from your account settings. Cancellation stops future renewals - your Pro access continues until the end of your current billing period.
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>Monthly plans: cancel any time before the next monthly renewal date.</li>
@@ -91,7 +91,7 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                Approved refunds are processed via the original payment method through Stripe. Processing typically takes 5–10 business days depending on your bank or card issuer.
+                Approved refunds are processed via the original payment method through Paddle. Processing typically takes 5-10 business days depending on your bank or card issuer.
               </p>
               <p>
                 To request a refund, email <a href="mailto:arkopra@gmail.com" className="text-[#888] hover:text-[#d4ff00] transition-colors underline">arkopra@gmail.com</a> with the subject line &quot;Refund Request&quot; and include your account email address. We will process eligible requests within 2 business days.
@@ -108,7 +108,7 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                When a free trial is offered, no charge is made until the trial period ends. Cancel before the trial ends to avoid being charged. Trial periods are not eligible for the 7-day refund guarantee — if you cancel during the trial, no charge is issued.
+                When a free trial is offered, no charge is made until the trial period ends. Cancel before the trial ends to avoid being charged. Trial periods are not eligible for the 7-day refund guarantee - if you cancel during the trial, no charge is issued.
               </p>
             </div>
           </section>

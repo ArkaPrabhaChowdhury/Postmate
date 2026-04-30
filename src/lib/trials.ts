@@ -6,11 +6,11 @@ const TRIAL_DAYS = 3;
 export async function startProTrial(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { plan: true, proTrialStartedAt: true, stripeSubscriptionId: true },
+    select: { plan: true, proTrialStartedAt: true, paddleSubscriptionId: true },
   });
 
   if (!user) throw new Error("User not found");
-  if (user.plan === "pro" && user.stripeSubscriptionId) throw new Error("Already subscribed to Pro");
+  if (user.plan === "pro" && user.paddleSubscriptionId) throw new Error("Already subscribed to Pro");
   if (user.proTrialStartedAt) throw new Error("Trial already used");
 
   const now = new Date();
@@ -37,14 +37,14 @@ export async function expireTrialForUser(userId: string) {
       email: true,
       name: true,
       plan: true,
-      stripeSubscriptionId: true,
+      paddleSubscriptionId: true,
       proTrialEndsAt: true,
       proTrialExpiredEmailSentAt: true,
     },
   });
 
   if (!user?.proTrialEndsAt || user.proTrialEndsAt > new Date()) return { expired: false };
-  if (user.stripeSubscriptionId) return { expired: false };
+  if (user.paddleSubscriptionId) return { expired: false };
 
   const expiredAt = new Date();
   const updated = await prisma.user.update({
@@ -76,7 +76,7 @@ export async function expireDueTrials(limit = 100) {
   const users = await prisma.user.findMany({
     where: {
       plan: "pro",
-      stripeSubscriptionId: null,
+      paddleSubscriptionId: null,
       proTrialEndsAt: { lte: now },
     },
     select: { id: true },

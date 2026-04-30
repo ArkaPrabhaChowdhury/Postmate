@@ -93,7 +93,7 @@ export default function TermsPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                Paid subscriptions are billed via Stripe. By subscribing, you authorize recurring charges at the selected interval (monthly or yearly). All prices are in USD.
+                Paid subscriptions are billed via Paddle. By subscribing, you authorize recurring charges at the selected interval (monthly or yearly). All prices are in USD.
               </p>
               <ul className="list-disc pl-5 space-y-2">
                 <li>Subscriptions renew automatically unless cancelled before the renewal date.</li>

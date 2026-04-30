@@ -10,7 +10,6 @@ import {
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock, Calendar,
 } from "lucide-react";
 import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
-import { syncUserFromCheckoutSession } from "@/lib/paddle-sync";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
@@ -75,14 +74,7 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 export default async function DashboardPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
   const userId = await requireUserId();
-  const params = await searchParams;
-
-  const upgraded = params?.upgraded === "1";
-  const sessionIdParam = params?.session_id;
-  const checkoutSessionId = typeof sessionIdParam === "string" ? sessionIdParam : undefined;
-  if (upgraded && checkoutSessionId) {
-    await syncUserFromCheckoutSession(userId, checkoutSessionId).catch(() => {});
-  }
+  await searchParams;
 
   const activeRepo = await prisma.repo.findFirst({
     where: { userId, isActive: true },
@@ -218,14 +210,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       proTrialStartedAt: true,
       proTrialEndsAt: true,
       proTrialExpiredAt: true,
-      stripeSubscriptionId: true,
+      paddleSubscriptionId: true,
     },
   });
 
   const isPro = plan === "pro";
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
-  const isTrialActive = isPro && !!trialState?.proTrialEndsAt && !trialState.stripeSubscriptionId && trialState.proTrialEndsAt > new Date();
-  const isTrialExpired = !isPro && !!trialState?.proTrialExpiredAt && !trialState.stripeSubscriptionId;
+  const isTrialActive = isPro && !!trialState?.proTrialEndsAt && !trialState.paddleSubscriptionId && trialState.proTrialEndsAt > new Date();
+  const isTrialExpired = !isPro && !!trialState?.proTrialExpiredAt && !trialState.paddleSubscriptionId;
   const trialDaysLeft = trialState?.proTrialEndsAt
     ? Math.max(0, Math.ceil((trialState.proTrialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
     : 0;

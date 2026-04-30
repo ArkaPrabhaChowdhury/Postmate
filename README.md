@@ -97,10 +97,11 @@ RESEND_FROM_EMAIL="you@yourdomain.com"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Paddle (optional; enables Pro billing flow)
-PADDLE_API_KEY="pdl_live_or_sandbox_api_key"
+PADDLE_API_KEY="pdl_sandbox_or_live_api_key"
+PADDLE_API_BASE_URL="https://sandbox-api.paddle.com"
 PADDLE_PRO_PRICE_ID="pri_replace_me"
 PADDLE_PRO_YEARLY_PRICE_ID="pri_replace_me"
-PADDLE_CUSTOMER_PORTAL_URL="https://vendors.paddle.com/subscription/portal"
+PADDLE_WEBHOOK_SECRET="pdlntfset_replace_me"
 ```
 
 Create a GitHub OAuth App at `github.com/settings/developers`. Set the callback URL to `http://localhost:3000/api/auth/callback/github`.
