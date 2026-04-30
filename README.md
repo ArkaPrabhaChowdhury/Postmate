@@ -102,6 +102,8 @@ PADDLE_API_BASE_URL="https://sandbox-api.paddle.com"
 PADDLE_PRO_PRICE_ID="pri_replace_me"
 PADDLE_PRO_YEARLY_PRICE_ID="pri_replace_me"
 PADDLE_WEBHOOK_SECRET="pdlntfset_replace_me"
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN="test_replace_me"
+NEXT_PUBLIC_PADDLE_ENV="sandbox"
 ```
 
 Create a GitHub OAuth App at `github.com/settings/developers`. Set the callback URL to `http://localhost:3000/api/auth/callback/github`.

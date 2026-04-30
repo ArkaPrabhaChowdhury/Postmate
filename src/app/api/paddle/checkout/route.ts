@@ -16,6 +16,9 @@ export async function POST(req: NextRequest) {
   const user = await prisma.user.findUnique({ where: { email: session.user.email }, select: { id: true } });
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL;
+  const checkoutUrl = appUrl ? new URL("/pay", appUrl).toString() : undefined;
+
   const transaction = await createPaddleCheckout({
     userId: user.id,
     email: session.user.email,
@@ -23,6 +26,7 @@ export async function POST(req: NextRequest) {
     priceId,
     plan,
     billingInterval: interval,
+    checkoutUrl,
   });
 
   return NextResponse.json({ url: transaction.data.checkout.url });

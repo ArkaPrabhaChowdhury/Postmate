@@ -69,6 +69,7 @@ export async function createPaddleCheckout(params: {
   priceId: string;
   plan: string;
   billingInterval: "monthly" | "yearly";
+  checkoutUrl?: string;
 }) {
   return paddleRequest<{ data: PaddleTransaction }>("/transactions", {
     method: "POST",
@@ -83,6 +84,11 @@ export async function createPaddleCheckout(params: {
         plan: params.plan,
         billingInterval: params.billingInterval,
       },
+      checkout: params.checkoutUrl
+        ? {
+            url: params.checkoutUrl,
+          }
+        : undefined,
     }),
   });
 }
