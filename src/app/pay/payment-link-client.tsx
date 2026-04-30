@@ -36,7 +36,10 @@ export default function PaddlePaymentLinkClient() {
   const [error, setError] = useState<string | null>(null);
 
   const transactionId = searchParams.get("_ptxn");
-  const successUrl = useMemo(() => `${appUrl}/dashboard?upgraded=1`, []);
+  const successUrl = useMemo(() => {
+    if (!transactionId) return `${appUrl}/dashboard?upgraded=1`;
+    return `${appUrl}/dashboard?upgraded=1&_ptxn=${encodeURIComponent(transactionId)}`;
+  }, [transactionId]);
 
   function initializePaddle() {
     if (!window.Paddle) {
