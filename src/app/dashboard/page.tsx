@@ -77,6 +77,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const userId = await requireUserId();
   const params = await searchParams;
   const upgraded = params?.upgraded === "1";
+  const commitsPageParam = params?.commitsPage;
+  const commitsPageRaw = Array.isArray(commitsPageParam) ? commitsPageParam[0] : commitsPageParam;
+  const commitsPageNum = Number.parseInt(commitsPageRaw ?? "1", 10);
+  const commitsPage = Number.isFinite(commitsPageNum) && commitsPageNum > 0 ? commitsPageNum : 1;
+  const commitsPerPage = 5;
   const transactionParam = params?._ptxn;
   const transactionId = typeof transactionParam === "string" ? transactionParam : undefined;
 
@@ -182,7 +187,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
-      take: 5,
+      skip: (commitsPage - 1) * commitsPerPage,
+      take: commitsPerPage + 1,
       select: { id: true, externalId: true, title: true, url: true, authorLogin: true, authoredAt: true, createdAt: true },
     }),
     prisma.generatedPost.findMany({
@@ -211,6 +217,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       ? newsTweetModel.findMany({ where: { userId, linkedinStatus: "scheduled" }, orderBy: { scheduledAt: "asc" }, select: { id: true, articleTitle: true, scheduledAt: true } })
       : Promise.resolve([] as { id: string; articleTitle: string; scheduledAt: Date | null }[]),
   ]);
+  const hasMoreCommits = events.length > commitsPerPage;
+  const visibleEvents = hasMoreCommits ? events.slice(0, commitsPerPage) : events;
 
   const trialState = await prisma.user.findUnique({
     where: { id: userId },
@@ -525,7 +533,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
               </div>
             </summary>
 
-            {events.length === 0 ? (
+            {visibleEvents.length === 0 ? (
               <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
                   <GitCommit size={18} className="text-[#444]" />
@@ -537,7 +545,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
               </div>
             ) : (
               <div className="divide-y divide-white/[0.05]">
-                {events.map((e) => {
+                {visibleEvents.map((e) => {
                   const existing = postBySha.get(e.externalId);
                   return (
                     <div
@@ -617,6 +625,27 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                     </div>
                   );
                 })}
+                <div className="px-5 py-3.5 flex items-center justify-between gap-3 bg-white/[0.01]">
+                  <p className="text-xs text-[#666]">Showing page {commitsPage}</p>
+                  <div className="flex items-center gap-2">
+                    {commitsPage > 1 && (
+                      <Link
+                        href={commitsPage === 2 ? "/dashboard" : `/dashboard?commitsPage=${commitsPage - 1}`}
+                        className="inline-flex items-center justify-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#aaa] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors"
+                      >
+                        Newer
+                      </Link>
+                    )}
+                    {hasMoreCommits && (
+                      <Link
+                        href={`/dashboard?commitsPage=${commitsPage + 1}`}
+                        className="inline-flex items-center justify-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#aaa] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors"
+                      >
+                        Load more
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </details>
