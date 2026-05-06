@@ -8,6 +8,7 @@ import { getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprin
 import { fetchDevNews } from "@/lib/news";
 import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, generateClusteredPosts, type PostStyle } from "@/lib/ai";
 import { assertCanGeneratePost, assertProPlan } from "@/lib/plan-limits";
+import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
 
 function firstLine(s: string): string {
   return s.split(/\r?\n/)[0]?.trim() ?? s;
@@ -262,11 +263,26 @@ export async function saveVoiceSettings(formData: FormData) {
   const userId = await requireUserId();
   const voiceMemory = String(formData.get("voiceMemory") ?? "").trim();
   const tone = String(formData.get("tone") ?? "").trim();
+  const ownerGlobalInstructionOverride = String(formData.get("ownerGlobalInstructionOverride") ?? "").trim();
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  const isOwnerPromptAdmin = isOwnerPromptAdminEmail(user?.email);
 
   await prisma.userSettings.upsert({
     where: { userId },
-    create: { userId, voiceMemory: voiceMemory || null, tone: tone || null },
-    update: { voiceMemory: voiceMemory || null, tone: tone || null },
+    create: {
+      userId,
+      voiceMemory: voiceMemory || null,
+      tone: tone || null,
+      ...(isOwnerPromptAdmin ? { ownerGlobalInstructionOverride: ownerGlobalInstructionOverride || null } : {}),
+    },
+    update: {
+      voiceMemory: voiceMemory || null,
+      tone: tone || null,
+      ...(isOwnerPromptAdmin ? { ownerGlobalInstructionOverride: ownerGlobalInstructionOverride || null } : {}),
+    },
   });
 
   revalidatePath("/dashboard");

@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import dns from "dns";
 import { Prompts } from "./prompts";
 import { logExtraction } from "./logger";
+import { prisma } from "./prisma";
+import { getOwnerPromptAdminEmail } from "./owner-prompt";
 
 // Force IPv4 for Node fetch to bypass broken IPv6 routing to Cloudflare (Groq API)
 // which causes persistent "UND_ERR_SOCKET" connection drops.
@@ -31,6 +33,29 @@ export type CommitForPrompt = {
     patch?: string;
   }>;
 };
+
+async function getOwnerGlobalInstruction(): Promise<string> {
+  const ownerPromptAdminEmail = getOwnerPromptAdminEmail();
+  if (!ownerPromptAdminEmail) return Prompts.ownerGlobalInstruction;
+
+  const settingsClient = prisma as unknown as {
+    userSettings?: {
+      findFirst: (args: {
+        where: { user: { email: string } };
+        select: { ownerGlobalInstructionOverride: true };
+      }) => Promise<{ ownerGlobalInstructionOverride?: string | null } | null>;
+    };
+  };
+
+  const ownerSettings = settingsClient.userSettings
+    ? await settingsClient.userSettings.findFirst({
+    where: { user: { email: ownerPromptAdminEmail } },
+    select: { ownerGlobalInstructionOverride: true },
+      })
+    : null;
+
+  return ownerSettings?.ownerGlobalInstructionOverride?.trim() || Prompts.ownerGlobalInstruction;
+}
 
 const STOPWORDS = new Set([
   "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from", "has", "have",
@@ -166,13 +191,14 @@ function buildPromptContext(input: {
   additionalPrompt?: string;
   tasteProfile?: string;
   tone?: string;
+  ownerGlobalInstruction: string;
 } & Record<string, unknown>): string[] {
   const lines = [
     "Instruction priority:",
     "1. Explicit user voice and direct request instructions",
     "2. Owner global instruction",
     "3. Base system style rules",
-    `Owner global instruction: ${Prompts.ownerGlobalInstruction}`,
+    `Owner global instruction: ${input.ownerGlobalInstruction}`,
   ];
 
   if (input.voiceMemory) lines.push(`Voice memory: ${input.voiceMemory}`);
@@ -327,6 +353,7 @@ export async function generateLinkedInPost(input: {
   additionalPrompt?: string;
   enforce280?: boolean;
 }): Promise<string> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const styleGuide = Prompts.getLinkedInPostStyleGuide(input.style);
 
   const filesSummary =
@@ -356,7 +383,7 @@ export async function generateLinkedInPost(input: {
     `Commit: ${input.commit.sha.slice(0, 7)} — ${input.commit.message}`,
     input.commit.authorLogin ? `Author: ${input.commit.authorLogin}` : "",
     input.commit.authoredAt ? `Date: ${input.commit.authoredAt}` : "",
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     "",
     "Files changed:",
     filesSummary,
@@ -413,6 +440,7 @@ export async function generateProjectStrategy(input: {
   commits: { sha: string; message: string; authoredAt?: string }[];
   languages: string[];
 }): Promise<string> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const commitLines = input.commits.slice(0, 40).map((c) => {
     const first = c.message.split(/\r?\n/)[0] ?? "";
     return `- [${c.authoredAt ?? ""}] ${c.sha.slice(0, 7)}: ${first}`;
@@ -427,6 +455,7 @@ export async function generateProjectStrategy(input: {
     input.description ? `Description: ${input.description}` : "",
     input.topics.length ? `Topics: ${input.topics.join(", ")}` : "",
     input.languages.length ? `Languages: ${input.languages.join(", ")}` : "",
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     "",
     "Recent commits:",
     commitLines.join("\n") || "(none)",
@@ -462,6 +491,7 @@ export async function generateJourneyPosts(input: {
   commits: { sha: string; message: string; authoredAt?: string }[];
   languages: string[];
 }): Promise<JourneyPost[]> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const commitLines = input.commits.slice(0, 10).map((c) => {
     const first = c.message.split(/\r?\n/)[0] ?? "";
     return `- ${c.sha.slice(0, 7)}: ${first}`;
@@ -482,7 +512,7 @@ export async function generateJourneyPosts(input: {
 
   const userMsg = [
     meta,
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     "",
     "Top commits:",
     commitLines.join("\n") || "(none)",
@@ -534,6 +564,7 @@ export async function generateProjectShowcase(input: {
   voiceMemory?: string;
   tone?: string;
 }): Promise<string> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const commitLines = input.commits.slice(0, 10).map((c) => {
     const first = c.message.split(/\r?\n/)[0] ?? "";
     return `- ${c.sha.slice(0, 7)}: ${first}`;
@@ -554,7 +585,7 @@ export async function generateProjectShowcase(input: {
 
   const userMsg = [
     meta,
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     "",
     "Top commits:",
     commitLines.join("\n") || "(none)",
@@ -596,12 +627,13 @@ export async function generateTrendPost(input: {
   tone?: string;
   enforce280?: boolean;
 }): Promise<string> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const system = Prompts.trendPostSystem(input.platform);
   const userMsg = [
     `Platform: ${input.platform}`,
     `Topic: ${input.topic}`,
     input.headline ? `Selected headline: ${input.headline}` : "",
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     input.profile.name ? `Name: ${input.profile.name}` : "",
     input.profile.login ? `Handle: ${input.profile.login}` : "",
     input.profile.bio ? `Bio: ${input.profile.bio}` : "",
@@ -664,6 +696,7 @@ export async function generateNewsTweet(input: {
   tasteProfile?: string;
   additionalPrompt?: string;
 }): Promise<string> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const stripEdgeQuotes = (text: string) => {
     const trimmed = text.trim();
     const withoutLeading = trimmed.replace(/^[\"“”]+/, "");
@@ -674,7 +707,7 @@ export async function generateNewsTweet(input: {
   const userMsg = [
     `Title: ${input.title}`,
     input.summary ? `Summary: ${input.summary}` : "",
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
   ]
     .filter(Boolean)
     .join("\n");
@@ -707,6 +740,7 @@ export async function generateClusteredPosts(input: {
   tone?: string;
   platform?: "linkedin" | "x";
 }): Promise<CommitCluster[]> {
+  const ownerGlobalInstruction = await getOwnerGlobalInstruction();
   const platform = input.platform ?? "linkedin";
   const commitLines = input.commits
     .slice(0, 30)
@@ -715,7 +749,7 @@ export async function generateClusteredPosts(input: {
 
   const userMsg = [
     `Repo: ${input.repoFullName}`,
-    ...buildPromptContext(input),
+    ...buildPromptContext({ ...input, ownerGlobalInstruction }),
     "",
     "Commits to cluster:",
     commitLines,

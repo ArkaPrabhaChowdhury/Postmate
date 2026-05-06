@@ -14,6 +14,7 @@ import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
+import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -173,7 +174,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
 
   const settingsClient = prisma as unknown as {
     userSettings?: {
-      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null } | null>;
+      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null; ownerGlobalInstructionOverride?: string | null } | null>;
     };
   };
 
@@ -183,7 +184,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     };
   }).newsTweet;
 
-  const [events, posts, strategy, settings, suggestion, plan, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
+  const [events, posts, strategy, settings, user, suggestion, plan, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
@@ -205,6 +206,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       })
       : Promise.resolve(null),
     settingsClient.userSettings ? settingsClient.userSettings.findUnique({ where: { userId } }) : Promise.resolve(null),
+    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
     getPostingSuggestion(userId),
     getUserPlan(userId),
     getMonthlyPostCount(userId),
@@ -219,6 +221,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   ]);
   const hasMoreCommits = events.length > commitsPerPage;
   const visibleEvents = hasMoreCommits ? events.slice(0, commitsPerPage) : events;
+  const isOwnerPromptAdmin = isOwnerPromptAdminEmail(user?.email);
 
   const trialState = await prisma.user.findUnique({
     where: { id: userId },
@@ -476,6 +479,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
               <VoiceSettingsSection
                 initialVoiceMemory={settings?.voiceMemory ?? ""}
                 initialTone={settings?.tone ?? "50"}
+                initialOwnerGlobalInstruction={settings?.ownerGlobalInstructionOverride ?? ""}
+                showOwnerGlobalInstruction={isOwnerPromptAdmin}
                 onSave={saveVoiceSettings}
                 onAutoGenerate={autoGenerateVoice}
               />

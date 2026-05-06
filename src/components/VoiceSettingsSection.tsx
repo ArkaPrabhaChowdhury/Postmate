@@ -6,13 +6,23 @@ import { Fingerprint, Check, ChevronRight } from "lucide-react";
 type Props = {
   initialVoiceMemory: string;
   initialTone: string;
+  initialOwnerGlobalInstruction?: string;
+  showOwnerGlobalInstruction?: boolean;
   onSave: (fd: FormData) => Promise<void>;
   onAutoGenerate: () => Promise<string>;
 };
 
-export function VoiceSettingsSection({ initialVoiceMemory, initialTone, onSave, onAutoGenerate }: Props) {
+export function VoiceSettingsSection({
+  initialVoiceMemory,
+  initialTone,
+  initialOwnerGlobalInstruction = "",
+  showOwnerGlobalInstruction = false,
+  onSave,
+  onAutoGenerate,
+}: Props) {
   const [voiceMemory, setVoiceMemory] = useState(initialVoiceMemory);
   const [tone, setTone] = useState(initialTone);
+  const [ownerGlobalInstruction, setOwnerGlobalInstruction] = useState(initialOwnerGlobalInstruction);
   const [saved, setSaved] = useState(false);
   const [generating, startGenerating] = useTransition();
   const [generated, setGenerated] = useState(false);
@@ -34,6 +44,7 @@ export function VoiceSettingsSection({ initialVoiceMemory, initialTone, onSave, 
     const fd = new FormData();
     fd.set("voiceMemory", voiceMemory);
     fd.set("tone", tone);
+    if (showOwnerGlobalInstruction) fd.set("ownerGlobalInstructionOverride", ownerGlobalInstruction);
     startSaving(async () => {
       await onSave(fd);
       setSaved(true);
@@ -90,6 +101,21 @@ export function VoiceSettingsSection({ initialVoiceMemory, initialTone, onSave, 
           placeholder="Short phrases, tone quirks, or stylistic rules you want in every post. Or click 'Auto-generate' to analyze your GitHub writing style."
         />
       </div>
+
+      {showOwnerGlobalInstruction && (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <label className="text-xs font-semibold text-[#888]">Owner global prompt</label>
+            <span className="text-[11px] text-[#555]">Applies to every user</span>
+          </div>
+          <textarea
+            value={ownerGlobalInstruction}
+            onChange={(e) => setOwnerGlobalInstruction(e.target.value)}
+            className="w-full h-24 resize-y bg-[#090909] border border-white/[0.08] rounded-xl p-3 text-sm text-[#f0ede8] leading-relaxed outline-none focus:border-[#d4ff00]/50 transition-colors"
+            placeholder="Owner-wide AI rule that applies to all generations unless the user's voice or direct request overrides it."
+          />
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-1">

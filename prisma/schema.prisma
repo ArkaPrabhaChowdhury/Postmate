@@ -47,6 +47,7 @@ model UserSettings {
   id          String   @id @default(cuid())
   userId      String   @unique
   voiceMemory String?
+  ownerGlobalInstructionOverride String?
   tone        String?
   newsSources       String?
   newsKeywords      String?
