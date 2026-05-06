@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { XLogo } from "@/components/XLogo";
+import { HomeDemoVideo } from "@/components/HomeDemoVideo";
 
 const containerVariants = {
   hidden: {},
@@ -257,6 +258,8 @@ export default function Home() {
       </section>
 
       {/* ── PLATFORM STRIP ───────────────────────────────── */}
+      <HomeDemoVideo />
+
       <section className="w-full py-10 border-y border-white/[0.04] bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-5">
           <p className="text-[11px] font-mono text-[#666] uppercase tracking-[0.2em] flex-shrink-0">

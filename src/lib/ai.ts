@@ -18,6 +18,47 @@ export type JourneyPost = {
   content: string;
 };
 
+function normalizeJourneyPost(value: unknown, index: number): JourneyPost {
+  if (typeof value === "string") {
+    const fallbackStages = ["origin", "build", "launch"] as const;
+    return {
+      title: `Post ${index + 1}`,
+      stage: fallbackStages[index] ?? "reflection",
+      emoji: "",
+      content: value.trim(),
+    };
+  }
+
+  if (!value || typeof value !== "object") {
+    throw new Error(`Journey post ${index + 1} is not a valid object.`);
+  }
+
+  const raw = value as Record<string, unknown>;
+  const fallbackStages = ["origin", "build", "launch"] as const;
+  const title = typeof raw.title === "string" ? raw.title.trim() : "";
+  const stage = typeof raw.stage === "string" ? raw.stage.trim() : fallbackStages[index] ?? "reflection";
+  const emoji = typeof raw.emoji === "string" ? raw.emoji.trim() : "";
+  const content =
+    typeof raw.content === "string"
+      ? raw.content.trim()
+      : typeof raw.body === "string"
+        ? raw.body.trim()
+        : typeof raw.text === "string"
+          ? raw.text.trim()
+          : "";
+
+  if (!content) {
+    throw new Error(`Journey post ${index + 1} is missing content.`);
+  }
+
+  return {
+    title: title || `Post ${index + 1}`,
+    stage,
+    emoji,
+    content,
+  };
+}
+
 export type CommitForPrompt = {
   sha: string;
   message: string;
@@ -544,9 +585,9 @@ export async function generateJourneyPosts(input: {
     .replace(/("(?:[^"\\]|\\.)*")/g, (m) => m.replace(/\n/g, "\\n").replace(/\r/g, ""));
 
   try {
-    const parsed = JSON.parse(cleaned) as JourneyPost[];
+    const parsed = JSON.parse(cleaned) as unknown;
     if (!Array.isArray(parsed)) throw new Error("Not an array");
-    return parsed;
+    return parsed.map((item, index) => normalizeJourneyPost(item, index));
   } catch {
     throw new Error(`Failed to parse journey posts JSON: ${cleaned.slice(0, 200)}`);
   }
