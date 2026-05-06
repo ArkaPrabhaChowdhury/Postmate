@@ -90,14 +90,13 @@ export async function getVoiceFingerprintData(userId: string): Promise<{
       .getReadme({ owner: r.owner.login, repo: r.name })
       .then((res) => {
         const raw = Buffer.from(res.data.content, "base64").toString("utf8");
-        // First 800 chars of prose only
+        // Use the full cleaned README prose so voice extraction can see the whole project narrative.
         return raw
           .replace(/```[\s\S]*?```/g, "")
           .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
           .replace(/<[^>]+>/g, "")
           .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 800);
+          .trim();
       })
       .catch(() => "")
   );
