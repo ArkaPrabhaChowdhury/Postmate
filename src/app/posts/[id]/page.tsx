@@ -24,7 +24,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const userId = await requireUserId();
   const { id } = await params;
 
-  const [post, linkedinAccount] = await Promise.all([
+  const [post, linkedinAccount, xSettings] = await Promise.all([
     prisma.generatedPost.findFirst({
       where: { id, userId },
       select: {
@@ -36,6 +36,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       },
     }),
     getLinkedInAccount(userId),
+    prisma.userSettings.findUnique({ where: { userId }, select: { xEnforce280: true } }),
   ]);
   if (!post) notFound();
 
@@ -107,6 +108,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             onScore={scorePostAction}
             onRegenerate={regeneratePostAction}
             repoFullName={post.repo?.fullName ?? undefined}
+            xEnforce280={xSettings?.xEnforce280 ?? true}
           />
         </div>
       </div>

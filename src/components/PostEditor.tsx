@@ -56,7 +56,7 @@ function ScoreCard({ score, loading }: { score: PostScore | null; loading: boole
         </div>
       )}
       <p className="text-[11px] text-[#555] leading-snug pt-1 border-t border-white/[0.04]">
-        💡 Tip: posts with an image or screenshot typically get 2× more reach — use "Post image" below if you have one.
+        💡 Tip: posts with an image or screenshot typically get 2× more reach — use &ldquo;Post image&rdquo; below if you have one.
       </p>
     </div>
   );
@@ -115,9 +115,10 @@ export function PostEditor(props: {
   onScore?: (content: string) => Promise<PostScore>;
   onRegenerate?: (postId: string, prompt: string) => Promise<string>;
   repoFullName?: string;
+  xEnforce280?: boolean;
 }) {
   const [platform] = useState<Platform>(props.initialPlatform ?? "linkedin");
-  const MAX = LIMITS[platform];
+  const maxChars = platform === "x" && props.xEnforce280 === false ? null : LIMITS[platform];
   const minSchedule = useMemo(() => new Date(Date.now() + 60000), []);
   const [content, setContent] = useState(props.initialContent ?? "");
   const [saved, setSaved] = useState(false);
@@ -145,7 +146,7 @@ export function PostEditor(props: {
   const [regenError, setRegenError] = useState("");
   const [, startTransition] = useTransition();
 
-  const over = content.length > MAX;
+  const over = maxChars !== null && content.length > maxChars;
   const hashtags = [...new Set(content.match(/#[a-zA-Z]\w*/g) ?? [])];
 
   async function handleSave(fd: FormData) {
@@ -293,9 +294,11 @@ export function PostEditor(props: {
           <h3 className="text-sm font-semibold text-[#f0ede8]">Editor</h3>
           <div className="flex items-center gap-3">
             <span className={`text-xs font-mono ${over ? "text-red-400" : "text-[#666]"}`}>
-              {content.length.toLocaleString()} / {MAX.toLocaleString()}
+              {maxChars === null
+                ? `${content.length.toLocaleString()} chars`
+                : `${content.length.toLocaleString()} / ${maxChars.toLocaleString()}`}
             </span>
-            <CharRing count={content.length} max={MAX} />
+            {maxChars !== null && <CharRing count={content.length} max={maxChars} />}
           </div>
         </div>
 
@@ -645,7 +648,7 @@ export function PostEditor(props: {
             </div>
             {/* X Body */}
             <div className="px-4 pb-3 text-sm text-white leading-relaxed">
-              {content.length <= 280 ? (
+              {maxChars === null || content.length <= 280 ? (
                 <p className="whitespace-pre-wrap">{content || <span className="text-[#555]">Your X post…</span>}</p>
               ) : (
                 <>
@@ -688,7 +691,9 @@ export function PostEditor(props: {
                 ? <><strong className="text-[#aaa]">Tip:</strong> LinkedIn connected — posts go live directly via API. Use &ldquo;Schedule&rdquo; to queue at a specific time.</>
                 : <><strong className="text-[#aaa]">Tip:</strong> Connect LinkedIn in <a href="/settings" className="text-[#d4ff00]/70 hover:text-[#d4ff00]">Settings</a> to enable direct posting. For now, copy + open LinkedIn.</>
             ) : (
-              <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to X&rdquo; to pre-fill the tweet composer. Trim to 280 chars first if needed.</>
+              props.xEnforce280 === false
+                ? <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to X&rdquo; to pre-fill the composer.</>
+                : <><strong className="text-[#aaa]">Tip:</strong> Click &ldquo;Post to X&rdquo; to pre-fill the composer. Trim to 280 chars first if needed.</>
             )}
           </p>
         </div>
