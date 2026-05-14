@@ -19,7 +19,6 @@ declare global {
 }
 
 const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID ?? "";
-const isPostHogEnabled = !!process.env.NEXT_PUBLIC_POSTHOG_TOKEN;
 
 function setClarityTag(key: string, value: string) {
   if (typeof window === "undefined" || !window.clarity) return;
@@ -30,7 +29,7 @@ export function captureAnalyticsEvent(
   event: string,
   properties?: Record<string, unknown>,
 ) {
-  if (!isPostHogEnabled || !initPostHog()) return;
+  if (!initPostHog()) return;
   posthog.capture(event, properties);
 }
 
@@ -57,11 +56,11 @@ export function AppAnalytics({ user }: { user?: AnalyticsUser | null }) {
     const authState = resolvedUser?.id ? "authenticated" : "anonymous";
     const plan = resolvedUser?.plan ?? "anonymous";
 
-    if (isPostHogEnabled && initPostHog()) {
+    if (initPostHog()) {
       posthog.register({ auth_state: authState, plan });
     }
 
-    if (isPostHogEnabled && resolvedUser?.id) {
+    if (resolvedUser?.id && initPostHog()) {
       if (identifiedUserRef.current !== resolvedUser.id) {
         posthog.identify(resolvedUser.id, {
           email: resolvedUser.email ?? undefined,
