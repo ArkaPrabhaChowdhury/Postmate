@@ -12,7 +12,7 @@ export function HomeDemoVideo() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <section className="w-full border-y border-white/[0.05] bg-[#050807] px-6 py-16 sm:px-8 sm:py-20 lg:px-16">
+    <section id="demo" className="w-full border-y border-white/[0.05] bg-[#050807] px-6 py-16 sm:px-8 sm:py-20 lg:px-16">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto mb-9 max-w-3xl text-center">
           <div className="mb-4 font-mono text-[16px] uppercase text-[#d4ff00]">

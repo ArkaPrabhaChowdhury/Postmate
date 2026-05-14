@@ -14,6 +14,9 @@ import {
   TrendingUp,
   Rss,
   Zap,
+  EyeOff,
+  PencilLine,
+  PlayCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { XLogo } from "@/components/XLogo";
@@ -57,7 +60,7 @@ export default function Home() {
   useEffect(() => { setMounted(true); }, []);
   const shouldReduceMotion = mounted ? prefersReducedMotion : false;
 
-  const motionInitial = shouldReduceMotion ? "show" : "hidden";
+  const motionInitial = mounted && !shouldReduceMotion ? "hidden" : "show";
 
   return (
     <div className="relative flex flex-col w-full min-h-screen bg-[#090909]">
@@ -106,28 +109,36 @@ export default function Home() {
               {/* Subhead */}
               <motion.p
                 variants={itemVariants}
-                className="text-[#525252] text-lg leading-[1.7] max-w-lg font-medium"
+                className="text-[#8d8d8d] text-lg leading-[1.7] max-w-lg font-medium"
               >
                 Ship code, not just drafts. Postmate reads your GitHub activity,
                 shapes the narrative, and hands you a post you&apos;ll actually
                 want to publish.
               </motion.p>
 
-              <motion.div variants={itemVariants}>
-                <a
-                  href="https://tools.launchllama.co?utm_source=badge&utm_medium=referral"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex"
-                >
-                  <img
-                    src="https://speaktechenglish.com/wp-content/uploads/2026/04/Screenshot_2026-04-09_at_17.40.44-removebg-preview.png"
-                    alt="Featured on Launch Llama"
-                    width="200"
-                    height="50"
-                    className="h-auto w-[200px]"
-                  />
-                </a>
+              <motion.div variants={itemVariants} className="lg:hidden">
+                <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.35)]">
+                  <div className="mb-3 flex items-center justify-between border-b border-white/[0.05] pb-2.5">
+                    <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-[#666]">
+                      Generated post
+                    </span>
+                    <span className="rounded-full border border-[#d4ff00]/20 bg-[#d4ff00]/[0.07] px-2 py-0.5 text-[10px] font-mono text-[#d4ff00]">
+                      LinkedIn
+                    </span>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-[#c8c4bd]">
+                    &ldquo;I shipped OAuth refresh handling this week. The
+                    interesting part wasn&apos;t the token logic, it was learning
+                    how tiny auth edge cases quietly shape user trust.&rdquo;
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {["#buildinpublic", "#webdev", "#shipping"].map((tag) => (
+                      <span key={tag} className="text-[10px] font-mono text-[#d4ff00]/55">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </motion.div>
 
               {/* CTAs */}
@@ -143,20 +154,43 @@ export default function Home() {
                   />
                 </Link>
                 <Link
-                  href="#how-it-works"
-                  className="inline-flex items-center gap-2 px-6 py-3 border border-white/[0.08] text-[#666] hover:text-[#f0ede8] hover:border-white/20 rounded-xl transition-all text-sm font-medium"
+                  href="#demo"
+                  className="inline-flex items-center gap-2 px-6 py-3 border border-white/[0.14] bg-white/[0.03] text-[#d8d4cc] hover:bg-white/[0.07] hover:border-white/25 rounded-xl transition-all text-sm font-semibold"
                 >
-                  See how it works
+                  <PlayCircle size={16} />
+                  Watch demo
                 </Link>
               </motion.div>
 
               {/* Trust note */}
-              <motion.p
+              <motion.div
                 variants={itemVariants}
-                className="text-[12px] text-[#777] font-mono tracking-wide"
+                className="flex flex-wrap gap-x-4 gap-y-2 text-[12px] text-[#8d8d8d] font-mono tracking-wide"
               >
-                Read-only GitHub access · No posting without approval
-              </motion.p>
+                <span className="inline-flex items-center gap-1.5">
+                  <EyeOff size={13} className="text-[#d4ff00]/70" />
+                  Read-only GitHub
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <PencilLine size={13} className="text-[#d4ff00]/70" />
+                  Edit before publishing
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <ShieldCheck size={13} className="text-[#d4ff00]/70" />
+                  No auto-posting
+                </span>
+              </motion.div>
+
+              <motion.a
+                variants={itemVariants}
+                href="https://tools.launchllama.co?utm_source=badge&utm_medium=referral"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] font-mono text-[#777] transition-colors hover:text-[#f0ede8]"
+              >
+                Featured on Launch Llama
+                <ArrowRight size={12} />
+              </motion.a>
             </motion.div>
 
             {/* Right: App mock */}
