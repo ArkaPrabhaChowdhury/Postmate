@@ -114,6 +114,12 @@ export async function savePost(formData: FormData) {
     data: { content },
   });
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postSaved,
+    properties: { postId: id },
+  });
+
   revalidatePath(`/posts/${id}`);
   revalidatePath("/dashboard");
 }

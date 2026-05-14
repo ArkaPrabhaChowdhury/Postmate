@@ -23,6 +23,7 @@
     "octokit": "^5.0.5",
     "openai": "^6.27.0",
     "playwright": "^1.52.0",
+    "posthog-js": "^1.373.4",
     "posthog-node": "^5.21.2",
     "prisma": "^6.19.2",
     "react": "19.2.3",

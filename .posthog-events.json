@@ -1,0 +1,17 @@
+[
+  {
+    "event": "post_saved",
+    "description": "User manually saves edits to a generated post draft",
+    "file": "src/app/posts/actions.ts"
+  },
+  {
+    "event": "news_settings_saved",
+    "description": "User saves news settings (tone, keywords, auto-fetch, taste profile)",
+    "file": "src/app/news/actions.ts"
+  },
+  {
+    "event": "support_submitted",
+    "description": "User submits the support contact form",
+    "file": "src/app/api/support/route.ts"
+  }
+]

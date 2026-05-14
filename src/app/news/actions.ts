@@ -274,6 +274,12 @@ export async function saveNewsSettings(formData: FormData) {
     update: { newsTone, newsAutoFetch, newsEmailEnabled, newsKeywords, newsTasteProfile },
   });
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.newsSettingsSaved,
+    properties: { newsTone, newsAutoFetch, newsEmailEnabled, hasKeywords: !!newsKeywords },
+  });
+
   revalidatePath("/news/settings");
   revalidatePath("/news");
 }

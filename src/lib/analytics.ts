@@ -23,6 +23,9 @@ export const ANALYTICS_EVENTS = {
   newsTweetApproved: "news_tweet_approved",
   newsTweetRejected: "news_tweet_rejected",
   newsTweetPosted: "news_tweet_posted",
+  postSaved: "post_saved",
+  newsSettingsSaved: "news_settings_saved",
+  supportSubmitted: "support_submitted",
 } as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];

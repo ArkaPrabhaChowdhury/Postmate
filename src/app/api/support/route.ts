@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -50,6 +52,12 @@ export async function POST(req: NextRequest) {
     console.error("[support] resend error:", result.error);
     return NextResponse.json({ error: "Failed to send message." }, { status: 500 });
   }
+
+  await captureServerEvent({
+    distinctId: email,
+    event: ANALYTICS_EVENTS.supportSubmitted,
+    properties: { subject },
+  });
 
   return NextResponse.json({ ok: true });
 }
