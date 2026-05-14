@@ -10,6 +10,7 @@ import {
   getAnalyticsPageType,
   type AnalyticsUser,
 } from "@/lib/analytics";
+import { initPostHog } from "@/lib/posthog-client";
 
 declare global {
   interface Window {
@@ -29,7 +30,7 @@ export function captureAnalyticsEvent(
   event: string,
   properties?: Record<string, unknown>,
 ) {
-  if (!isPostHogEnabled) return;
+  if (!isPostHogEnabled || !initPostHog()) return;
   posthog.capture(event, properties);
 }
 
@@ -56,7 +57,7 @@ export function AppAnalytics({ user }: { user?: AnalyticsUser | null }) {
     const authState = resolvedUser?.id ? "authenticated" : "anonymous";
     const plan = resolvedUser?.plan ?? "anonymous";
 
-    if (isPostHogEnabled) {
+    if (isPostHogEnabled && initPostHog()) {
       posthog.register({ auth_state: authState, plan });
     }
 
