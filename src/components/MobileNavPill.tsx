@@ -12,6 +12,8 @@ export function MobileNavPill() {
   const { data: session } = useSession();
   const loggedIn = !!session?.user;
 
+  if (!loggedIn && pathname === "/") return null;
+
   const items: Item[] = loggedIn
     ? [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
