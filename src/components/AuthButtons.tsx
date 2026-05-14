@@ -2,11 +2,19 @@
 
 import { signIn, signOut } from "next-auth/react";
 import { Github, LogOut } from "lucide-react";
+import { captureAnalyticsEvent } from "@/components/AppAnalytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 export function SignInButton() {
   return (
     <button
-      onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+      onClick={() => {
+        captureAnalyticsEvent(ANALYTICS_EVENTS.authStarted, {
+          provider: "github",
+          location: "signin_page",
+        });
+        signIn("github", { callbackUrl: "/dashboard" });
+      }}
       className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-900 text-sm font-semibold rounded-xl transition-all shadow-sm"
     >
       <Github size={18} />

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { captureAnalyticsEvent } from "@/components/AppAnalytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 declare global {
   interface Window {
@@ -41,6 +43,12 @@ export default function PaddlePaymentLinkClient() {
     return `${appUrl}/dashboard?upgraded=1&_ptxn=${encodeURIComponent(transactionId)}`;
   }, [transactionId]);
 
+  useEffect(() => {
+    captureAnalyticsEvent(ANALYTICS_EVENTS.checkoutPageViewed, {
+      transactionId,
+    });
+  }, [transactionId]);
+
   function initializePaddle() {
     if (!window.Paddle) {
       setError("Paddle.js failed to load.");
@@ -74,6 +82,9 @@ export default function PaddlePaymentLinkClient() {
         },
         eventCallback: (event) => {
           if (event.name === "checkout.closed") {
+            captureAnalyticsEvent(ANALYTICS_EVENTS.checkoutClosed, {
+              transactionId,
+            });
             window.location.href = "/pricing";
           }
         },

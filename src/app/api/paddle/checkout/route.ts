@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createPaddleCheckout, PLANS, type Plan } from "@/lib/paddle";
 import { prisma } from "@/lib/prisma";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
+import { captureServerEvent } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -27,6 +29,16 @@ export async function POST(req: NextRequest) {
     plan,
     billingInterval: interval,
     checkoutUrl,
+  });
+
+  await captureServerEvent({
+    distinctId: user.id,
+    event: ANALYTICS_EVENTS.checkoutCreated,
+    properties: {
+      plan,
+      billingInterval: interval,
+      transactionId: transaction.data.id,
+    },
   });
 
   return NextResponse.json({ url: transaction.data.checkout.url });

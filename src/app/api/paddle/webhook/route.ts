@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  getPaddleTransaction,
   getPlanDetailsFromPaddleItems,
   verifyPaddleWebhookSignature,
   type PaddleSubscription,
 } from "@/lib/paddle";
 import { prisma } from "@/lib/prisma";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
+import { captureServerEvent } from "@/lib/posthog-server";
 
 export const runtime = "nodejs";
 
@@ -93,6 +94,15 @@ export async function POST(req: NextRequest) {
     const transactionId = typeof data.id === "string" ? data.id : undefined;
     if (!transactionId) return NextResponse.json({ received: true });
     await syncUserFromPaddleTransaction(userId, transactionId);
+    await captureServerEvent({
+      distinctId: userId,
+      event: ANALYTICS_EVENTS.subscriptionActivated,
+      properties: {
+        source: "paddle_webhook",
+        transactionId,
+        customerId,
+      },
+    });
     return NextResponse.json({ received: true });
   }
 
@@ -103,6 +113,24 @@ export async function POST(req: NextRequest) {
     type === "subscription.canceled"
   ) {
     await upsertFromSubscription(userId, data as unknown as PaddleSubscription);
+
+    const subscription = data as unknown as PaddleSubscription;
+    const plan = getPlanDetailsFromPaddleItems(subscription.items).plan;
+    const hasPaidAccess = subscriptionKeepsPaidAccess(subscription.status);
+
+    await captureServerEvent({
+      distinctId: userId,
+      event: hasPaidAccess
+        ? ANALYTICS_EVENTS.subscriptionActivated
+        : ANALYTICS_EVENTS.subscriptionCanceled,
+      properties: {
+        source: "paddle_subscription_webhook",
+        status: subscription.status,
+        plan,
+        customerId: subscription.customer_id ?? customerId,
+        subscriptionId: subscription.id,
+      },
+    });
   }
 
   return NextResponse.json({ received: true });

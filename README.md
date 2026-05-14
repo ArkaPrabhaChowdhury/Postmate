@@ -66,7 +66,7 @@ Postmate is a Next.js app that connects to GitHub, syncs recent commits from one
 ### News pipeline
 
 - Pro-only news ingestion and queue management
-- Source mix includes official AI lab blogs, official dev blogs, GitHub Trending, Hacker News, and other developer/news sources defined in code
+- Source mix includes public X timelines, official AI lab blogs, official dev blogs, GitHub Trending, Hacker News, and other developer/news sources defined in code
 - Keyword-based filtering plus AI scoring
 - Queue UI for approve, reject, edit, regenerate, schedule, and post-now workflows
 - History page for reviewed/posted news items
@@ -161,7 +161,17 @@ PADDLE_WEBHOOK_SECRET="pdlntfset_replace_me"
 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN="test_replace_me"
 NEXT_PUBLIC_PADDLE_ENV="sandbox"
 
+NEXT_PUBLIC_POSTHOG_TOKEN="phc_replace_me"
+NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
+NEXT_PUBLIC_CLARITY_PROJECT_ID="replace_me"
+
 OWNER_PROMPT_ADMIN_EMAIL="owner@example.com"
+
+NEWS_X_ENABLED="true"
+NEWS_X_ACCOUNTS="OpenAI,AnthropicAI,GoogleDeepMind,GeminiApp,perplexity_ai"
+NEWS_X_POSTS_PER_ACCOUNT="2"
+NEWS_X_MAX_AGE_DAYS="365"
+NEWS_X_TIMEOUT_MS="30000"
 ```
 
 Notes:
@@ -169,10 +179,54 @@ Notes:
 - `.env.example` also contains `GOOGLE_GENAI_API_KEY`, but the active generation path in the current code uses Groq.
 - Create a GitHub OAuth app with callback `http://localhost:3000/api/auth/callback/github`.
 
+## Analytics setup
+
+Postmate now supports product analytics through PostHog and session replay / heatmaps through Microsoft Clarity.
+
+### What gets tracked
+
+- Visitors and pageviews across marketing and app pages
+- Referral sources and UTM traffic in PostHog web analytics
+- Pricing page visits and billing interval changes
+- Sign-in starts and completed authenticated sessions
+- Trial starts
+- Checkout creation and checkout page visits
+- Successful paid subscription activations from Paddle webhooks
+- Subscription cancellations / downgrades from Paddle webhooks
+- Billing portal opens
+
+### Required env vars
+
+```bash
+NEXT_PUBLIC_POSTHOG_TOKEN="phc_replace_me"
+NEXT_PUBLIC_POSTHOG_HOST="https://us.i.posthog.com"
+NEXT_PUBLIC_CLARITY_PROJECT_ID="replace_me"
+```
+
+### Recommended dashboards
+
+In PostHog, create:
+
+- A web analytics view for visitors, sessions, top pages, referrers, and UTMs
+- A funnel: `pricing_viewed` -> `pricing_plan_selected` -> `checkout_created` -> `subscription_activated`
+- A funnel: `auth_started` -> `auth_completed`
+- A trend chart for `trial_started`
+- A breakdown of `subscription_activated` by `plan`, `billingInterval`, and referrer / UTM properties
+
+In Clarity, use filters and custom tags:
+
+- `page_type`
+- `pathname`
+- `auth_state`
+- `plan`
+
+This makes it easy to inspect recordings for anonymous pricing visitors, authenticated free users, and paid users separately.
+
 ## Local setup
 
 ```bash
 npm install
+npx playwright install chromium
 ```
 
 For local SQLite:

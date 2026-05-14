@@ -9,6 +9,8 @@ import { sendNewsDigestEmail } from "@/lib/email";
 import type { IngestArticle } from "@/lib/news-ingest";
 import { generateNewsTweet } from "@/lib/ai";
 import { postToLinkedIn } from "@/lib/linkedin";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 export async function ingestNews() {
   const userId = await requireUserId();
@@ -28,6 +30,12 @@ export async function ingestNews() {
       }).catch(() => {});
     }
   }
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.newsFetched,
+    properties: { added: result.added, articlesCount: result.articles.length },
+  });
 
   revalidatePath("/news");
   return result;
@@ -71,6 +79,12 @@ export async function approveTweet(formData: FormData) {
   if (!id) throw new Error("Missing tweet id.");
 
   await prisma.newsTweet.update({ where: { id, userId }, data: { status: "approved" } });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.newsTweetApproved,
+    properties: { tweetId: id },
+  });
 
   const settings = await prisma.userSettings.findUnique({
     where: { userId },
@@ -125,6 +139,11 @@ export async function postLinkedInTweetNow(id: string): Promise<{ ok: boolean; e
       where: { id },
       data: { linkedinStatus: "posted", linkedinPostId, status: "posted", postedAt: new Date() },
     });
+    await captureServerEvent({
+      distinctId: userId,
+      event: ANALYTICS_EVENTS.newsTweetPosted,
+      properties: { tweetId: id, platform: "linkedin" },
+    });
     revalidatePath("/news");
     return { ok: true };
   } catch (err) {
@@ -139,6 +158,11 @@ export async function rejectTweet(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Missing tweet id.");
   await prisma.newsTweet.update({ where: { id, userId }, data: { status: "rejected" } });
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.newsTweetRejected,
+    properties: { tweetId: id },
+  });
   revalidatePath("/news");
 }
 

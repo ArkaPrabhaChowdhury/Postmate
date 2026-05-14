@@ -9,6 +9,8 @@ import { fetchDevNews } from "@/lib/news";
 import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, generateClusteredPosts, type PostStyle } from "@/lib/ai";
 import { assertCanGeneratePost, assertProPlan } from "@/lib/plan-limits";
 import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 function firstLine(s: string): string {
   return s.split(/\r?\n/)[0]?.trim() ?? s;
@@ -64,6 +66,12 @@ export async function syncRecentCommits() {
       },
     });
   }
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.commitsSynced,
+    properties: { repoFullName: repo.fullName, commitCount: rows.length },
+  });
 
   revalidatePath("/dashboard");
 }
@@ -135,6 +143,12 @@ export async function generatePostFromCommit(formData: FormData) {
       status: "draft",
     },
     select: { id: true },
+  });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postGenerated,
+    properties: { sourceType: "commit", style, platform, repoFullName: repo.fullName },
   });
 
   revalidatePath("/dashboard");
@@ -230,6 +244,12 @@ export async function generateProjectShowcaseForRepo() {
     select: { id: true },
   });
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postGenerated,
+    properties: { sourceType: "repo", style: "project_showcase", repoFullName: repo.fullName },
+  });
+
   revalidatePath("/dashboard");
   redirect(`/posts/${post.id}`);
 }
@@ -285,6 +305,12 @@ export async function saveVoiceSettings(formData: FormData) {
     },
   });
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.voiceSettingsSaved,
+    properties: { hasVoiceMemory: !!voiceMemory, hasTone: !!tone },
+  });
+
   revalidatePath("/dashboard");
 }
 
@@ -335,6 +361,12 @@ export async function generateClusteredPostsAction(formData: FormData) {
     )
   );
 
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postGenerated,
+    properties: { sourceType: "clustered", style: "progress", platform, clusterCount: posts.length, repoFullName: repo.fullName },
+  });
+
   revalidatePath("/dashboard");
   redirect(`/posts/${posts[0]!.id}`);
 }
@@ -378,6 +410,12 @@ export async function generateSuggestedPost(formData: FormData) {
       status: "draft",
     },
     select: { id: true },
+  });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postGenerated,
+    properties: { sourceType: "suggested", style: "progress", repoFullName: repo.fullName },
   });
 
   revalidatePath("/dashboard");
@@ -454,6 +492,12 @@ export async function generateTrendPostFromRepo(formData: FormData) {
       status: "draft",
     },
     select: { id: true },
+  });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postGenerated,
+    properties: { sourceType: "trend", style: "trend", platform, topic: topic || "dev news" },
   });
 
   revalidatePath("/dashboard");

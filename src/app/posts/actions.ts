@@ -7,6 +7,8 @@ import { getRepoContext, parseFullName } from "@/lib/github";
 import { scorePost, generateLinkedInPost, type PostScore } from "@/lib/ai";
 import { logExtraction } from "@/lib/logger";
 import { postToLinkedIn } from "@/lib/linkedin";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -122,6 +124,11 @@ export async function markPostCopied(id: string) {
     where: { id, userId },
     data: { status: "copied" },
   });
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postCopied,
+    properties: { postId: id },
+  });
   revalidatePath(`/posts/${id}`);
   revalidatePath("/dashboard");
 }
@@ -169,6 +176,12 @@ export async function regeneratePostAction(postId: string, additionalPrompt: str
   await prisma.generatedPost.update({
     where: { id: postId, userId },
     data: { content },
+  });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postRegenerated,
+    properties: { postId, platform: post.platform, style: post.style, hasAdditionalPrompt: !!additionalPrompt },
   });
 
   revalidatePath(`/posts/${postId}`);
@@ -235,6 +248,11 @@ export async function postToLinkedInNow(postId: string): Promise<{ ok: boolean; 
       where: { id: postId },
       data: { linkedinStatus: "posted", linkedinPostId, status: "posted" },
     });
+    await captureServerEvent({
+      distinctId: userId,
+      event: ANALYTICS_EVENTS.postPublished,
+      properties: { postId, platform: "linkedin" },
+    });
     revalidatePath(`/posts/${postId}`);
     return { ok: true };
   } catch (err) {
@@ -262,6 +280,11 @@ export async function scheduleLinkedInPost(postId: string, scheduledAt: string):
   await prisma.generatedPost.update({
     where: { id: postId },
     data: { linkedinStatus: "scheduled", scheduledAt: date },
+  });
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.postScheduled,
+    properties: { postId, platform: "linkedin", scheduledAt },
   });
   revalidatePath(`/posts/${postId}`);
   return { ok: true };

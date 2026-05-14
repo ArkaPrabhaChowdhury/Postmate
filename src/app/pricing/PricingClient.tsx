@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { PLANS } from "@/lib/plans";
+import { captureAnalyticsEvent } from "@/components/AppAnalytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -27,8 +29,20 @@ export default function PricingPage() {
   const [trialLoading, setTrialLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
 
+  useEffect(() => {
+    captureAnalyticsEvent(ANALYTICS_EVENTS.pricingViewed, {
+      entrypoint: authed ? "authenticated" : "anonymous",
+    });
+  }, [authed]);
+
   async function handleUpgrade(plan: Plan) {
     if (plan === "free") return;
+    captureAnalyticsEvent(ANALYTICS_EVENTS.pricingPlanSelected, {
+      plan,
+      billingInterval,
+      authed,
+      action: "upgrade_now",
+    });
     if (!authed) {
       window.location.href = "/signin";
       return;
@@ -48,6 +62,12 @@ export default function PricingPage() {
   }
 
   async function handleStartTrial() {
+    captureAnalyticsEvent(ANALYTICS_EVENTS.pricingPlanSelected, {
+      plan: "pro",
+      billingInterval,
+      authed,
+      action: "start_trial",
+    });
     if (!authed) {
       window.location.href = "/signin";
       return;
@@ -58,6 +78,10 @@ export default function PricingPage() {
       const res = await fetch("/api/trial/start", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start trial");
+      captureAnalyticsEvent(ANALYTICS_EVENTS.trialStarted, {
+        plan: "pro",
+        trialEndsAt: data.trialEndsAt,
+      });
       window.location.href = "/dashboard?trial=started";
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to start trial");
@@ -119,7 +143,12 @@ export default function PricingPage() {
           <div className="inline-flex items-center rounded-xl border border-white/[0.08] bg-[#0d0d0d] p-1">
             <button
               type="button"
-              onClick={() => setBillingInterval("monthly")}
+              onClick={() => {
+                captureAnalyticsEvent(ANALYTICS_EVENTS.pricingBillingIntervalChanged, {
+                  billingInterval: "monthly",
+                });
+                setBillingInterval("monthly");
+              }}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 billingInterval === "monthly"
                   ? "bg-[#d4ff00] text-[#090909] font-semibold"
@@ -130,7 +159,12 @@ export default function PricingPage() {
             </button>
             <button
               type="button"
-              onClick={() => setBillingInterval("yearly")}
+              onClick={() => {
+                captureAnalyticsEvent(ANALYTICS_EVENTS.pricingBillingIntervalChanged, {
+                  billingInterval: "yearly",
+                });
+                setBillingInterval("yearly");
+              }}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 billingInterval === "yearly"
                   ? "bg-[#d4ff00] text-[#090909] font-semibold"

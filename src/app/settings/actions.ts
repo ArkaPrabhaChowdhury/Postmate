@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { parseFullName } from "@/lib/github";
 import { requireUserId } from "@/lib/requireUser";
+import { captureServerEvent } from "@/lib/posthog-server";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 export async function saveXSettings(enforce280: boolean) {
   const userId = await requireUserId();
@@ -33,6 +35,12 @@ export async function setActiveRepo(formData: FormData) {
     where: { userId_fullName: { userId, fullName } },
     create: { userId, owner, name: repo, fullName, isActive: true },
     update: { owner, name: repo, isActive: true },
+  });
+
+  await captureServerEvent({
+    distinctId: userId,
+    event: ANALYTICS_EVENTS.repoConnected,
+    properties: { repoFullName: fullName },
   });
 
   revalidatePath("/dashboard");

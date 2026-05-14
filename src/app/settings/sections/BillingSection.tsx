@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { CreditCard, ExternalLink } from "lucide-react";
+import { captureAnalyticsEvent } from "@/components/AppAnalytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
 export default function BillingSection() {
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,7 @@ export default function BillingSection() {
       const res = await fetch("/api/paddle/portal", { method: "POST" });
       const json = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !json.url) throw new Error(json.error || "Failed to open billing portal.");
+      captureAnalyticsEvent(ANALYTICS_EVENTS.billingPortalOpened);
       window.location.href = json.url;
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

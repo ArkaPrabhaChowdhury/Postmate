@@ -10,6 +10,7 @@ import { Providers } from "@/components/Providers";
 import { Analytics } from "@vercel/analytics/next";
 import { prisma } from "@/lib/prisma";
 import { MobileNavPill } from "@/components/MobileNavPill";
+import type { AnalyticsUser } from "@/lib/analytics";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -97,9 +98,21 @@ export default async function RootLayout({
 }) {
   const session = await getServerSession(authOptions);
   const user = session?.user;
-  const isPro = user?.id
-    ? (await prisma.user.findUnique({ where: { id: user.id }, select: { plan: true } }))?.plan === "pro"
-    : false;
+  const userRecord = user?.id
+    ? await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { plan: true },
+      })
+    : null;
+  const isPro = userRecord?.plan === "pro";
+  const analyticsUser: AnalyticsUser | null = user?.id
+    ? {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: userRecord?.plan ?? "free",
+      }
+    : null;
 
   return (
     <html
@@ -190,7 +203,7 @@ export default async function RootLayout({
 
         {/* Page */}
         <main className="relative pt-14 pb-24 md:pb-0 min-h-[calc(100dvh-5rem)]">
-          <Providers>{children}</Providers>
+          <Providers analyticsUser={analyticsUser}>{children}</Providers>
         </main>
 
         {/* Mobile floating nav pill */}

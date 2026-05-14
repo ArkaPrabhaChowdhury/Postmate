@@ -114,6 +114,8 @@ export default function PrivacyPage() {
               <ul className="list-disc pl-5 space-y-2">
                 <li><strong className="text-[#f0ede8]">GitHub:</strong> For authentication and repository access.</li>
                 <li><strong className="text-[#f0ede8]">Groq:</strong> For lightning-fast content generation. Data sent for processing is minimized and anonymized where possible.</li>
+                <li><strong className="text-[#f0ede8]">PostHog:</strong> For product analytics including visits, referral sources, pricing funnel activity, and subscription conversions.</li>
+                <li><strong className="text-[#f0ede8]">Microsoft Clarity:</strong> For session recordings, heatmaps, and usability analysis.</li>
                 <li><strong className="text-[#f0ede8]">Vercel:</strong> For hosting and infrastructure.</li>
               </ul>
             </div>
