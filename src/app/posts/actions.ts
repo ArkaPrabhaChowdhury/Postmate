@@ -154,7 +154,7 @@ export async function regeneratePostAction(postId: string, additionalPrompt: str
 
   const settings = await prisma.userSettings.findUnique({
     where: { userId },
-    select: { voiceMemory: true, tone: true },
+    select: { voiceMemory: true, tone: true, xEnforce280: true },
   });
 
   const { owner, repo } = parseFullName(post.repo.fullName);
@@ -171,6 +171,7 @@ export async function regeneratePostAction(postId: string, additionalPrompt: str
     voiceMemory: settings?.voiceMemory ?? undefined,
     tone: settings?.tone ?? undefined,
     additionalPrompt,
+    enforce280: post.platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
   });
 
   await prisma.generatedPost.update({
