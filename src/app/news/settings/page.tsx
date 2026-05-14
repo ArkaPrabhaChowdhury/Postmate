@@ -21,7 +21,7 @@ export default async function NewsSettingsPage() {
               News settings
             </h1>
             <p className="text-xs text-[#666] mt-1">
-              Postmate monitors GitHub releases, trending repos, HN top posts, and official AI lab blogs.
+              Postmate monitors public X posts from selected AI accounts, GitHub releases, trending repos, HN top posts, and official AI lab blogs.
               Items are AI-scored for developer relevance — only high-signal updates reach your queue.
             </p>
           </div>
@@ -115,6 +115,7 @@ export default async function NewsSettingsPage() {
             <div className="px-5 py-4 grid gap-3 sm:grid-cols-2">
               {[
                 { label: "AI company blogs", desc: "Anthropic, OpenAI, Google AI, DeepMind, Meta AI, Mistral, Hugging Face, Microsoft AI, AWS ML, NVIDIA, Cohere, Stability AI" },
+                { label: "Public X timelines", desc: "OpenAI, AnthropicAI, GoogleDeepMind, GeminiApp, perplexity_ai — scraped from latest public posts" },
                 { label: "Tech news — AI sections", desc: "TechCrunch AI, The Verge AI, VentureBeat AI, Wired AI" },
                 { label: "Official dev blogs", desc: "Bun, Deno, Vercel, Cloudflare, GitHub" },
                 { label: "Hacker News", desc: "Front page (100+ points) + keyword search on your interests" },

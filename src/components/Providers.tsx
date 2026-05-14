@@ -1,19 +1,15 @@
 "use client";
 
+import { Suspense } from "react";
 import { SessionProvider } from "next-auth/react";
 import { AppAnalytics } from "@/components/AppAnalytics";
-import type { AnalyticsUser } from "@/lib/analytics";
 
-export function Providers({
-  children,
-  analyticsUser,
-}: {
-  children: React.ReactNode;
-  analyticsUser?: AnalyticsUser | null;
-}) {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <AppAnalytics user={analyticsUser} />
+      <Suspense fallback={null}>
+        <AppAnalytics />
+      </Suspense>
       {children}
     </SessionProvider>
   );

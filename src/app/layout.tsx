@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans, Space_Mono } from "next/font/google";
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import "./globals.css";
-import { authOptions } from "@/lib/auth";
-import { SignOutButton } from "@/components/AuthButtons";
-import { ArrowRight } from "lucide-react";
 import { Providers } from "@/components/Providers";
 import { Analytics } from "@vercel/analytics/next";
-import { prisma } from "@/lib/prisma";
 import { MobileNavPill } from "@/components/MobileNavPill";
-import type { AnalyticsUser } from "@/lib/analytics";
+import { SiteNavAccount, SiteNavLinks } from "@/components/SiteNav";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -96,24 +91,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-  const user = session?.user;
-  const userRecord = user?.id
-    ? await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { plan: true },
-      })
-    : null;
-  const isPro = userRecord?.plan === "pro";
-  const analyticsUser: AnalyticsUser | null = user?.id
-    ? {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        plan: userRecord?.plan ?? "free",
-      }
-    : null;
-
   return (
     <html
       lang="en"
@@ -127,6 +104,7 @@ export default async function RootLayout({
           details[open] > summary .chevron { transform: rotate(180deg); }
         `}</style>
 
+        <Providers>
         {/* Nav */}
         <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/[0.05] bg-[#090909]/85 backdrop-blur-xl">
           <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-6">
@@ -145,69 +123,23 @@ export default async function RootLayout({
 
             {/* Center nav */}
             <nav className="hidden md:flex items-center gap-0.5 bg-white/[0.04] p-1 rounded-xl border border-white/[0.05]">
-              {(user
-                ? [
-                    { href: "/dashboard", label: "Dashboard" },
-                    { href: "/news", label: "News" },
-                    ...(!isPro ? [{ href: "/pricing", label: "Pricing" }] : []),
-                    { href: "/settings", label: "Settings" },
-                  ]
-                : [
-                    { href: "/#features", label: "Features" },
-                    { href: "/pricing", label: "Pricing" },
-                  ]
-              ).map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="px-4 py-1.5 text-sm font-medium text-[#525252] hover:text-[#f0ede8] hover:bg-white/[0.06] rounded-lg transition-all duration-150"
-                >
-                  {label}
-                </Link>
-              ))}
+              <SiteNavLinks />
             </nav>
 
             {/* Right */}
             <div className="flex items-center gap-3">
-              {user ? (
-                <>
-                  <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-white/[0.04] rounded-xl border border-white/[0.05]">
-                    {user.image && (
-                      <img
-                        src={user.image}
-                        alt={user.name ?? ""}
-                        className="w-5 h-5 rounded-full border border-white/10"
-                      />
-                    )}
-                    <span className="text-xs font-medium text-[#888] truncate max-w-[100px]">
-                      {user.name}
-                    </span>
-                  </div>
-                  <SignOutButton />
-                </>
-              ) : (
-                <Link
-                  href="/signin"
-                  className="group inline-flex items-center gap-1.5 px-4 py-2 bg-[#d4ff00] text-[#090909] text-sm font-bold rounded-xl hover:bg-[#c4ef00] transition-colors"
-                >
-                  Get Started
-                  <ArrowRight
-                    size={14}
-                    className="group-hover:translate-x-0.5 transition-transform"
-                  />
-                </Link>
-              )}
+              <SiteNavAccount />
             </div>
           </div>
         </header>
 
         {/* Page */}
         <main className="relative pt-14 pb-24 md:pb-0 min-h-[calc(100dvh-5rem)]">
-          <Providers analyticsUser={analyticsUser}>{children}</Providers>
+          {children}
         </main>
 
         {/* Mobile floating nav pill */}
-        <MobileNavPill loggedIn={!!user} isPro={isPro} />
+        <MobileNavPill />
 
         {/* Global Footer */}
         <footer className="w-full py-10 border-t border-white/[0.04] bg-[#0a0a0a]">
@@ -259,6 +191,7 @@ export default async function RootLayout({
             </div>
           </div>
         </footer>
+        </Providers>
         <Analytics />
       </body>
     </html>

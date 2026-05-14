@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import dns from "dns";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_SOURCES, fetchHNAlgoliaItems, parseRss, uniqueByUrl, type RssItem } from "@/lib/news-rss";
+import { fetchLatestXItems } from "@/lib/news-x";
 import { generateNewsTweet } from "@/lib/ai";
 
 // Force IPv4 — same fix as ai.ts
@@ -161,7 +162,7 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
   // Default HN queries — high-signal frontpage topics
   const defaultHNQueries = ["Show HN", "Ask HN", "release"];
 
-  const [feeds, hnItems] = await Promise.all([
+  const [feeds, hnItems, xItems] = await Promise.all([
     // RSS sources in parallel
     Promise.allSettled(
       DEFAULT_SOURCES.map((url) =>
@@ -175,6 +176,7 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
       [...defaultHNQueries, ...userKeywords],
       userKeywords.length > 0 ? 50 : 100,
     ),
+    fetchLatestXItems().catch(() => []),
   ]);
 
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -186,10 +188,10 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
       return isNaN(t) || t >= cutoff;
     });
 
-  // HN keyword items first so they survive the 300-item slice
-  const items = [...hnItems, ...rssItems];
+  // X items first, then HN keyword items, so the freshest social posts survive the slice.
+  const items = [...xItems, ...hnItems, ...rssItems];
 
-  console.log(`[ingest] rss=${rssItems.length} hn=${hnItems.length} total=${items.length}`);
+  console.log(`[ingest] x=${xItems.length} rss=${rssItems.length} hn=${hnItems.length} total=${items.length}`);
 
   const deduped = uniqueByUrl(items).slice(0, userKeywords.length > 0 ? 2500 : 800);
 

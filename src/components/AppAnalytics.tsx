@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useSession } from "next-auth/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import {
@@ -107,53 +108,67 @@ export function captureAnalyticsEvent(
 }
 
 export function AppAnalytics({ user }: { user?: AnalyticsUser | null }) {
+  const { data: session } = useSession();
+  const resolvedUser = useMemo(
+    () =>
+      user ??
+      (session?.user?.id
+        ? {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            plan: "unknown",
+          }
+        : null),
+    [session, user],
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const identifiedUserRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const authState = user?.id ? "authenticated" : "anonymous";
-    const plan = user?.plan ?? "anonymous";
+    const authState = resolvedUser?.id ? "authenticated" : "anonymous";
+    const plan = resolvedUser?.plan ?? "anonymous";
 
     analyticsContext = {
-      userId: user?.id,
-      email: user?.email,
-      name: user?.name,
+      userId: resolvedUser?.id,
+      email: resolvedUser?.email,
+      name: resolvedUser?.name,
       authState,
       plan,
     };
 
-    if (user?.id) {
-      if (identifiedUserRef.current !== user.id) {
+    if (resolvedUser?.id) {
+      if (identifiedUserRef.current !== resolvedUser.id) {
         sendPostHogEvent("$identify", {
           $anon_distinct_id: getAnonymousId(),
           $set: {
-            email: user.email ?? undefined,
-            name: user.name ?? undefined,
-            plan: user.plan,
+            email: resolvedUser.email ?? undefined,
+            name: resolvedUser.name ?? undefined,
+            plan: resolvedUser.plan,
           },
         });
         captureAnalyticsEvent(ANALYTICS_EVENTS.authCompleted, {
-          plan: user.plan,
+          plan: resolvedUser.plan,
         });
       }
 
       if (window.clarity) {
         window.clarity(
           "identify",
-          user.id,
+          resolvedUser.id,
           undefined,
           undefined,
-          user.email ?? user.name ?? user.id,
+          resolvedUser.email ?? resolvedUser.name ?? resolvedUser.id,
         );
       }
     }
 
-    identifiedUserRef.current = user?.id ?? null;
+    identifiedUserRef.current = resolvedUser?.id ?? null;
 
     setClarityTag("auth_state", authState);
     setClarityTag("plan", plan);
-  }, [user]);
+  }, [resolvedUser]);
 
   useEffect(() => {
     if (!pathname) return;
@@ -165,13 +180,13 @@ export function AppAnalytics({ user }: { user?: AnalyticsUser | null }) {
     captureAnalyticsEvent("$pageview", {
       $current_url: currentUrl,
       page_type: pageType,
-      auth_state: user?.id ? "authenticated" : "anonymous",
-      plan: user?.plan ?? "anonymous",
+      auth_state: resolvedUser?.id ? "authenticated" : "anonymous",
+      plan: resolvedUser?.plan ?? "anonymous",
     });
 
     setClarityTag("pathname", pathname);
     setClarityTag("page_type", pageType);
-  }, [pathname, searchParams, user?.id, user?.plan]);
+  }, [pathname, searchParams, resolvedUser?.id, resolvedUser?.plan]);
 
   return clarityProjectId ? (
     <Script

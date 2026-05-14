@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import PaddlePaymentLinkClient from "./payment-link-client";
 
 export const metadata: Metadata = {
@@ -10,6 +11,12 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 export default function PayPage() {
-  return <PaddlePaymentLinkClient />;
+  return (
+    <Suspense fallback={null}>
+      <PaddlePaymentLinkClient />
+    </Suspense>
+  );
 }

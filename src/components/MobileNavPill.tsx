@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { LayoutDashboard, Newspaper, CreditCard, Settings, Sparkles, Tag } from "lucide-react";
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ size?: number; className?: string }> };
 
-export function MobileNavPill({ loggedIn, isPro }: { loggedIn: boolean; isPro: boolean }) {
+export function MobileNavPill() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const loggedIn = !!session?.user;
 
   const items: Item[] = loggedIn
     ? [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { href: "/news", label: "News", icon: Newspaper },
-        ...(!isPro ? [{ href: "/pricing", label: "Pricing", icon: CreditCard }] : []),
+        { href: "/pricing", label: "Pricing", icon: CreditCard },
         { href: "/settings", label: "Settings", icon: Settings },
       ]
     : [
