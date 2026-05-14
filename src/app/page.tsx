@@ -60,7 +60,8 @@ export default function Home() {
   useEffect(() => { setMounted(true); }, []);
   const shouldReduceMotion = mounted ? prefersReducedMotion : false;
 
-  const motionInitial = mounted && !shouldReduceMotion ? "hidden" : "show";
+  const heroInitial = "show";
+  const scrollInitial = shouldReduceMotion ? "show" : "hidden";
 
   return (
     <div className="relative flex flex-col w-full min-h-screen bg-[#090909]">
@@ -80,7 +81,7 @@ export default function Home() {
             {/* Left: Content */}
             <motion.div
               variants={containerVariants}
-              initial={motionInitial}
+              initial={heroInitial}
               animate="show"
               className="flex flex-col gap-7"
             >
@@ -348,7 +349,7 @@ export default function Home() {
 
           <motion.div
             variants={fadeUp}
-            initial={motionInitial}
+            initial={scrollInitial}
             whileInView="show"
             viewport={{ once: true, margin: "-5%" }}
             className="mb-20"
@@ -374,7 +375,7 @@ export default function Home() {
               <motion.div
                 key={idx}
                 variants={fadeUp}
-                initial={motionInitial}
+                initial={scrollInitial}
                 whileInView="show"
                 viewport={{ once: true, margin: "-5%" }}
                 transition={{ delay: idx * 0.1 }}
@@ -418,7 +419,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-[28fr_72fr] gap-10 mb-16 items-end">
             <motion.div
               variants={fadeUp}
-              initial={motionInitial}
+              initial={scrollInitial}
               whileInView="show"
               viewport={{ once: true }}
             >
@@ -436,7 +437,7 @@ export default function Home() {
             </motion.div>
             <motion.p
               variants={fadeUp}
-              initial={motionInitial}
+              initial={scrollInitial}
               whileInView="show"
               viewport={{ once: true }}
               className="text-[#666] text-lg leading-relaxed font-medium lg:pb-1"
@@ -452,7 +453,7 @@ export default function Home() {
               <motion.div
                 key={idx}
                 variants={fadeUp}
-                initial={motionInitial}
+                initial={scrollInitial}
                 whileInView="show"
                 viewport={{ once: true, margin: "-5%" }}
                 transition={{ delay: (idx % 2) * 0.08 }}
@@ -532,7 +533,7 @@ export default function Home() {
           <div className="max-w-3xl">
             <motion.div
               variants={containerVariants}
-              initial={motionInitial}
+              initial={scrollInitial}
               whileInView="show"
               viewport={{ once: true }}
               className="space-y-8"
