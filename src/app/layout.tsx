@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans, Space_Mono } from "next/font/google";
+import { Oswald, Syne, DM_Sans, Space_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -11,6 +11,12 @@ const syne = Syne({
   variable: "--font-syne",
   subsets: ["latin"],
   weight: ["400", "600", "700", "800"],
+});
+
+const heroDisplay = Oswald({
+  variable: "--font-hero",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 const dmSans = DM_Sans({
@@ -94,7 +100,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${dmSans.variable} ${spaceMono.variable}`}
+      className={`${syne.variable} ${heroDisplay.variable} ${dmSans.variable} ${spaceMono.variable}`}
     >
       <body className="bg-[#090909] text-[#f0ede8] font-sans antialiased min-h-dvh">
         <style>{`
@@ -154,7 +160,7 @@ export default async function RootLayout({
               </span>
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-center md:justify-end md:text-left">
               <Link
                 href="/pricing"
                 className="text-[12px] text-[#525252] hover:text-[#d4ff00] transition-colors font-mono tracking-tight"

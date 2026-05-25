@@ -60,7 +60,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <div>
               <h1
                 className="text-xl font-bold tracking-tight text-[#f0ede8]"
-                style={{ fontFamily: "var(--font-syne)" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Edit draft
               </h1>

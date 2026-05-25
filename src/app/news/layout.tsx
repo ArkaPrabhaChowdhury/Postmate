@@ -13,7 +13,7 @@ export default async function NewsLayout({ children }: { children: React.ReactNo
         <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-2xl p-8">
           <h1
             className="text-xl font-bold tracking-tight text-[#f0ede8]"
-            style={{ fontFamily: "var(--font-syne)" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             News is a Pro feature
           </h1>

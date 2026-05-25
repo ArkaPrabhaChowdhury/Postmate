@@ -70,7 +70,7 @@ export default function NewsPage() {
           <div>
             <h1
               className="text-xl font-bold tracking-tight text-[#f0ede8]"
-              style={{ fontFamily: "var(--font-syne)" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               News queue
             </h1>

@@ -107,7 +107,7 @@ export default function PaddlePaymentLinkClient() {
           <p className="mb-3 text-[11px] font-mono uppercase tracking-[0.3em] text-[#d4ff00]">
             Secure checkout
           </p>
-          <h1 className="text-3xl font-extrabold tracking-[-0.04em]" style={{ fontFamily: "var(--font-syne)" }}>
+          <h1 className="text-3xl font-extrabold tracking-[-0.04em]" style={{ fontFamily: "var(--font-heading)" }}>
             Opening Paddle checkout
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-[#777]">

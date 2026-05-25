@@ -133,12 +133,18 @@ Local SQLite example:
 DATABASE_URL="file:./dev.db"
 ```
 
-Postgres / Neon example:
+Supabase Postgres example for this Vercel/serverless app:
 
 ```bash
-DATABASE_URL="postgresql://USER:PASSWORD@YOUR-PROJECT-pooler.REGION.aws.neon.tech/DB?sslmode=require&pgbouncer=true&connection_limit=1&pool_timeout=0"
-DIRECT_DATABASE_URL="postgresql://USER:PASSWORD@YOUR-PROJECT.REGION.aws.neon.tech/DB?sslmode=require"
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:6543/postgres?pgbouncer=true&connection_limit=1&pool_timeout=0&connect_timeout=30"
+DIRECT_DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres?sslmode=require"
 ```
+
+Notes:
+
+- `DATABASE_URL` should use transaction mode on port `6543` for this repo's runtime traffic.
+- `DIRECT_DATABASE_URL` should use the direct connection for Prisma migrations and other one-off admin commands.
+- If you later create a separate DB role for app traffic, replace `postgres` in `DATABASE_URL` with that user.
 
 ### Optional integrations
 

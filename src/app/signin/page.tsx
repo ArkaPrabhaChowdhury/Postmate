@@ -20,7 +20,7 @@ export default function SignInPage() {
 
         <h1
           className="text-2xl font-bold tracking-tight text-[#f0ede8] mb-2"
-          style={{ fontFamily: "var(--font-syne)" }}
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           Sign in to Postmate
         </h1>

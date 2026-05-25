@@ -1,11 +1,5 @@
-import { Syne } from "next/font/google";
 import Link from "next/link";
 import { ArrowLeft, RefreshCw, CreditCard, Clock, HelpCircle, Mail } from "lucide-react";
-
-const syne = Syne({
-  subsets: ["latin"],
-  weight: ["700", "800"],
-});
 
 export const metadata = {
   title: "Refund Policy",
@@ -36,7 +30,7 @@ export default function RefundPage() {
             <RefreshCw size={12} />
             Billing
           </div>
-          <h1 className={`text-5xl sm:text-6xl font-extrabold tracking-tight mb-4 ${syne.className}`}>
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-4">
             Refund <span className="text-[#d4ff00]">Policy</span>
           </h1>
           <p className="text-[#666] font-medium">Last updated: {lastUpdated}</p>
@@ -48,7 +42,7 @@ export default function RefundPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <RefreshCw size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>7-Day Refund Guarantee</h2>
+              <h2 className="text-2xl font-bold">7-Day Refund Guarantee</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -65,7 +59,7 @@ export default function RefundPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Clock size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Cancellation</h2>
+              <h2 className="text-2xl font-bold">Cancellation</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -87,7 +81,7 @@ export default function RefundPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <CreditCard size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>How Refunds Are Processed</h2>
+              <h2 className="text-2xl font-bold">How Refunds Are Processed</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -104,7 +98,7 @@ export default function RefundPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <HelpCircle size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Free Trials</h2>
+              <h2 className="text-2xl font-bold">Free Trials</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>

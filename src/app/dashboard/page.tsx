@@ -104,7 +104,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
         <div>
           <h1
             className="text-xl font-bold tracking-tight text-[#f0ede8] mb-1"
-            style={{ fontFamily: "var(--font-syne)" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             No repo connected
           </h1>
@@ -263,7 +263,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
           <div>
             <h1
               className="text-xl font-bold tracking-tight text-[#f0ede8]"
-              style={{ fontFamily: "var(--font-syne)" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Dashboard
             </h1>

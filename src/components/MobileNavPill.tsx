@@ -14,6 +14,10 @@ export function MobileNavPill() {
 
   if (!loggedIn && pathname === "/") return null;
 
+  if (!loggedIn) {
+    return null;
+  }
+
   const items: Item[] = loggedIn
     ? [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

@@ -19,7 +19,7 @@ export default async function NewsHistoryPage() {
           <div>
             <h1
               className="text-xl font-bold tracking-tight text-[#f0ede8]"
-              style={{ fontFamily: "var(--font-syne)" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Posted history
             </h1>

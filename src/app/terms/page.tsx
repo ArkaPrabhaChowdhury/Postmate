@@ -1,11 +1,5 @@
-import { Syne } from "next/font/google";
 import Link from "next/link";
 import { ArrowLeft, FileText, AlertCircle, CreditCard, Ban, Scale, Mail } from "lucide-react";
-
-const syne = Syne({
-  subsets: ["latin"],
-  weight: ["700", "800"],
-});
 
 export const metadata = {
   title: "Terms of Service",
@@ -36,7 +30,7 @@ export default function TermsPage() {
             <Scale size={12} />
             Legal
           </div>
-          <h1 className={`text-5xl sm:text-6xl font-extrabold tracking-tight mb-4 ${syne.className}`}>
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-4">
             Terms of <span className="text-[#d4ff00]">Service</span>
           </h1>
           <p className="text-[#666] font-medium">Last updated: {lastUpdated}</p>
@@ -48,7 +42,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <FileText size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Acceptance of Terms</h2>
+              <h2 className="text-2xl font-bold">Acceptance of Terms</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -65,7 +59,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <FileText size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Description of Service</h2>
+              <h2 className="text-2xl font-bold">Description of Service</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -89,7 +83,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <CreditCard size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Payments & Subscriptions</h2>
+              <h2 className="text-2xl font-bold">Payments & Subscriptions</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -109,7 +103,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <AlertCircle size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Acceptable Use</h2>
+              <h2 className="text-2xl font-bold">Acceptable Use</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>You agree not to use the Service to:</p>
@@ -131,7 +125,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Ban size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Disclaimers & Limitation of Liability</h2>
+              <h2 className="text-2xl font-bold">Disclaimers & Limitation of Liability</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
@@ -151,7 +145,7 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Scale size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Governing Law</h2>
+              <h2 className="text-2xl font-bold">Governing Law</h2>
             </div>
             <div className="text-[#888] leading-relaxed">
               <p>

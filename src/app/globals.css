@@ -8,6 +8,7 @@
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
     @apply font-sans;
   }
 
@@ -22,7 +23,14 @@
   }
 
   * { @apply border-border outline-ring/50; }
-  body { @apply bg-background text-foreground; }
+  body {
+    overflow-x: clip;
+    @apply bg-background text-foreground;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), var(--font-sans), sans-serif;
+    letter-spacing: -0.02em;
+  }
 
   button:not([disabled]) { cursor: pointer; }
   button[disabled] { cursor: not-allowed; }
@@ -32,7 +40,7 @@
   --font-display: var(--font-syne);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-space-mono);
-  --font-heading: var(--font-syne);
+  --font-heading: var(--font-hero);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -188,7 +196,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Override Tailwind's default 1s linear spin — must be outside @layer to win cascade */
+/* Override Tailwind's default 1s linear spin - must be outside @layer to win cascade */
 .animate-spin {
   animation: spin 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
 }
@@ -205,4 +213,13 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+
+.font-druk-heavy {
+  font-family: var(--font-hero), var(--font-syne), sans-serif;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
 }

@@ -1,11 +1,5 @@
-import { Syne } from "next/font/google";
 import Link from "next/link";
 import { ArrowLeft, Shield, Lock, Eye, FileText, Globe } from "lucide-react";
-
-const syne = Syne({
-  subsets: ["latin"],
-  weight: ["700", "800"],
-});
 
 export const metadata = {
   title: "Privacy Policy",
@@ -39,9 +33,7 @@ export default function PrivacyPage() {
             <Shield size={12} />
             Data Protection
           </div>
-          <h1 
-            className={`text-5xl sm:text-6xl font-extrabold tracking-tight mb-4 ${syne.className}`}
-          >
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mb-4">
             Privacy <span className="text-[#d4ff00]">Policy</span>
           </h1>
           <p className="text-[#666] font-medium">
@@ -57,7 +49,7 @@ export default function PrivacyPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Eye size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Information We Collect</h2>
+              <h2 className="text-2xl font-bold">Information We Collect</h2>
             </div>
             <div className="prose prose-invert max-w-none text-[#888] leading-relaxed space-y-4">
               <p>
@@ -83,7 +75,7 @@ export default function PrivacyPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Lock size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>How We Use Data</h2>
+              <h2 className="text-2xl font-bold">How We Use Data</h2>
             </div>
             <div className="prose prose-invert max-w-none text-[#888] leading-relaxed space-y-4">
               <p>
@@ -105,7 +97,7 @@ export default function PrivacyPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Globe size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Third Party Services</h2>
+              <h2 className="text-2xl font-bold">Third Party Services</h2>
             </div>
             <div className="prose prose-invert max-w-none text-[#888] leading-relaxed space-y-4">
               <p>
@@ -127,7 +119,7 @@ export default function PrivacyPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <FileText size={20} />
               </div>
-              <h2 className={`text-2xl font-bold ${syne.className}`}>Security</h2>
+              <h2 className="text-2xl font-bold">Security</h2>
             </div>
             <div className="prose prose-invert max-w-none text-[#888] leading-relaxed">
               <p>

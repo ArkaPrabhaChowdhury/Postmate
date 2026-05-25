@@ -35,7 +35,7 @@ export default function SupportPage() {
       <div className="mb-8">
         <h1
           className="text-2xl font-bold tracking-tight text-[#f0ede8]"
-          style={{ fontFamily: "var(--font-syne)" }}
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           Support
         </h1>

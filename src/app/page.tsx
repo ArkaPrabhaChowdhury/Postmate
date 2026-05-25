@@ -99,12 +99,11 @@ export default function Home() {
               {/* Headline */}
               <motion.h1
                 variants={itemVariants}
-                className="text-5xl sm:text-6xl lg:text-[4.5rem] xl:text-[5rem] font-extrabold leading-[1.0] tracking-[-0.035em] text-[#f0ede8]"
-                style={{ fontFamily: "var(--font-syne)" }}
+                className="font-druk-heavy text-[3.6rem] sm:text-[4.5rem] lg:text-[5.25rem] xl:text-[5.85rem] text-[#f0ede8]"
               >
                 Turn commits
                 <br />
-                <span className="text-[#d4ff00]">into content.</span>
+                <span className="mt-1 block text-[#d4ff00]">into content.</span>
               </motion.h1>
 
               {/* Subhead */}
@@ -359,7 +358,7 @@ export default function Home() {
             </div>
             <h2
               className="text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] text-[#f0ede8] max-w-xl leading-[1.05]"
-              style={{ fontFamily: "var(--font-syne)" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               Sync, draft, ship.
               <br />
@@ -384,7 +383,7 @@ export default function Home() {
                 {/* Faded large number */}
                 <div
                   className="text-[96px] font-extrabold leading-none text-white/[0.025] select-none absolute top-4 left-6"
-                  style={{ fontFamily: "var(--font-syne)" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   0{idx + 1}
                 </div>
@@ -398,7 +397,7 @@ export default function Home() {
 
                 <h3
                   className="relative z-10 text-[17px] font-bold text-[#f0ede8] mb-2.5 tracking-[-0.01em]"
-                  style={{ fontFamily: "var(--font-syne)" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {step.title}
                 </h3>
@@ -428,7 +427,7 @@ export default function Home() {
               </div>
               <h2
                 className="text-3xl sm:text-4xl font-extrabold tracking-[-0.03em] text-[#f0ede8] leading-[1.1]"
-                style={{ fontFamily: "var(--font-syne)" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Engineered for
                 <br />
@@ -473,7 +472,7 @@ export default function Home() {
                   <div>
                     <h3
                       className="text-[16px] font-bold text-[#f0ede8] mb-2 tracking-[-0.01em]"
-                      style={{ fontFamily: "var(--font-syne)" }}
+                      style={{ fontFamily: "var(--font-heading)" }}
                     >
                       {feature.title}
                     </h3>
@@ -548,7 +547,7 @@ export default function Home() {
               <motion.h2
                 variants={itemVariants}
                 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.04em] text-[#f0ede8] leading-[1.0]"
-                style={{ fontFamily: "var(--font-syne)" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 Build in public.
                 <br />

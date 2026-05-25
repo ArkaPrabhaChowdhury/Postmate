@@ -20,7 +20,7 @@ export function HomeDemoVideo() {
           </div>
           <h2
             className="text-3xl font-extrabold leading-tight text-[#f0ede8] sm:text-4xl"
-            style={{ fontFamily: "var(--font-syne)" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             See Postmate in action.
           </h2>

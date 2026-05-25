@@ -121,7 +121,7 @@ export default function PricingPage() {
           <motion.h1
             variants={fadeUp}
             className="text-5xl sm:text-6xl font-extrabold tracking-[-0.035em] text-[#f0ede8] leading-[1.05] mb-5"
-            style={{ fontFamily: "var(--font-syne)" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Pick your plan.
             <br />
@@ -223,7 +223,7 @@ export default function PricingPage() {
                     <span
                       className="text-5xl font-extrabold text-[#f0ede8] tracking-tight"
                       style={{
-                        fontFamily: "var(--font-syne)",
+                        fontFamily: "var(--font-heading)",
                         fontVariantNumeric: "lining-nums tabular-nums",
                         fontFeatureSettings: '"lnum" 1, "tnum" 1',
                       }}
@@ -334,7 +334,7 @@ export default function PricingPage() {
           <motion.h2
             variants={fadeUp}
             className="text-2xl font-extrabold text-[#f0ede8] tracking-tight mb-10 text-center"
-            style={{ fontFamily: "var(--font-syne)" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Frequently asked
           </motion.h2>

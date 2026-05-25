@@ -14,19 +14,22 @@ function normalizeDatabaseUrl(url: string | undefined) {
     return url;
   }
 
-  // Prisma + Neon pooled endpoint uses PgBouncer.
-  // In serverless, it’s safer to keep connections minimal and avoid pool timeouts.
+  // For pooled Postgres endpoints in serverless, keep connections minimal,
+  // allow a longer initial connect window, and disable prepared statements
+  // where the pooler requires it.
   const isPostgres = parsed.protocol === "postgres:" || parsed.protocol === "postgresql:";
-  const isNeon = parsed.hostname.endsWith(".neon.tech");
-  const isPooler = parsed.hostname.includes("-pooler.");
+  const isNeonPooler = parsed.hostname.endsWith(".neon.tech") && parsed.hostname.includes("-pooler.");
+  const isSupabaseTransactionPooler =
+    (parsed.hostname.endsWith(".pooler.supabase.com") || parsed.hostname.endsWith(".supabase.co")) &&
+    parsed.port === "6543";
 
-  if (isPostgres && isNeon && isPooler) {
+  if (isPostgres && (isNeonPooler || isSupabaseTransactionPooler)) {
     if (!parsed.searchParams.has("pgbouncer")) parsed.searchParams.set("pgbouncer", "true");
     if (!parsed.searchParams.has("connection_limit")) parsed.searchParams.set("connection_limit", "1");
     if (!parsed.searchParams.has("pool_timeout")) parsed.searchParams.set("pool_timeout", "0");
     if (!parsed.searchParams.has("connect_timeout")) parsed.searchParams.set("connect_timeout", "30");
 
-    // Avoid passing uncommon params that can break older poolers/clients.
+    // Avoid passing uncommon params that can break some poolers/clients.
     if (parsed.searchParams.has("channel_binding")) parsed.searchParams.delete("channel_binding");
   }
 
