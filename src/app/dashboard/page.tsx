@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
+import { DashboardAutoSync } from "@/components/DashboardAutoSync";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -124,11 +125,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   }
 
   // Auto-sync commits — at most once every 5 minutes to avoid waterfall on every load
-  const lastSync = await prisma.repo.findUnique({
-    where: { id: activeRepo.id },
-    select: { updatedAt: true },
-  });
-  const staleSince = Date.now() - (lastSync?.updatedAt?.getTime() ?? 0);
+  const staleSince = 0;
   if (staleSince > 5 * 60 * 1000) {
     try {
       const [owner, name] = activeRepo.fullName.split("/");
@@ -237,9 +234,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
   const isTrialActive = isPro && !!trialState?.proTrialEndsAt && !trialState.paddleSubscriptionId && trialState.proTrialEndsAt > new Date();
   const isTrialExpired = !isPro && !!trialState?.proTrialExpiredAt && !trialState.paddleSubscriptionId;
-  const trialDaysLeft = trialState?.proTrialEndsAt
-    ? Math.max(0, Math.ceil((trialState.proTrialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-    : 0;
+  const trialEndsLabel = trialState?.proTrialEndsAt
+    ? trialState.proTrialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
+    : "";
 
   const postBySha = new Map(posts.map((p) => [p.sourceId, p]));
 
@@ -257,6 +254,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8">
+      <DashboardAutoSync repoId={activeRepo.id} />
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -314,7 +312,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
                 <Sparkles size={14} className="text-[#d4ff00]" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-[#f0ede8]">Pro trial active - {trialDaysLeft} day{trialDaysLeft !== 1 ? "s" : ""} left</p>
+                <p className="text-xs font-semibold text-[#f0ede8]">Pro trial active - ends {trialEndsLabel}</p>
                 <p className="text-[11px] text-[#777] mt-0.5">Upgrade before it ends to keep unlimited posts, news, journey posts, and scheduling.</p>
               </div>
             </div>

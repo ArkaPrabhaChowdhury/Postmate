@@ -107,8 +107,6 @@ export default function PricingPage() {
         {/* Header */}
         <motion.div
           variants={stagger}
-          initial="hidden"
-          animate="show"
           className="text-center mb-20"
         >
           <motion.div variants={fadeUp}>
@@ -136,8 +134,6 @@ export default function PricingPage() {
         {/* Billing toggle */}
         <motion.div
           variants={fadeUp}
-          initial="hidden"
-          animate="show"
           className="w-full flex justify-center"
         >
           <div className="inline-flex items-center rounded-xl border border-white/[0.08] bg-[#0d0d0d] p-1">
@@ -181,8 +177,6 @@ export default function PricingPage() {
           {/* Most Popular badge - positioned above the Pro card */}
           <motion.div
             variants={stagger}
-            initial="hidden"
-            animate="show"
             className="grid md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl border border-white/[0.04]"
           >
           {tiers.map(({ key, highlight }) => {
@@ -316,8 +310,6 @@ export default function PricingPage() {
         {/* Bottom note */}
         <motion.p
           variants={fadeUp}
-          initial="hidden"
-          animate="show"
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
           3-day free trial - No contracts - Cancel anytime - Secure checkout via Paddle

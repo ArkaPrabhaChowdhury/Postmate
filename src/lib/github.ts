@@ -2,6 +2,16 @@ import { Octokit } from "octokit";
 import { prisma } from "@/lib/prisma";
 import { logExtraction } from "@/lib/logger";
 
+export type GitHubRepoListItem = {
+  id: number;
+  full_name: string;
+  private: boolean;
+  description: string | null;
+  language: string | null;
+  stargazers_count: number;
+  updated_at: string | null;
+};
+
 export async function getGitHubAccessToken(userId: string): Promise<string> {
   const account = await prisma.account.findFirst({
     where: { userId, provider: "github" },
@@ -18,6 +28,95 @@ export async function getGitHubAccessToken(userId: string): Promise<string> {
 export async function getOctokitForUser(userId: string): Promise<Octokit> {
   const token = await getGitHubAccessToken(userId);
   return new Octokit({ auth: token });
+}
+
+export async function listUserRepos(
+  userId: string,
+  options?: { page?: number; perPage?: number }
+): Promise<GitHubRepoListItem[]> {
+  const octokit = await getOctokitForUser(userId);
+  const page = options?.page ?? 1;
+  const perPage = options?.perPage ?? 10;
+  const res = await octokit.rest.repos.listForAuthenticatedUser({
+    page,
+    per_page: perPage,
+    sort: "updated",
+  });
+
+  return res.data.map((repo) => ({
+    id: repo.id,
+    full_name: repo.full_name,
+    private: repo.private,
+    description: repo.description ?? null,
+    language: repo.language ?? null,
+    stargazers_count: repo.stargazers_count ?? 0,
+    updated_at: repo.updated_at ?? null,
+  }));
+}
+
+export async function syncRecentCommitsForRepo(params: {
+  userId: string;
+  repoId: string;
+  fullName: string;
+  perPage?: number;
+}) {
+  const [owner, repo] = params.fullName.split("/");
+  if (!owner || !repo) {
+    throw new Error("Invalid repo full name. Expected owner/repo.");
+  }
+
+  const octokit = await getOctokitForUser(params.userId);
+  const res = await octokit.rest.repos.listCommits({
+    owner,
+    repo,
+    per_page: params.perPage ?? 20,
+  });
+
+  const rows = res.data.map((commit) => {
+    const message = commit.commit?.message ?? "";
+    const authoredAt = commit.commit?.author?.date ?? null;
+    const authorLogin = commit.author?.login ?? null;
+
+    return {
+      repoId: params.repoId,
+      type: "commit" as const,
+      externalId: commit.sha,
+      title: message.split(/\r?\n/)[0]?.trim() ?? message,
+      url: commit.html_url ?? null,
+      authorLogin,
+      authoredAt: authoredAt ? new Date(authoredAt) : null,
+      payloadJson: JSON.stringify({
+        sha: commit.sha,
+        message,
+        html_url: commit.html_url,
+        authoredAt,
+        authorLogin,
+      }),
+    };
+  });
+
+  await Promise.all([
+    ...rows.map((row) =>
+      prisma.gitHubEvent.upsert({
+        where: {
+          repoId_type_externalId: {
+            repoId: row.repoId,
+            type: row.type,
+            externalId: row.externalId,
+          },
+        },
+        create: row,
+        update: {
+          title: row.title,
+          url: row.url,
+          authorLogin: row.authorLogin,
+          authoredAt: row.authoredAt,
+          payloadJson: row.payloadJson,
+        },
+      })
+    ),
+    prisma.repo.update({ where: { id: params.repoId }, data: {} }),
+  ]);
 }
 
 export async function getGitHubProfile(userId: string): Promise<{
