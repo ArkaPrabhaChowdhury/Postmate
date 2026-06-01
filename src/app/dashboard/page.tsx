@@ -222,18 +222,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const isOwnerPromptAdmin = isOwnerPromptAdminEmail(userState?.email);
 
   const now = new Date();
-  const hasStandaloneTrial =
-    !!userState?.proTrialEndsAt &&
-    !userState.paddleSubscriptionId;
-  const isExpiredStandaloneTrial =
-    hasStandaloneTrial &&
-    userState.proTrialEndsAt <= now;
+  const trialEndsAt = userState?.proTrialEndsAt ?? null;
+  const isExpiredStandaloneTrial = !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt <= now;
   const isPro = userState?.plan === "pro" && !isExpiredStandaloneTrial;
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
-  const isTrialActive = userState?.plan === "pro" && hasStandaloneTrial && userState.proTrialEndsAt > now;
+  const isTrialActive = userState?.plan === "pro" && !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt > now;
   const isTrialExpired = isExpiredStandaloneTrial || (!isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId);
-  const trialEndsLabel = userState?.proTrialEndsAt
-    ? userState.proTrialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
+  const trialEndsLabel = trialEndsAt
+    ? trialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
     : "";
 
   const postBySha = new Map(posts.map((p) => [p.sourceId, p]));
