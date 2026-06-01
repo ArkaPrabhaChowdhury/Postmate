@@ -28,6 +28,7 @@ export default async function DashboardTimingPage() {
 async function measureDashboardTiming() {
   const startedAt = Date.now();
   const userId = await requireUserId();
+  const steps: Array<{ label: string; durationMs: number; result: unknown }> = [];
 
   const activeRepoStep = await timed("activeRepo", () =>
     prisma.repo.findFirst({
@@ -36,7 +37,7 @@ async function measureDashboardTiming() {
     })
   );
 
-  const steps = [activeRepoStep];
+  steps.push(activeRepoStep);
 
   if (activeRepoStep.result) {
     const repoId = activeRepoStep.result.id;
