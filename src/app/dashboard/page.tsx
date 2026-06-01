@@ -9,13 +9,14 @@ import {
   Sparkles, GitCommit, FileText, Route,
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock, Calendar,
 } from "lucide-react";
-import { getUserPlan, getMonthlyPostCount } from "@/lib/plan-limits";
+import { getMonthlyPostCount } from "@/lib/plan-limits";
 import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import { StopPropagation } from "@/components/StopPropagation";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
 import { DashboardAutoSync } from "@/components/DashboardAutoSync";
+import { expireTrialForUser } from "@/lib/trials";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -43,13 +44,6 @@ function normalizeJourneyPost(value: unknown): JourneyPostData | null {
 }
 
 function timeAgo(date: Date) {
-  const diff = Date.now() - date.getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  if (d < 30) return `${d}d ago`;
   return date.toLocaleDateString("en", { month: "short", day: "numeric" });
 }
 
@@ -181,7 +175,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     };
   }).newsTweet;
 
-  const [events, posts, strategy, settings, user, suggestion, plan, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
+  await expireTrialForUser(userId);
+
+  const [events, posts, strategy, settings, userState, suggestion, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
       orderBy: { authoredAt: "desc" },
@@ -203,9 +199,17 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
       })
       : Promise.resolve(null),
     settingsClient.userSettings ? settingsClient.userSettings.findUnique({ where: { userId } }) : Promise.resolve(null),
-    prisma.user.findUnique({ where: { id: userId }, select: { email: true } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        plan: true,
+        proTrialEndsAt: true,
+        proTrialExpiredAt: true,
+        paddleSubscriptionId: true,
+      },
+    }),
     getPostingSuggestion(userId),
-    getUserPlan(userId),
     getMonthlyPostCount(userId),
     prisma.generatedPost.findMany({
       where: { userId, linkedinStatus: "scheduled" },
@@ -218,24 +222,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   ]);
   const hasMoreCommits = events.length > commitsPerPage;
   const visibleEvents = hasMoreCommits ? events.slice(0, commitsPerPage) : events;
-  const isOwnerPromptAdmin = isOwnerPromptAdminEmail(user?.email);
+  const isOwnerPromptAdmin = isOwnerPromptAdminEmail(userState?.email);
 
-  const trialState = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      proTrialStartedAt: true,
-      proTrialEndsAt: true,
-      proTrialExpiredAt: true,
-      paddleSubscriptionId: true,
-    },
-  });
-
-  const isPro = plan === "pro";
+  const isPro = userState?.plan === "pro";
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
-  const isTrialActive = isPro && !!trialState?.proTrialEndsAt && !trialState.paddleSubscriptionId && trialState.proTrialEndsAt > new Date();
-  const isTrialExpired = !isPro && !!trialState?.proTrialExpiredAt && !trialState.paddleSubscriptionId;
-  const trialEndsLabel = trialState?.proTrialEndsAt
-    ? trialState.proTrialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
+  const isTrialActive = isPro && !!userState?.proTrialEndsAt && !userState.paddleSubscriptionId && userState.proTrialEndsAt > new Date();
+  const isTrialExpired = !isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId;
+  const trialEndsLabel = userState?.proTrialEndsAt
+    ? userState.proTrialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
     : "";
 
   const postBySha = new Map(posts.map((p) => [p.sourceId, p]));

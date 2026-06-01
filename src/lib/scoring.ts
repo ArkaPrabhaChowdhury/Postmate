@@ -72,52 +72,69 @@ export async function getPostingSuggestion(userId: string): Promise<PostingSugge
 
   const now = Date.now();
   const weekAgo = new Date(now - 7 * MS_PER_DAY);
+  const repoIds = repos.map((repo) => repo.id);
 
-  const scored = await Promise.all(
-    repos.map(async (repo) => {
-      const [lastPost, commitsThisWeek, lastRepoPost, topCommit] = await Promise.all([
-        prisma.generatedPost.findFirst({
-          where: { userId },
-          orderBy: { createdAt: "desc" },
-          select: { createdAt: true },
-        }),
-        prisma.gitHubEvent.count({
-          where: { repoId: repo.id, type: "commit", authoredAt: { gte: weekAgo } },
-        }),
-        prisma.generatedPost.findFirst({
-          where: { userId, repoId: repo.id },
-          orderBy: { createdAt: "desc" },
-          select: { createdAt: true },
-        }),
-        prisma.gitHubEvent.findFirst({
-          where: { repoId: repo.id, type: "commit" },
-          orderBy: { authoredAt: "desc" },
-          select: { externalId: true },
-        }),
-      ]);
+  const [lastPost, commitsThisWeek, lastRepoPosts, topCommits] = await Promise.all([
+    prisma.generatedPost.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+    prisma.gitHubEvent.groupBy({
+      by: ["repoId"],
+      where: { repoId: { in: repoIds }, type: "commit", authoredAt: { gte: weekAgo } },
+      _count: { _all: true },
+    }),
+    prisma.generatedPost.findMany({
+      where: {
+        userId,
+        repoId: { in: repoIds },
+      },
+      orderBy: [{ repoId: "asc" }, { createdAt: "desc" }],
+      distinct: ["repoId"],
+      select: { repoId: true, createdAt: true },
+    }),
+    prisma.gitHubEvent.findMany({
+      where: { repoId: { in: repoIds }, type: "commit" },
+      orderBy: [{ repoId: "asc" }, { authoredAt: "desc" }],
+      distinct: ["repoId"],
+      select: { repoId: true, externalId: true },
+    }),
+  ]);
 
-      const daysSinceLastPost = daysSince(lastPost?.createdAt ?? null);
-      const daysSinceRepoMentioned = daysSince(lastRepoPost?.createdAt ?? null);
-
-      const score =
-        RECENCY_WEIGHT * daysSinceLastPost +
-        ACTIVITY_WEIGHT * commitsThisWeek +
-        GAP_WEIGHT * daysSinceRepoMentioned;
-
-      const reasons: string[] = [];
-      if (commitsThisWeek > 0) reasons.push(`${commitsThisWeek} commit${commitsThisWeek > 1 ? "s" : ""} this week`);
-      if (daysSinceRepoMentioned > 0) reasons.push(`no post about this repo in ${daysSinceRepoMentioned}d`);
-      if (daysSinceLastPost > 0) reasons.push(`last post ${daysSinceLastPost}d ago`);
-
-      return {
-        repoId: repo.id,
-        repoFullName: repo.fullName,
-        score,
-        reasons,
-        topCommitSha: topCommit?.externalId ?? null,
-      };
-    })
+  const daysSinceLastPost = daysSince(lastPost?.createdAt ?? null);
+  const commitsByRepoId = new Map(
+    commitsThisWeek.map((row) => [row.repoId, row._count._all])
   );
+  const lastRepoPostByRepoId = new Map(
+    lastRepoPosts.map((row) => [row.repoId, row.createdAt])
+  );
+  const topCommitByRepoId = new Map(
+    topCommits.map((row) => [row.repoId, row.externalId])
+  );
+
+  const scored = repos.map((repo) => {
+    const repoCommitsThisWeek = commitsByRepoId.get(repo.id) ?? 0;
+    const daysSinceRepoMentioned = daysSince(lastRepoPostByRepoId.get(repo.id) ?? null);
+
+    const score =
+      RECENCY_WEIGHT * daysSinceLastPost +
+      ACTIVITY_WEIGHT * repoCommitsThisWeek +
+      GAP_WEIGHT * daysSinceRepoMentioned;
+
+    const reasons: string[] = [];
+    if (repoCommitsThisWeek > 0) reasons.push(`${repoCommitsThisWeek} commit${repoCommitsThisWeek > 1 ? "s" : ""} this week`);
+    if (daysSinceRepoMentioned > 0) reasons.push(`no post about this repo in ${daysSinceRepoMentioned}d`);
+    if (daysSinceLastPost > 0) reasons.push(`last post ${daysSinceLastPost}d ago`);
+
+    return {
+      repoId: repo.id,
+      repoFullName: repo.fullName,
+      score,
+      reasons,
+      topCommitSha: topCommitByRepoId.get(repo.id) ?? null,
+    };
+  });
 
   const best = scored.sort((a, b) => b.score - a.score)[0];
   if (!best || !best.topCommitSha) return null;
