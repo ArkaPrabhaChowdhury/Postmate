@@ -25,9 +25,17 @@ function normalizeDatabaseUrl(url: string | undefined) {
 
   if (isPostgres && (isNeonPooler || isSupabaseTransactionPooler)) {
     if (!parsed.searchParams.has("pgbouncer")) parsed.searchParams.set("pgbouncer", "true");
-    if (!parsed.searchParams.has("connection_limit")) parsed.searchParams.set("connection_limit", "1");
     if (!parsed.searchParams.has("pool_timeout")) parsed.searchParams.set("pool_timeout", "0");
     if (!parsed.searchParams.has("connect_timeout")) parsed.searchParams.set("connect_timeout", "30");
+
+    if (isSupabaseTransactionPooler) {
+      const currentLimit = Number(parsed.searchParams.get("connection_limit") ?? "0");
+      if (!Number.isFinite(currentLimit) || currentLimit < 5) {
+        parsed.searchParams.set("connection_limit", "5");
+      }
+    } else if (!parsed.searchParams.has("connection_limit")) {
+      parsed.searchParams.set("connection_limit", "1");
+    }
 
     // Avoid passing uncommon params that can break some poolers/clients.
     if (parsed.searchParams.has("channel_binding")) parsed.searchParams.delete("channel_binding");

@@ -114,6 +114,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId, provider])
 }
 
 model Session {
@@ -123,6 +124,8 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
@@ -149,6 +152,7 @@ model Repo {
   strategies ProjectStrategy[]
 
   @@index([userId])
+  @@index([userId, isActive])
   @@unique([userId, fullName])
 }
 
@@ -168,6 +172,7 @@ model GitHubEvent {
 
   @@unique([repoId, type, externalId])
   @@index([repoId, createdAt])
+  @@index([repoId, type, authoredAt(sort: Desc)])
 }
 
 model GeneratedPost {
@@ -191,6 +196,8 @@ model GeneratedPost {
 
   @@index([userId, createdAt])
   @@index([repoId, createdAt])
+  @@index([userId, repoId, createdAt(sort: Desc)])
+  @@index([userId, linkedinStatus, scheduledAt])
   @@index([sourceType, sourceId])
 }
 
@@ -207,4 +214,5 @@ model ProjectStrategy {
 
   @@unique([userId, repoId])
   @@index([userId, repoId, createdAt])
+  @@index([repoId])
 }

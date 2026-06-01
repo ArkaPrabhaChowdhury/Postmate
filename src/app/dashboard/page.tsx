@@ -7,7 +7,7 @@ import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
 import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
-  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Fingerprint, Layers, Zap, Lock, Calendar,
+  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Layers, Zap, Lock, Calendar,
 } from "lucide-react";
 import { getMonthlyPostCount } from "@/lib/plan-limits";
 import Link from "next/link";
@@ -16,7 +16,6 @@ import { StopPropagation } from "@/components/StopPropagation";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
 import { DashboardAutoSync } from "@/components/DashboardAutoSync";
-import { expireTrialForUser } from "@/lib/trials";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -175,8 +174,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
     };
   }).newsTweet;
 
-  await expireTrialForUser(userId);
-
   const [events, posts, strategy, settings, userState, suggestion, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
     prisma.gitHubEvent.findMany({
       where: { repoId: activeRepo.id, type: "commit" },
@@ -224,10 +221,17 @@ export default async function DashboardPage({ searchParams }: { searchParams?: P
   const visibleEvents = hasMoreCommits ? events.slice(0, commitsPerPage) : events;
   const isOwnerPromptAdmin = isOwnerPromptAdminEmail(userState?.email);
 
-  const isPro = userState?.plan === "pro";
+  const now = new Date();
+  const hasStandaloneTrial =
+    !!userState?.proTrialEndsAt &&
+    !userState.paddleSubscriptionId;
+  const isExpiredStandaloneTrial =
+    hasStandaloneTrial &&
+    userState.proTrialEndsAt <= now;
+  const isPro = userState?.plan === "pro" && !isExpiredStandaloneTrial;
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
-  const isTrialActive = isPro && !!userState?.proTrialEndsAt && !userState.paddleSubscriptionId && userState.proTrialEndsAt > new Date();
-  const isTrialExpired = !isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId;
+  const isTrialActive = userState?.plan === "pro" && hasStandaloneTrial && userState.proTrialEndsAt > now;
+  const isTrialExpired = isExpiredStandaloneTrial || (!isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId);
   const trialEndsLabel = userState?.proTrialEndsAt
     ? userState.proTrialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
     : "";
