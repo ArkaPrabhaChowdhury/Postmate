@@ -1,0 +1,786 @@
+import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/requireUser";
+import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction, generateSuggestedPost } from "./actions";
+import { getPostingSuggestion } from "@/lib/scoring";
+import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
+import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
+import { getOctokitForUser } from "@/lib/github";
+import {
+  Sparkles, GitCommit, FileText, Route,
+  ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Layers, Zap, Lock, Calendar,
+} from "lucide-react";
+import { getMonthlyPostCount } from "@/lib/plan-limits";
+import Link from "next/link";
+import { SubmitButton } from "@/components/SubmitButton";
+import { StopPropagation } from "@/components/StopPropagation";
+import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
+import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
+import { DashboardAutoSync } from "@/components/DashboardAutoSync";
+
+function normalizeJourneyPost(value: unknown): JourneyPostData | null {
+  if (!value || typeof value !== "object") return null;
+
+  const raw = value as Record<string, unknown>;
+  const title = typeof raw.title === "string" ? raw.title.trim() : "";
+  const stage = typeof raw.stage === "string" ? raw.stage.trim() : "reflection";
+  const emoji = typeof raw.emoji === "string" ? raw.emoji.trim() : "";
+  const content = typeof raw.content === "string"
+    ? raw.content
+    : typeof raw.body === "string"
+      ? raw.body
+      : typeof raw.text === "string"
+        ? raw.text
+        : "";
+
+  if (!title && !content.trim()) return null;
+
+  return {
+    title: title || "Untitled post",
+    stage: stage || "reflection",
+    emoji,
+    content: content.trim(),
+  };
+}
+
+function timeAgo(date: Date) {
+  return date.toLocaleDateString("en", { month: "short", day: "numeric" });
+}
+
+const styleConfig = {
+  progress: { label: "Progress", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  insight: { label: "Insight", cls: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  build_in_public: { label: "Build", cls: "bg-sky-500/10 text-sky-400 border-sky-500/20" },
+  project_showcase: { label: "Showcase", cls: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
+  trend: { label: "Trend", cls: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+} as const;
+
+const statusConfig = {
+  draft: { label: "Draft", cls: "bg-white/[0.06] text-[#888] border-white/[0.1]" },
+  copied: { label: "Copied", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  posted: { label: "Posted", cls: "bg-[#d4ff00]/10 text-[#d4ff00] border-[#d4ff00]/20" },
+} as const;
+
+function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[11px] font-semibold tracking-wide uppercase ${cls}`}>
+      {children}
+    </span>
+  );
+}
+
+export async function DashboardContent({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
+  const userId = await requireUserId();
+  const params = await searchParams;
+  const upgraded = params?.upgraded === "1";
+  const commitsPageParam = params?.commitsPage;
+  const commitsPageRaw = Array.isArray(commitsPageParam) ? commitsPageParam[0] : commitsPageParam;
+  const commitsPageNum = Number.parseInt(commitsPageRaw ?? "1", 10);
+  const commitsPage = Number.isFinite(commitsPageNum) && commitsPageNum > 0 ? commitsPageNum : 1;
+  const commitsPerPage = 5;
+  const transactionParam = params?._ptxn;
+  const transactionId = typeof transactionParam === "string" ? transactionParam : undefined;
+
+  if (upgraded && transactionId) {
+    await syncUserFromPaddleTransaction(userId, transactionId).catch(() => {});
+  }
+
+  const activeRepo = await prisma.repo.findFirst({
+    where: { userId, isActive: true },
+    select: { id: true, fullName: true },
+  });
+
+  if (!activeRepo) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-24 gap-4">
+        <div className="w-12 h-12 rounded-xl bg-[#0c0c0c] border border-white/[0.08] flex items-center justify-center">
+          <GitCommit size={20} className="text-[#555]" />
+        </div>
+        <div>
+          <h1
+            className="text-xl font-bold tracking-tight text-[#f0ede8] mb-1"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            No repo connected
+          </h1>
+          <p className="text-sm text-[#666] max-w-xs mx-auto leading-relaxed">
+            Connect a GitHub repo to sync commits and start generating posts.
+          </p>
+        </div>
+        <Link
+          href="/settings"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] text-sm font-bold rounded-xl transition-colors"
+        >
+          Connect a repo
+          <ChevronRight size={14} />
+        </Link>
+      </div>
+    );
+  }
+
+  // Auto-sync commits — at most once every 5 minutes to avoid waterfall on every load
+  const staleSince = 0;
+  if (staleSince > 5 * 60 * 1000) {
+    try {
+      const [owner, name] = activeRepo.fullName.split("/");
+      const octokit = await getOctokitForUser(userId);
+      const res = await octokit.rest.repos.listCommits({ owner, repo: name, per_page: 20 });
+      const rows = res.data.map((c) => {
+        const message = c.commit?.message ?? "";
+        const authoredAt = c.commit?.author?.date ?? null;
+        const authorLogin = c.author?.login ?? null;
+        return {
+          repoId: activeRepo.id,
+          type: "commit",
+          externalId: c.sha,
+          title: message.split(/\r?\n/)[0]?.trim() ?? message,
+          url: c.html_url ?? null,
+          authorLogin,
+          authoredAt: authoredAt ? new Date(authoredAt) : null,
+          payloadJson: JSON.stringify({ sha: c.sha, message, html_url: c.html_url, authoredAt, authorLogin }),
+        };
+      });
+      await Promise.all([
+        ...rows.map((row) =>
+          prisma.gitHubEvent.upsert({
+            where: { repoId_type_externalId: { repoId: row.repoId, type: row.type, externalId: row.externalId } },
+            create: row,
+            update: { title: row.title, url: row.url, authorLogin: row.authorLogin, authoredAt: row.authoredAt, payloadJson: row.payloadJson },
+          })
+        ),
+        prisma.repo.update({ where: { id: activeRepo.id }, data: {} }),
+      ]);
+    } catch { /* silent fail — stale data still renders */ }
+  }
+
+  const strategyModel = (prisma as unknown as {
+    projectStrategy?: {
+      findFirst: (args: {
+        where: { userId: string; repoId: string };
+        orderBy: { createdAt: "desc" };
+        select: { id: true; content: true; createdAt: true };
+      }) => Promise<{ id: string; content: string; createdAt: Date } | null>;
+    };
+  }).projectStrategy;
+
+  const settingsClient = prisma as unknown as {
+    userSettings?: {
+      findUnique: (args: { where: { userId: string } }) => Promise<{ voiceMemory?: string | null; tone?: string | null; ownerGlobalInstructionOverride?: string | null } | null>;
+    };
+  };
+
+  const newsTweetModel = (prisma as unknown as {
+    newsTweet?: {
+      findMany: (args: object) => Promise<{ id: string; articleTitle: string; scheduledAt: Date | null }[]>;
+    };
+  }).newsTweet;
+
+  const [events, posts, strategy, settings, userState, suggestion, monthlyPostCount, scheduledPosts, scheduledNews] = await Promise.all([
+    prisma.gitHubEvent.findMany({
+      where: { repoId: activeRepo.id, type: "commit" },
+      orderBy: { authoredAt: "desc" },
+      skip: (commitsPage - 1) * commitsPerPage,
+      take: commitsPerPage + 1,
+      select: { id: true, externalId: true, title: true, url: true, authorLogin: true, authoredAt: true, createdAt: true },
+    }),
+    prisma.generatedPost.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, repoId: true, sourceId: true, style: true, status: true, createdAt: true },
+    }),
+    strategyModel
+      ? strategyModel.findFirst({
+        where: { userId, repoId: activeRepo.id },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, content: true, createdAt: true },
+      })
+      : Promise.resolve(null),
+    settingsClient.userSettings ? settingsClient.userSettings.findUnique({ where: { userId } }) : Promise.resolve(null),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+        plan: true,
+        proTrialEndsAt: true,
+        proTrialExpiredAt: true,
+        paddleSubscriptionId: true,
+      },
+    }),
+    getPostingSuggestion(userId),
+    getMonthlyPostCount(userId),
+    prisma.generatedPost.findMany({
+      where: { userId, linkedinStatus: "scheduled" },
+      orderBy: { scheduledAt: "asc" },
+      select: { id: true, scheduledAt: true, style: true },
+    }),
+    newsTweetModel
+      ? newsTweetModel.findMany({ where: { userId, linkedinStatus: "scheduled" }, orderBy: { scheduledAt: "asc" }, select: { id: true, articleTitle: true, scheduledAt: true } })
+      : Promise.resolve([] as { id: string; articleTitle: string; scheduledAt: Date | null }[]),
+  ]);
+  const hasMoreCommits = events.length > commitsPerPage;
+  const visibleEvents = hasMoreCommits ? events.slice(0, commitsPerPage) : events;
+  const isOwnerPromptAdmin = isOwnerPromptAdminEmail(userState?.email);
+
+  const now = new Date();
+  const trialEndsAt = userState?.proTrialEndsAt ?? null;
+  const isExpiredStandaloneTrial = !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt <= now;
+  const isPro = userState?.plan === "pro" && !isExpiredStandaloneTrial;
+  const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
+  const isTrialActive = userState?.plan === "pro" && !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt > now;
+  const isTrialExpired = isExpiredStandaloneTrial || (!isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId);
+  const trialEndsLabel = trialEndsAt
+    ? trialEndsAt.toLocaleDateString("en", { month: "short", day: "numeric" })
+    : "";
+
+  const postBySha = new Map(posts.map((p) => [p.sourceId, p]));
+
+  let journeyPosts: JourneyPostData[] = [];
+  if (strategy?.content) {
+    try {
+      const parsed = JSON.parse(strategy.content);
+      if (Array.isArray(parsed)) {
+        journeyPosts = parsed
+          .map(normalizeJourneyPost)
+          .filter((post): post is JourneyPostData => post !== null);
+      }
+    } catch { /* ignore */ }
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8">
+      <DashboardAutoSync repoId={activeRepo.id} />
+      <div className="flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1
+              className="text-xl font-bold tracking-tight text-[#f0ede8]"
+              style={{ fontFamily: "var(--font-heading)" }}
+            >
+              Dashboard
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-[#555]">Repo:</span>
+              <a
+                href={`https://github.com/${activeRepo.fullName}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-[#d4ff00]/70 hover:text-[#d4ff00] transition-colors flex items-center gap-1 font-mono"
+              >
+                {activeRepo.fullName}
+                <ExternalLink size={10} />
+              </a>
+            </div>
+          </div>
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all"
+          >
+            Change repo
+          </Link>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          {[
+            { label: "Commits synced", value: events.length, icon: GitCommit },
+            { label: "Drafts created", value: posts.length, icon: FileText },
+            { label: "Journey posts", value: journeyPosts.length, icon: Route },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
+                <Icon size={14} className="text-[#d4ff00]/60" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold tracking-tight leading-none text-[#f0ede8]">{value}</div>
+                <div className="text-[11px] text-[#555] mt-0.5">{label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {isTrialActive && (
+          <div className="flex items-center justify-between gap-4 px-5 py-4 bg-[#d4ff00]/[0.08] border border-[#d4ff00]/20 rounded-xl flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#d4ff00]/10 border border-[#d4ff00]/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles size={14} className="text-[#d4ff00]" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#f0ede8]">Pro trial active - ends {trialEndsLabel}</p>
+                <p className="text-[11px] text-[#777] mt-0.5">Upgrade before it ends to keep unlimited posts, news, journey posts, and scheduling.</p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              Upgrade now
+              <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
+
+        {isTrialExpired && (
+          <div className="flex items-center justify-between gap-4 px-5 py-4 bg-amber-500/[0.08] border border-amber-500/20 rounded-xl flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+                <Lock size={14} className="text-amber-300" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#f0ede8]">Your Pro trial expired</p>
+                <p className="text-[11px] text-[#777] mt-0.5">You are back on the Free plan. Upgrade to restore Pro features.</p>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              Upgrade to Pro
+              <ChevronRight size={12} />
+            </Link>
+          </div>
+        )}
+
+        {/* Free plan usage banner */}
+        {!isPro && (
+          <div className="flex items-center justify-between gap-4 px-5 py-3.5 bg-[#0c0c0c] border border-white/[0.08] rounded-xl flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.06] flex items-center justify-center flex-shrink-0">
+                <Zap size={14} className="text-[#d4ff00]/60" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-[#f0ede8]">Free plan — {freePostsLeft} post{freePostsLeft !== 1 ? "s" : ""} left this month</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-32 h-1 bg-white/[0.08] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#d4ff00] rounded-full transition-all"
+                      style={{ width: `${Math.min(100, (monthlyPostCount / 5) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-[#555]">{monthlyPostCount} / 5</span>
+                </div>
+              </div>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+            >
+              <Sparkles size={11} />
+              Upgrade to Pro
+            </Link>
+          </div>
+        )}
+
+        {/* Scheduled Posts */}
+        {(scheduledPosts.length > 0 || scheduledNews.length > 0) && (
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3">
+              <Calendar size={14} className="text-amber-400/70 shrink-0" />
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Scheduled Posts</h2>
+                <p className="text-xs text-[#666] mt-0.5">Upcoming posts queued for auto-publishing.</p>
+              </div>
+            </div>
+            <div className="divide-y divide-white/[0.05]">
+              {scheduledPosts.map((p) => {
+                const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
+                return (
+                  <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Calendar size={13} className="text-amber-400 shrink-0" />
+                      <Badge cls={sc.cls}>{sc.label}</Badge>
+                      {p.scheduledAt && (
+                        <span className="text-xs text-amber-400/80 font-mono whitespace-nowrap">
+                          {new Date(p.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href={`/posts/${p.id}`}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                    >
+                      View <ChevronRight size={12} />
+                    </Link>
+                  </div>
+                );
+              })}
+              {scheduledNews.map((n) => (
+                <div key={n.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Calendar size={13} className="text-amber-400 shrink-0" />
+                    <Badge cls="bg-amber-500/10 text-amber-400 border-amber-500/20">News</Badge>
+                    <span className="text-xs text-[#f0ede8] truncate">{n.articleTitle}</span>
+                    {n.scheduledAt && (
+                      <span className="text-xs text-amber-400/80 font-mono whitespace-nowrap hidden sm:block">
+                        {new Date(n.scheduledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href="/news"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                  >
+                    View <ChevronRight size={12} />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Suggested today */}
+        {suggestion && suggestion.topCommitSha && (
+          <div className="bg-[#0c0c0c] border border-[#d4ff00]/20 rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#d4ff00]/10 border border-[#d4ff00]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Zap size={14} className="text-[#d4ff00]" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#d4ff00] uppercase tracking-wider mb-0.5">Suggested today</p>
+                <p className="text-sm font-medium text-[#f0ede8]">{suggestion.repoFullName}</p>
+                <p className="text-xs text-[#666] mt-0.5">{suggestion.reasons.join(" · ")}</p>
+              </div>
+            </div>
+            <form action={generateSuggestedPost}>
+              <input type="hidden" name="commitSha" value={suggestion.topCommitSha} />
+              <input type="hidden" name="repoId" value={suggestion.repoId} />
+              <SubmitButton
+                pendingText="Generating…"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
+              >
+                <Sparkles size={11} />
+                Generate post
+              </SubmitButton>
+            </form>
+          </div>
+        )}
+
+        {/* Voice & Tone */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Voice &amp; Tone</h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  Save your voice memory and tone preference for all generated posts.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+            <div className="p-5">
+              <VoiceSettingsSection
+                initialVoiceMemory={settings?.voiceMemory ?? ""}
+                initialTone={settings?.tone ?? "50"}
+                initialOwnerGlobalInstruction={settings?.ownerGlobalInstructionOverride ?? ""}
+                showOwnerGlobalInstruction={isOwnerPromptAdmin}
+                onSave={saveVoiceSettings}
+                onAutoGenerate={autoGenerateVoice}
+              />
+            </div>
+          </details>
+        </section>
+
+        {/* Commits */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details open>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 cursor-pointer select-none">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-[#f0ede8]">Recent commits</h2>
+                  <p className="text-xs text-[#666] mt-0.5">
+                    Select a commit and generate a LinkedIn or X draft (X is capped at 280 chars).
+                  </p>
+                </div>
+                <ChevronDown size={14} className="text-[#555] chevron sm:hidden mt-1 shrink-0" />
+              </div>
+              <div className="flex items-center gap-2">
+                <StopPropagation>
+                  {isPro ? (
+                    <form action={generateClusteredPostsAction} className="flex items-center gap-2 flex-1 sm:flex-none">
+                      <div className="relative flex-1 sm:flex-none">
+                        <select
+                          name="platform"
+                          defaultValue="linkedin"
+                          className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                        >
+                          <option value="linkedin">LinkedIn</option>
+                          <option value="x">X</option>
+                        </select>
+                        <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                      </div>
+                      <SubmitButton
+                        pendingText="Clustering…"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
+                      >
+                        <Layers size={11} />
+                        Cluster commits
+                      </SubmitButton>
+                    </form>
+                  ) : (
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#555] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors w-full sm:w-auto"
+                    >
+                      <Lock size={10} />
+                      Cluster commits · Pro
+                    </Link>
+                  )}
+                </StopPropagation>
+                <ChevronDown size={14} className="text-[#555] chevron hidden sm:block shrink-0" />
+              </div>
+            </summary>
+
+            {visibleEvents.length === 0 ? (
+              <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                  <GitCommit size={18} className="text-[#444]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#888]">No commits synced</p>
+                  <p className="text-xs text-[#555] mt-0.5">Hit &ldquo;Sync commits&rdquo; to pull activity from your repo.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/[0.05]">
+                {visibleEvents.map((e) => {
+                  const existing = postBySha.get(e.externalId);
+                  return (
+                    <div
+                      key={e.id}
+                      className="px-5 py-3.5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#f0ede8] line-clamp-2 md:truncate">{e.title}</p>
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#555] flex-wrap">
+                          <code className="font-mono bg-white/[0.05] px-1.5 py-0.5 rounded text-[#888]">
+                            {e.externalId.slice(0, 7)}
+                          </code>
+                          {e.authorLogin && <span className="truncate max-w-[120px]">{e.authorLogin}</span>}
+                          {e.authoredAt && <span>{timeAgo(new Date(e.authoredAt))}</span>}
+                          {e.url && (
+                            <a
+                              href={e.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[#d4ff00]/60 hover:text-[#d4ff00] flex items-center gap-0.5 transition-colors"
+                            >
+                              view <ExternalLink size={9} />
+                            </a>
+                          )}
+                          {existing && (
+                            <Link
+                              href={`/posts/${existing.id}`}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-colors uppercase tracking-wide"
+                            >
+                              <CheckCircle2 size={10} />
+                              Draft
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      <form action={generatePostFromCommit} className="grid grid-cols-2 md:flex md:items-center gap-2 md:flex-shrink-0">
+                        <input type="hidden" name="sha" value={e.externalId} />
+                        <div className="relative">
+                          <select
+                            name="platform"
+                            defaultValue="linkedin"
+                            className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none"
+                          >
+                            <option value="linkedin">LinkedIn</option>
+                            <option value="x">X</option>
+                          </select>
+                          <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                        </div>
+                        <div className="relative">
+                          <select
+                            name="style"
+                            defaultValue="progress"
+                            disabled={!isPro}
+                            className="w-full text-[11px] font-medium bg-[#090909] border border-white/[0.1] text-[#aaa] rounded-lg pl-2 pr-6 py-1.5 outline-none focus:border-[#d4ff00]/50 cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="progress">Progress update</option>
+                            {isPro && <option value="insight">Technical insight</option>}
+                            {isPro && <option value="build_in_public">Build in public</option>}
+                          </select>
+                          <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
+                        </div>
+                        {!isPro && freePostsLeft === 0 ? (
+                          <Link href="/pricing" className="col-span-2 md:col-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap">
+                            <Lock size={11} /> Limit reached
+                          </Link>
+                        ) : (
+                          <SubmitButton
+                            pendingText="Generating…"
+                            className="col-span-2 md:col-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                          >
+                            <Sparkles size={11} />
+                            Generate
+                          </SubmitButton>
+                        )}
+                      </form>
+                    </div>
+                  );
+                })}
+                <div className="px-5 py-3.5 flex items-center justify-between gap-3 bg-white/[0.01]">
+                  <p className="text-xs text-[#666]">Showing page {commitsPage}</p>
+                  <div className="flex items-center gap-2">
+                    {commitsPage > 1 && (
+                      <Link
+                        href={commitsPage === 2 ? "/dashboard" : `/dashboard?commitsPage=${commitsPage - 1}`}
+                        className="inline-flex items-center justify-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#aaa] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors"
+                      >
+                        Newer
+                      </Link>
+                    )}
+                    {hasMoreCommits && (
+                      <Link
+                        href={`/dashboard?commitsPage=${commitsPage + 1}`}
+                        className="inline-flex items-center justify-center px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#aaa] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors"
+                      >
+                        Load more
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </details>
+        </section>
+
+        {/* Project Showcase */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div className="flex items-center gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-[#f0ede8] flex items-center gap-2">
+                    LinkedIn Project Showcase
+                    {!isPro && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#d4ff00]/10 text-[#d4ff00] border border-[#d4ff00]/20 rounded text-[9px] font-bold tracking-wide uppercase"><Lock size={8} /> Pro</span>}
+                  </h2>
+                  <p className="text-xs text-[#666] mt-0.5">
+                    AI reads the entire repo and generates a comprehensive LinkedIn post highlighting key features.
+                  </p>
+                </div>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+            <div className="px-5 py-3.5 border-t border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
+              {isPro ? (
+                <form action={generateProjectShowcaseForRepo}>
+                  <SubmitButton
+                    pendingText="Generating…"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    <Sparkles size={11} />
+                    Generate showcase
+                  </SubmitButton>
+                </form>
+              ) : (
+                <Link href="/pricing" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                  <Sparkles size={11} /> Upgrade to Pro
+                </Link>
+              )}
+            </div>
+          </details>
+        </section>
+
+        {/* Journey */}
+        <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+          <details>
+            <summary className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap cursor-pointer select-none">
+              <div>
+                <h2 className="text-sm font-semibold text-[#f0ede8] flex items-center gap-2">
+                  Journey Posts for X
+                  {!isPro && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#d4ff00]/10 text-[#d4ff00] border border-[#d4ff00]/20 rounded text-[9px] font-bold tracking-wide uppercase"><Lock size={8} /> Pro</span>}
+                </h2>
+                <p className="text-xs text-[#666] mt-0.5">
+                  AI reads your repo history and generates 3 posts ideal for an X thread.
+                </p>
+              </div>
+              <ChevronDown size={14} className="text-[#555] chevron" />
+            </summary>
+
+            <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-4 flex-wrap">
+              {isPro ? (
+                <form action={generateStrategyForRepo}>
+                  <SubmitButton
+                    pendingText="Generating…"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
+                  >
+                    <Sparkles size={12} />
+                    {journeyPosts.length ? "Regenerate" : "Generate journey"}
+                  </SubmitButton>
+                </form>
+              ) : (
+                <Link href="/pricing" className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors">
+                  <Sparkles size={11} /> Upgrade to Pro
+                </Link>
+              )}
+            </div>
+
+            {journeyPosts.length > 0 ? (
+              <div className="p-5">
+                <StrategyJourneyCards posts={journeyPosts} />
+                {strategy?.createdAt && (
+                  <p className="text-[11px] text-[#555] mt-3">
+                    Generated {timeAgo(new Date(strategy.createdAt))}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-14 text-center px-6">
+                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center">
+                  <Route size={18} className="text-[#444]" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#888]">No journey yet</p>
+                  <p className="text-xs text-[#555] mt-0.5 max-w-xs mx-auto">
+                    Generate 3 story-arc posts covering your project from origin to launch.
+                  </p>
+                </div>
+              </div>
+            )}
+          </details>
+        </section>
+
+        {/* Recent drafts */}
+        {posts.length > 0 && (
+          <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
+            <details>
+              <summary className="px-5 py-3.5 border-b border-white/[0.06] cursor-pointer select-none flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-[#f0ede8]">Recent drafts</h2>
+                <ChevronDown size={14} className="text-[#555] chevron" />
+              </summary>
+              <div className="divide-y divide-white/[0.05]">
+                {posts.map((p) => {
+                  const sc = styleConfig[p.style as keyof typeof styleConfig] ?? styleConfig.progress;
+                  const st = statusConfig[p.status as keyof typeof statusConfig] ?? statusConfig.draft;
+                  return (
+                    <div key={p.id} className="px-5 py-3 flex items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Badge cls={sc.cls}>{sc.label}</Badge>
+                        <code className="font-mono text-[11px] text-[#666] bg-white/[0.05] px-1.5 py-0.5 rounded">
+                          {p.repoId && p.sourceId.slice(0, 7) !== p.repoId.slice(0, 7) ? p.sourceId.slice(0, 7) : "repo"}
+                        </code>
+                        <Badge cls={st.cls}>{st.label}</Badge>
+                        <span className="text-[11px] text-[#555] hidden sm:block">{timeAgo(new Date(p.createdAt))}</span>
+                      </div>
+                      <Link
+                        href={`/posts/${p.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-[#888] rounded-lg transition-all flex-shrink-0"
+                      >
+                        Edit &amp; post
+                        <ChevronRight size={12} />
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
