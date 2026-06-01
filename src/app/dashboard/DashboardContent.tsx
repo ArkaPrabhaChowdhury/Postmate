@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { requireUserId } from "@/lib/requireUser";
 import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction, generateSuggestedPost } from "./actions";
 import { getPostingSuggestion } from "@/lib/scoring";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
@@ -68,8 +67,13 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
   );
 }
 
-export async function DashboardContent({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
-  const userId = await requireUserId();
+export async function DashboardContent({
+  userId,
+  searchParams,
+}: {
+  userId: string;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const params = await searchParams;
   const upgraded = params?.upgraded === "1";
   const commitsPageParam = params?.commitsPage;

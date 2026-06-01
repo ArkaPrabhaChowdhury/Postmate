@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-16 py-6 sm:py-8">
-      <div className="flex flex-col gap-6 animate-pulse">
+      <div className="flex flex-col gap-6">
         <div className="space-y-2">
           <h1 className="text-xl font-bold tracking-tight text-[#f0ede8]">Dashboard</h1>
           <div className="h-4 w-56 rounded bg-white/[0.05]" />
