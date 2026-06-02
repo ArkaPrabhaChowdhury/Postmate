@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction, generateSuggestedPost } from "./actions";
+import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcaseForRepo, saveVoiceSettings, autoGenerateVoice, generateClusteredPostsAction, generateSuggestedPost, syncRecentCommits } from "./actions";
 import { getPostingSuggestion } from "@/lib/scoring";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
 import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
@@ -449,7 +449,7 @@ export async function DashboardContent({
               <input type="hidden" name="commitSha" value={suggestion.topCommitSha} />
               <input type="hidden" name="repoId" value={suggestion.repoId} />
               <SubmitButton
-                pendingText="Generating…"
+                pendingText="Generating..."
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
               >
                 <Sparkles size={11} />
@@ -497,7 +497,18 @@ export async function DashboardContent({
                 </div>
                 <ChevronDown size={14} className="text-[#555] chevron sm:hidden mt-1 shrink-0" />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                <StopPropagation>
+                  <form action={syncRecentCommits}>
+                    <SubmitButton
+                      pendingText="Syncing..."
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold bg-white/[0.05] border border-white/[0.08] text-[#aaa] rounded-lg hover:border-[#d4ff00]/30 hover:text-[#d4ff00] transition-colors whitespace-nowrap"
+                    >
+                      <GitCommit size={11} />
+                      Sync commits
+                    </SubmitButton>
+                  </form>
+                </StopPropagation>
                 <StopPropagation>
                   {isPro ? (
                     <form action={generateClusteredPostsAction} className="flex items-center gap-2 flex-1 sm:flex-none">
@@ -513,7 +524,7 @@ export async function DashboardContent({
                         <ChevronDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#666]" />
                       </div>
                       <SubmitButton
-                        pendingText="Clustering…"
+                        pendingText="Clustering..."
                         className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
                       >
                         <Layers size={11} />
@@ -541,7 +552,7 @@ export async function DashboardContent({
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#888]">No commits synced</p>
-                  <p className="text-xs text-[#555] mt-0.5">Hit &ldquo;Sync commits&rdquo; to pull activity from your repo.</p>
+                  <p className="text-xs text-[#555] mt-0.5">Use the Sync commits button to pull activity from your repo.</p>
                 </div>
               </div>
             ) : (
@@ -615,7 +626,7 @@ export async function DashboardContent({
                           </Link>
                         ) : (
                           <SubmitButton
-                            pendingText="Generating…"
+                            pendingText="Generating..."
                             className="col-span-2 md:col-auto inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
                           >
                             <Sparkles size={11} />
@@ -673,7 +684,7 @@ export async function DashboardContent({
               {isPro ? (
                 <form action={generateProjectShowcaseForRepo}>
                   <SubmitButton
-                    pendingText="Generating…"
+                    pendingText="Generating..."
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60"
                   >
                     <Sparkles size={11} />
@@ -709,7 +720,7 @@ export async function DashboardContent({
               {isPro ? (
                 <form action={generateStrategyForRepo}>
                   <SubmitButton
-                    pendingText="Generating…"
+                    pendingText="Generating..."
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#aaa] rounded-lg transition-colors disabled:opacity-60"
                   >
                     <Sparkles size={12} />
