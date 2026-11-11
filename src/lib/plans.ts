@@ -1,13 +1,6 @@
 export const PLANS = {
   free: {
     name: "Free",
-    priceIds: {
-      monthly: null,
-      yearly: null,
-    },
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    yearlyMonthlyEquivalent: 0,
     repos: 1,
     postsPerMonth: 5,
     features: [
@@ -18,13 +11,9 @@ export const PLANS = {
   },
   pro: {
     name: "Pro",
-    priceIds: {
-      monthly: process.env.PADDLE_PRO_PRICE_ID,
-      yearly: process.env.PADDLE_PRO_YEARLY_PRICE_ID,
-    },
-    monthlyPrice: 8,
-    yearlyPrice: 60,
-    yearlyMonthlyEquivalent: 5,
+    priceId: process.env.PADDLE_PRO_ONETIME_PRICE_ID,
+    price: 10,
+    indiaPrice: 499,
     repos: Infinity,
     postsPerMonth: Infinity,
     features: [
@@ -44,7 +33,13 @@ export const PLANS = {
 export type Plan = keyof typeof PLANS;
 
 export function getPlanFromPriceId(priceId: string): Plan {
+  if (isOneTimePriceId(priceId)) return "pro";
+  // Keep access synced for customers on the retired subscription prices.
   if (priceId === process.env.PADDLE_PRO_PRICE_ID) return "pro";
   if (priceId === process.env.PADDLE_PRO_YEARLY_PRICE_ID) return "pro";
   return "free";
+}
+
+export function isOneTimePriceId(priceId: string) {
+  return priceId === process.env.PADDLE_PRO_ONETIME_PRICE_ID;
 }

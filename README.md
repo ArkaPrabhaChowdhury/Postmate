@@ -78,9 +78,9 @@ Postmate is a Next.js app that connects to GitHub, syncs recent commits from one
 
 - Free and Pro plans
 - Free plan limit: 5 generated posts per month, `progress` style only
-- Paddle checkout, portal, and webhook integration
-- 3-day Pro trial flow
-- Automatic trial expiry handling and downgrade back to free
+- Paddle one-time checkout, legacy subscription portal, and webhook integration
+- Pro one-time purchase: ₹499 in India or the $10 equivalent elsewhere
+- Automatic expiry handling for legacy trials
 - Plan gates enforced in server actions, not only in the UI
 
 ### Operational routes
@@ -161,8 +161,7 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 PADDLE_API_KEY="pdl_sandbox_replace_me"
 PADDLE_API_BASE_URL="https://sandbox-api.paddle.com"
-PADDLE_PRO_PRICE_ID="pri_replace_me"
-PADDLE_PRO_YEARLY_PRICE_ID="pri_replace_me"
+PADDLE_PRO_ONETIME_PRICE_ID="pri_replace_me"
 PADDLE_WEBHOOK_SECRET="pdlntfset_replace_me"
 NEXT_PUBLIC_PADDLE_CLIENT_TOKEN="test_replace_me"
 NEXT_PUBLIC_PADDLE_ENV="sandbox"
@@ -180,6 +179,8 @@ NEWS_X_MAX_AGE_DAYS="365"
 NEWS_X_TIMEOUT_MS="30000"
 ```
 
+Configure this Paddle price as a one-time $10 USD price with a ₹499 INR country-specific price override for India. Enable automatic currency conversion for other supported currencies. Use the resulting one-time price ID for `PADDLE_PRO_ONETIME_PRICE_ID`.
+
 Notes:
 
 - `.env.example` also contains `GOOGLE_GENAI_API_KEY`, but the active generation path in the current code uses Groq.
@@ -193,11 +194,10 @@ Postmate now supports product analytics through PostHog and session replay / hea
 
 - Visitors and pageviews across marketing and app pages
 - Referral sources and UTM traffic in PostHog web analytics
-- Pricing page visits and billing interval changes
+- Pricing page visits and one-time purchase selections
 - Sign-in starts and completed authenticated sessions
-- Trial starts
 - Checkout creation and checkout page visits
-- Successful paid subscription activations from Paddle webhooks
+- Completed one-time Pro purchases and legacy subscription events from Paddle webhooks
 - Subscription cancellations / downgrades from Paddle webhooks
 - Billing portal opens
 
@@ -214,10 +214,10 @@ NEXT_PUBLIC_CLARITY_PROJECT_ID="replace_me"
 In PostHog, create:
 
 - A web analytics view for visitors, sessions, top pages, referrers, and UTMs
-- A funnel: `pricing_viewed` -> `pricing_plan_selected` -> `checkout_created` -> `subscription_activated`
+- A funnel: `pricing_viewed` -> `pricing_plan_selected` -> `checkout_created` -> `purchase_completed`
 - A funnel: `auth_started` -> `auth_completed`
-- A trend chart for `trial_started`
-- A breakdown of `subscription_activated` by `plan`, `billingInterval`, and referrer / UTM properties
+- A trend chart for `purchase_completed`
+- A breakdown of `purchase_completed` by `plan`, `purchaseType`, and referrer / UTM properties
 
 In Clarity, use filters and custom tags:
 
@@ -292,7 +292,7 @@ npx tsc -p tsconfig.json --noEmit
 
 - `/api/cron/news`: fetches news for users with auto-fetch enabled
 - `/api/cron/linkedin`: publishes due scheduled LinkedIn items
-- `/api/cron/trials`: expires finished trials and returns users to the free plan
+- `/api/cron/trials`: expires legacy trials and returns users to the free plan
 - `/api/cron/weekly-digest`: emails a weekly shipping digest for active repos
 
 If `CRON_SECRET` is set, cron routes accept:

@@ -4,8 +4,9 @@ import { useState } from "react";
 import { CreditCard, ExternalLink } from "lucide-react";
 import { captureAnalyticsEvent } from "@/components/AppAnalytics";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
+import Link from "next/link";
 
-export default function BillingSection() {
+export default function BillingSection({ isPro, hasSubscription }: { isPro: boolean; hasSubscription: boolean }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,18 +33,33 @@ export default function BillingSection() {
       </div>
       <div className="px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-sm text-[#666]">Manage your plan, payment method, invoices, and cancel anytime.</p>
+          <p className="text-sm text-[#666]">
+            {hasSubscription
+              ? "Manage your existing subscription, payment method, invoices, or cancellation."
+              : isPro
+                ? "Pro is active on your account as a one-time purchase. No renewals or billing management needed."
+                : "Pro is a one-time purchase: ₹499 in India or the $10 equivalent elsewhere."}
+          </p>
           {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
         </div>
-        <button
-          type="button"
-          onClick={openPortal}
-          disabled={loading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#f0ede8] rounded-lg transition-colors disabled:opacity-60"
-        >
-          <ExternalLink size={13} />
-          {loading ? "Opening..." : "Manage billing"}
-        </button>
+        {hasSubscription ? (
+          <button
+            type="button"
+            onClick={openPortal}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-[#f0ede8] rounded-lg transition-colors disabled:opacity-60"
+          >
+            <ExternalLink size={13} />
+            {loading ? "Opening..." : "Manage billing"}
+          </button>
+        ) : !isPro ? (
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors"
+          >
+            View Pro
+          </Link>
+        ) : null}
       </div>
     </section>
   );

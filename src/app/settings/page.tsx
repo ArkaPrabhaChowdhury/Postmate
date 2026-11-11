@@ -16,7 +16,7 @@ export default async function SettingsPage() {
     prisma.repo.findFirst({ where: { userId, isActive: true }, select: { fullName: true } }),
     getLinkedInAccount(userId),
     prisma.userSettings.findUnique({ where: { userId }, select: { xEnforce280: true } }),
-    prisma.user.findUnique({ where: { id: userId }, select: { plan: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { plan: true, paddleSubscriptionId: true } }),
   ]);
 
   return (
@@ -69,7 +69,10 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        <BillingSection />
+        <BillingSection
+          isPro={userPlan?.plan === "pro"}
+          hasSubscription={!!userPlan?.paddleSubscriptionId}
+        />
 
         <XPostSettingsSection
           xEnforce280={xSettings?.xEnforce280 ?? true}

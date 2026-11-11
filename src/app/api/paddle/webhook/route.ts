@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
 import { captureServerEvent } from "@/lib/posthog-server";
+import { isOneTimePriceId } from "@/lib/plans";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,11 @@ function subscriptionKeepsPaidAccess(status: string) {
 
 async function upsertFromSubscription(userId: string, subscription: PaddleSubscription) {
   const priceId = getSubscriptionPriceId(subscription);
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { paddlePriceId: true },
+  });
+  if (existingUser?.paddlePriceId && isOneTimePriceId(existingUser.paddlePriceId)) return;
   const hasPaidAccess = subscriptionKeepsPaidAccess(subscription.status);
   const plan = hasPaidAccess ? getPlanDetailsFromPaddleItems(subscription.items).plan : "free";
 
@@ -94,13 +100,17 @@ export async function POST(req: NextRequest) {
     const transactionId = typeof data.id === "string" ? data.id : undefined;
     if (!transactionId) return NextResponse.json({ received: true });
     await syncUserFromPaddleTransaction(userId, transactionId);
+    const isSubscriptionTransaction = typeof data.subscription_id === "string";
     await captureServerEvent({
       distinctId: userId,
-      event: ANALYTICS_EVENTS.subscriptionActivated,
+      event: isSubscriptionTransaction
+        ? ANALYTICS_EVENTS.subscriptionActivated
+        : ANALYTICS_EVENTS.purchaseCompleted,
       properties: {
         source: "paddle_webhook",
         transactionId,
         customerId,
+        purchaseType: isSubscriptionTransaction ? "subscription" : "one_time",
       },
     });
     return NextResponse.json({ received: true });

@@ -20,14 +20,12 @@ const stagger = {
 };
 
 type Plan = "free" | "pro";
-type BillingInterval = "monthly" | "yearly";
 
 export default function PricingPage() {
   const { data: session } = useSession();
   const authed = !!session?.user;
   const [loading, setLoading] = useState<Plan | null>(null);
-  const [trialLoading, setTrialLoading] = useState(false);
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>("monthly");
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     captureAnalyticsEvent(ANALYTICS_EVENTS.pricingViewed, {
@@ -39,54 +37,28 @@ export default function PricingPage() {
     if (plan === "free") return;
     captureAnalyticsEvent(ANALYTICS_EVENTS.pricingPlanSelected, {
       plan,
-      billingInterval,
       authed,
-      action: "upgrade_now",
+      action: "one_time_purchase",
     });
     if (!authed) {
       window.location.href = "/signin";
       return;
     }
     setLoading(plan);
+    setCheckoutError(null);
     try {
       const res = await fetch("/api/paddle/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, billingInterval }),
+        body: JSON.stringify({ plan }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
+      else setCheckoutError(data.error || "Could not start checkout. Please try again.");
+    } catch {
+      setCheckoutError("Could not start checkout. Please try again.");
     } finally {
       setLoading(null);
-    }
-  }
-
-  async function handleStartTrial() {
-    captureAnalyticsEvent(ANALYTICS_EVENTS.pricingPlanSelected, {
-      plan: "pro",
-      billingInterval,
-      authed,
-      action: "start_trial",
-    });
-    if (!authed) {
-      window.location.href = "/signin";
-      return;
-    }
-
-    setTrialLoading(true);
-    try {
-      const res = await fetch("/api/trial/start", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to start trial");
-      captureAnalyticsEvent(ANALYTICS_EVENTS.trialStarted, {
-        plan: "pro",
-        trialEndsAt: data.trialEndsAt,
-      });
-      window.location.href = "/dashboard?trial=started";
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to start trial");
-    } finally {
-      setTrialLoading(false);
     }
   }
 
@@ -131,47 +103,6 @@ export default function PricingPage() {
           </motion.p>
         </motion.div>
 
-        {/* Billing toggle */}
-        <motion.div
-          variants={fadeUp}
-          className="w-full flex justify-center"
-        >
-          <div className="inline-flex items-center rounded-xl border border-white/[0.08] bg-[#0d0d0d] p-1">
-            <button
-              type="button"
-              onClick={() => {
-                captureAnalyticsEvent(ANALYTICS_EVENTS.pricingBillingIntervalChanged, {
-                  billingInterval: "monthly",
-                });
-                setBillingInterval("monthly");
-              }}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                billingInterval === "monthly"
-                  ? "bg-[#d4ff00] text-[#090909] font-semibold"
-                  : "text-[#888] hover:text-[#f0ede8]"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                captureAnalyticsEvent(ANALYTICS_EVENTS.pricingBillingIntervalChanged, {
-                  billingInterval: "yearly",
-                });
-                setBillingInterval("yearly");
-              }}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                billingInterval === "yearly"
-                  ? "bg-[#d4ff00] text-[#090909] font-semibold"
-                  : "text-[#888] hover:text-[#f0ede8]"
-              }`}
-            >
-              Yearly <span className="text-[11px]">(save 20%)</span>
-            </button>
-          </div>
-        </motion.div>
-
         {/* Pricing cards */}
         <div className="relative max-w-3xl mx-auto mt-10 pt-5">
           {/* Most Popular badge - positioned above the Pro card */}
@@ -184,12 +115,6 @@ export default function PricingPage() {
             const isHighlight = highlight;
             const isFree = key === "free";
             const isLoading = loading === key;
-            const shownPrice = isFree
-              ? 0
-              : billingInterval === "yearly"
-                ? plan.yearlyMonthlyEquivalent
-                : plan.monthlyPrice;
-
             return (
               <motion.div
                 key={key}
@@ -222,18 +147,18 @@ export default function PricingPage() {
                         fontFeatureSettings: '"lnum" 1, "tnum" 1',
                       }}
                     >
-                      ${shownPrice}
+                      {isFree ? "$0" : `$${PLANS.pro.price}`}
                     </span>
                     {!isFree && (
-                      <span className="text-[#555] text-sm mb-2 font-mono">/ mo</span>
+                      <span className="text-[#555] text-sm mb-2 font-mono">one time</span>
                     )}
                     {isFree && (
                       <span className="text-[#555] text-sm mb-2 font-mono">forever</span>
                     )}
                   </div>
                   {!isFree && (
-                    <div className="h-6 mt-2 text-sm text-[#666]">
-                      {billingInterval === "yearly" ? `Billed annually at $${plan.yearlyPrice}/year.` : ""}
+                    <div className="mt-2 text-sm text-[#666]">
+                      ₹{PLANS.pro.indiaPrice} in India · $10 equivalent elsewhere
                     </div>
                   )}
                 </div>
@@ -247,28 +172,11 @@ export default function PricingPage() {
                     {authed ? "Current plan" : "Get started free"}
                   </Link>
                 ) : (
-                  <div className="mb-8 space-y-2">
-                    <button
-                      onClick={handleStartTrial}
-                      disabled={trialLoading || isLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] transition-all disabled:opacity-60"
-                    >
-                      {trialLoading ? (
-                        <>
-                          <span className="w-3.5 h-3.5 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                          Starting trial...
-                        </>
-                      ) : (
-                        <>
-                          Start 3-day free trial
-                          <Sparkles size={14} />
-                        </>
-                      )}
-                    </button>
+                  <div className="mb-8">
                     <button
                       onClick={() => handleUpgrade(key)}
-                      disabled={isLoading || trialLoading}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-60 bg-white/[0.07] hover:bg-white/[0.10] border border-white/[0.08] text-[#f0ede8]"
+                      disabled={isLoading}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-60 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909]"
                     >
                       {isLoading ? (
                         <>
@@ -277,12 +185,16 @@ export default function PricingPage() {
                         </>
                       ) : (
                         <>
-                          Upgrade now
+                          Get Pro once
                           <ArrowRight size={14} />
                         </>
                       )}
                     </button>
-                    <p className="text-[11px] text-[#666] text-center">No card needed for the trial. Upgrade anytime to keep Pro.</p>
+                    {checkoutError && (
+                      <p role="alert" className="mt-2 text-xs text-red-400 text-center">
+                        {checkoutError}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -312,7 +224,7 @@ export default function PricingPage() {
           variants={fadeUp}
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          3-day free trial - No contracts - Cancel anytime - Secure checkout via Paddle
+          One payment, lifetime Pro access · Secure checkout via Paddle
         </motion.p>
 
         {/* FAQ section */}
@@ -349,16 +261,16 @@ export default function PricingPage() {
 
 const faqs = [
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. Cancel from your account settings and you keep access until the end of your billing period. No questions asked.",
+    q: "Is Pro a subscription?",
+    a: "No. Pro is a one-time purchase with ongoing access. There are no renewals or cancellation steps.",
   },
   {
     q: "What counts as a post?",
     a: "Any AI-generated draft — LinkedIn post, X tweet, showcase, journey arc, or news tweet. Regenerating the same commit is a new post.",
   },
   {
-    q: "Can I upgrade or downgrade mid-cycle?",
-    a: "Yes. Paddle handles prorated changes automatically based on your billing cycle.",
+    q: "What happens after I pay?",
+    a: "Paddle confirms your payment and Pro features are enabled on your account.",
   },
   {
     q: "Is my GitHub data safe?",

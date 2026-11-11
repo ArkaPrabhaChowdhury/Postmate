@@ -73,7 +73,7 @@ export default function TermsPage() {
                 <li>Voice memory and tone personalization</li>
               </ul>
               <p>
-                Free accounts are limited to 1 repository and 5 AI-generated posts per month. Pro accounts ($8/month or $60/year) receive unlimited repositories, unlimited posts, and access to all features.
+                Free accounts are limited to 1 repository and 5 AI-generated posts per month. Pro accounts receive unlimited repositories, unlimited posts, and access to all features after a one-time purchase.
               </p>
             </div>
           </section>
@@ -83,17 +83,16 @@ export default function TermsPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <CreditCard size={20} />
               </div>
-              <h2 className="text-2xl font-bold">Payments & Subscriptions</h2>
+              <h2 className="text-2xl font-bold">Payments</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                Paid subscriptions are billed via Paddle. By subscribing, you authorize recurring charges at the selected interval (monthly or yearly). All prices are in USD.
+                Pro is a one-time payment processed by Paddle. The price is ₹499 in India and $10 USD or the localized equivalent elsewhere. Your payment grants ongoing Pro access with no automatic renewals.
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Subscriptions renew automatically unless cancelled before the renewal date.</li>
-                <li>You may cancel at any time from your billing settings. Cancellation takes effect at the end of the current billing period.</li>
-                <li>We reserve the right to change pricing with 30 days notice. Price changes apply at your next renewal.</li>
-                <li>Free trials, if offered, convert to paid subscriptions unless cancelled before the trial ends.</li>
+                <li>The one-time purchase applies to the account used at checkout and does not renew.</li>
+                <li>Existing subscriptions purchased before this change remain subject to their original billing terms until canceled.</li>
+                <li>We may change prices for future purchases; completed purchases are not affected.</li>
               </ul>
             </div>
           </section>

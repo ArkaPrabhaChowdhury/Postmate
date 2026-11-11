@@ -11,6 +11,7 @@ export const ANALYTICS_EVENTS = {
   billingPortalOpened: "billing_portal_opened",
   subscriptionActivated: "subscription_activated",
   subscriptionCanceled: "subscription_canceled",
+  purchaseCompleted: "purchase_completed",
   postGenerated: "post_generated",
   commitsSynced: "commits_synced",
   voiceSettingsSaved: "voice_settings_saved",

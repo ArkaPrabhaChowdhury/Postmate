@@ -46,10 +46,10 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                If you are not satisfied with Postmate Pro within the first <strong className="text-[#f0ede8]">7 days</strong> of your initial paid subscription, contact us for a full refund - no questions asked.
+                If you are not satisfied with Postmate Pro within the first <strong className="text-[#f0ede8]">7 days</strong> after your one-time purchase, contact us for a full refund - no questions asked.
               </p>
               <p>
-                This guarantee applies to first-time Pro subscribers only. It does not apply to renewals or accounts that previously received a refund.
+                This guarantee applies to first-time Pro purchases only and does not apply to accounts that previously received a refund.
               </p>
             </div>
           </section>
@@ -59,19 +59,18 @@ export default function RefundPage() {
               <div className="w-10 h-10 rounded-xl bg-[#111] border border-white/[0.08] flex items-center justify-center text-[#d4ff00]">
                 <Clock size={20} />
               </div>
-              <h2 className="text-2xl font-bold">Cancellation</h2>
+              <h2 className="text-2xl font-bold">One-time access</h2>
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                You may cancel your subscription at any time from your account settings. Cancellation stops future renewals - your Pro access continues until the end of your current billing period.
+                Pro is a one-time purchase. There are no recurring charges to cancel, and access does not expire.
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Monthly plans: cancel any time before the next monthly renewal date.</li>
-                <li>Yearly plans: cancel any time before the annual renewal date.</li>
-                <li>After cancellation, your account reverts to the Free plan. Your data is not deleted.</li>
+                <li>Refunds within the 7-day guarantee window are handled through support.</li>
+                <li>After that window, payments are non-refundable except where required by law.</li>
               </ul>
               <p>
-                Partial-month or partial-year refunds are not issued for mid-cycle cancellations beyond the 7-day window.
+                Existing subscriptions purchased before this change can still be canceled through their billing settings.
               </p>
             </div>
           </section>
@@ -102,7 +101,7 @@ export default function RefundPage() {
             </div>
             <div className="text-[#888] leading-relaxed space-y-4">
               <p>
-                When a free trial is offered, no charge is made until the trial period ends. Cancel before the trial ends to avoid being charged. Trial periods are not eligible for the 7-day refund guarantee - if you cancel during the trial, no charge is issued.
+                Free trials are no longer offered for new accounts. Any legacy trial access expires on its displayed end date.
               </p>
             </div>
           </section>

@@ -73,7 +73,6 @@ export async function createPaddleCheckout(params: {
   name?: string;
   priceId: string;
   plan: string;
-  billingInterval: "monthly" | "yearly";
   checkoutUrl?: string;
 }) {
   return paddleRequest<{ data: PaddleTransaction }>("/transactions", {
@@ -87,7 +86,7 @@ export async function createPaddleCheckout(params: {
       custom_data: {
         userId: params.userId,
         plan: params.plan,
-        billingInterval: params.billingInterval,
+        purchaseType: "one_time",
       },
       checkout: params.checkoutUrl
         ? {

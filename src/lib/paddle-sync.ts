@@ -56,7 +56,9 @@ export async function syncUserFromPaddleTransaction(userId: string, transactionI
     data: {
       plan,
       paddleCustomerId: transaction.customer_id ?? null,
+      paddleSubscriptionId: null,
       paddlePriceId: priceId || null,
+      paddleCurrentPeriodEnd: null,
       proTrialExpiredAt: null,
     },
   });
