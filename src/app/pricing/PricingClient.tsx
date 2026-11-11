@@ -21,11 +21,12 @@ const stagger = {
 
 type Plan = "free" | "pro";
 
-export default function PricingPage() {
+export default function PricingPage({ countryCode }: { countryCode: string }) {
   const { data: session } = useSession();
   const authed = !!session?.user;
   const [loading, setLoading] = useState<Plan | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const proPrice = countryCode === "IN" ? `₹${PLANS.pro.indiaPrice}` : `$${PLANS.pro.price}`;
 
   useEffect(() => {
     captureAnalyticsEvent(ANALYTICS_EVENTS.pricingViewed, {
@@ -147,7 +148,7 @@ export default function PricingPage() {
                         fontFeatureSettings: '"lnum" 1, "tnum" 1',
                       }}
                     >
-                      {isFree ? "$0" : `$${PLANS.pro.price}`}
+                      {isFree ? "$0" : proPrice}
                     </span>
                     {!isFree && (
                       <span className="text-[#555] text-sm mb-2 font-mono">one time</span>
@@ -156,11 +157,6 @@ export default function PricingPage() {
                       <span className="text-[#555] text-sm mb-2 font-mono">forever</span>
                     )}
                   </div>
-                  {!isFree && (
-                    <div className="mt-2 text-sm text-[#666]">
-                      ₹{PLANS.pro.indiaPrice} in India · $10 equivalent elsewhere
-                    </div>
-                  )}
                 </div>
 
                 {/* CTA */}
