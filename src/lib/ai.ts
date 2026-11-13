@@ -330,36 +330,50 @@ async function chat(
   client: OpenAI,
   system: string,
   user: string,
-  opts: { temperature?: number; max_tokens?: number } = {},
+  opts: {
+    temperature?: number;
+    max_completion_tokens?: number;
+    reasoning_effort?: "low" | "medium" | "high";
+    response_format?: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming["response_format"];
+  } = {},
   retries = 3
 ): Promise<string> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await client.chat.completions.create({
         model: MODEL,
         temperature: opts.temperature ?? 0.7,
-        max_tokens: opts.max_tokens ?? 700,
+        max_completion_tokens: opts.max_completion_tokens ?? 1100,
+        reasoning_effort: opts.reasoning_effort,
+        response_format: opts.response_format,
         messages: [
           { role: "system", content: system },
           { role: "user", content: user },
         ],
       });
       const text = res.choices[0]?.message?.content?.trim();
-      if (!text) throw new Error("OpenAI returned an empty response.");
+      if (!text) {
+        const finishReason = res.choices[0]?.finish_reason ?? "unknown";
+        throw new Error(`Groq returned no text output (finish reason: ${finishReason}).`);
+      }
       return text;
-    } catch (err: any) {
+    } catch (err: unknown) {
       lastError = err;
-      const status = err.status || err.response?.status;
+      const providerError = err && typeof err === "object"
+        ? err as { status?: unknown; response?: { status?: unknown }; message?: unknown }
+        : {};
+      const status = providerError.status ?? providerError.response?.status;
+      const message = typeof providerError.message === "string" ? providerError.message : String(err);
 
       // Do not retry on 4xx auth or validation errors (except 429 rate limits)
-      if (status && status >= 400 && status < 500 && status !== 429) {
+      if (typeof status === "number" && status >= 400 && status < 500 && status !== 429) {
         throw err;
       }
 
       if (attempt < retries) {
-        console.warn(`[AI] API error on attempt ${attempt}/${retries}: ${err.message}. Retrying...`);
+        console.warn(`[AI] API error on attempt ${attempt}/${retries}: ${message}. Retrying...`);
         await new Promise((r) => setTimeout(r, 1000));
         continue;
       }
@@ -367,7 +381,8 @@ async function chat(
       throw err;
     }
   }
-  throw lastError;
+  if (lastError instanceof Error) throw lastError;
+  throw new Error(String(lastError ?? "AI provider request failed."));
 }
 
 function normalizePostVoice(text: string): string {
@@ -443,8 +458,9 @@ export async function generateLinkedInPost(input: {
 
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
-    temperature: 0.75,
-    max_tokens: isX ? 150 : 800,
+    temperature: 0.4,
+    max_completion_tokens: isX ? 768 : 1400,
+    reasoning_effort: "low",
   });
   const claimSource = [
     input.commit.message,
@@ -461,8 +477,8 @@ export async function generateLinkedInPost(input: {
     const retry = await chat(
       client,
       system,
-      `${userMsg}\n\nCRITICAL REWRITE CONSTRAINT: Rewrite strictly from provided source facts. Remove any invented metrics, performance claims, user counts, business outcomes, or percentages.`,
-      { temperature: 0.2, max_tokens: isX ? 150 : 800 },
+      `${userMsg}\n\nCRITICAL REWRITE CONSTRAINT: Use only facts explicitly shown in the commit message or diff. A filename is not evidence for what a change does. If the source is sparse, write one short factual sentence. Do not add generic claims about architecture, documentation contents, or user impact.`,
+      { temperature: 0.2, max_completion_tokens: isX ? 768 : 1400, reasoning_effort: "low" },
     );
     candidate = hasUnsupportedClaimSignals(retry, claimSource)
       ? stripLikelyUnsupportedClaimLines(retry, claimSource)
@@ -526,7 +542,7 @@ export async function generateProjectStrategy(input: {
     .join("\n");
 
   const client = getOpenAIClient();
-  return chat(client, system, userMsg, { temperature: 0.7, max_tokens: 1200 });
+  return chat(client, system, userMsg, { temperature: 0.7, max_completion_tokens: 1800 });
 }
 
 // ─── generateJourneyPosts ────────────────────────────────────────────────────
@@ -578,7 +594,7 @@ export async function generateJourneyPosts(input: {
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
     temperature: 0.75,
-    max_tokens: 800,
+    max_completion_tokens: 1500,
   });
 
   // Strip markdown fences, then fix unquoted emoji values before parsing
@@ -651,7 +667,7 @@ export async function generateProjectShowcase(input: {
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
     temperature: 0.75,
-    max_tokens: 1400,
+    max_completion_tokens: 2200,
   });
   return normalizePostVoice(raw);
 }
@@ -702,7 +718,8 @@ export async function generateTrendPost(input: {
   const client = getOpenAIClient();
   const raw = await chat(client, system, userMsg, {
     temperature: 0.7,
-    max_tokens: input.platform === "x" ? 220 : 700,
+    max_completion_tokens: input.platform === "x" ? 768 : 1200,
+    reasoning_effort: "low",
   });
   const voiced = normalizePostVoice(raw);
   const shouldEnforce = input.enforce280 !== false;
@@ -733,7 +750,8 @@ export async function generateVoiceFingerprint(input: {
   const client = getOpenAIClient();
   return chat(client, Prompts.voiceFingerprintSystem, userMsg, {
     temperature: 0.4,
-    max_tokens: 400,
+    max_completion_tokens: 700,
+    reasoning_effort: "low",
   });
 }
 
@@ -764,10 +782,10 @@ export async function generateNewsTweet(input: {
 
   const client = getOpenAIClient();
   const claimSource = [input.title, input.summary, input.additionalPrompt ?? ""].filter(Boolean).join("\n");
-  let raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.7, max_tokens: 400 });
+  let raw = await chat(client, Prompts.tweetGeneratorSystem, userMsg, { temperature: 0.5, max_completion_tokens: 700, reasoning_effort: "low" });
   if (hasUnsupportedClaimSignals(raw, claimSource)) {
     const retryMsg = `${userMsg}\n\nCRITICAL REWRITE CONSTRAINT: Use only facts from title/summary. Remove any invented metrics, percentages, user counts, business outcomes, or performance claims.`;
-    const retry = await chat(client, Prompts.tweetGeneratorSystem, retryMsg, { temperature: 0.2, max_tokens: 400 });
+    const retry = await chat(client, Prompts.tweetGeneratorSystem, retryMsg, { temperature: 0.2, max_completion_tokens: 700, reasoning_effort: "low" });
     raw = hasUnsupportedClaimSignals(retry, claimSource)
       ? stripLikelyUnsupportedClaimLines(retry, claimSource)
       : retry;
@@ -810,7 +828,7 @@ export async function generateClusteredPosts(input: {
   const client = getOpenAIClient();
   const raw = await chat(client, Prompts.clusterCommitsSystem(platform), userMsg, {
     temperature: 0.7,
-    max_tokens: platform === "x" ? 800 : 2400,
+    max_completion_tokens: platform === "x" ? 1400 : 3000,
   });
 
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
@@ -831,15 +849,40 @@ export type PostScore = {
 };
 
 export async function scorePost(content: string): Promise<PostScore> {
-  const system = `You are a social media post quality evaluator. Score the post on three dimensions (1-10 each) and give 1-3 short improvement tips about the writing only — hook strength, clarity, CTA, tone, structure. Do NOT suggest adding images, visuals, or media. Return ONLY valid JSON with no markdown, no explanation. Schema: {"hook": number, "clarity": number, "cta": number, "tips": string[]}`;
+  const system = `You are a social media post quality evaluator. Score the post on three dimensions (1-10 each) and give 1-3 short improvement tips about the writing only — hook strength, clarity, CTA, tone, structure. Do NOT suggest adding images, visuals, or media.`;
   const client = getOpenAIClient();
   const raw = await chat(client, system, `Post to score:\n\n${content}`, {
     temperature: 0.3,
-    max_tokens: 150,
+    max_completion_tokens: 512,
+    reasoning_effort: "low",
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "post_quality_score",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            hook: { type: "integer" },
+            clarity: { type: "integer" },
+            cta: { type: "integer" },
+            tips: { type: "array", items: { type: "string" } },
+          },
+          required: ["hook", "clarity", "cta", "tips"],
+          additionalProperties: false,
+        },
+      },
+    },
   });
   const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
   try {
     const parsed = JSON.parse(cleaned) as PostScore;
+    if (
+      !Number.isFinite(parsed.hook) || !Number.isFinite(parsed.clarity) || !Number.isFinite(parsed.cta) ||
+      !Array.isArray(parsed.tips) || !parsed.tips.every((tip) => typeof tip === "string")
+    ) {
+      throw new Error("Invalid score response shape.");
+    }
     return {
       hook: Math.min(10, Math.max(1, Math.round(parsed.hook))),
       clarity: Math.min(10, Math.max(1, Math.round(parsed.clarity))),

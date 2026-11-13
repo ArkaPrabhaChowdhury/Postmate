@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Calendar, X as XIcon } from "lucide-react";
+import Link from "next/link";
+import { Linkedin, Copy, Check, AlertCircle, ThumbsUp, MessageSquare, Repeat2, Send, Heart, BarChart2, Bookmark, Upload, Sparkles, RefreshCw, Download, Calendar, Lock, X as XIcon } from "lucide-react";
 import { XLogo } from "@/components/XLogo";
 import { LinkedInSchedulePicker } from "@/components/LinkedInSchedulePicker";
 
@@ -101,6 +102,7 @@ function CharRing({ count, max }: { count: number; max: number }) {
 
 export function PostEditor(props: {
   postId: string;
+  isPro: boolean;
   initialContent: string;
   initialPlatform?: Platform;
   initialLinkedinStatus?: string;
@@ -141,6 +143,7 @@ export function PostEditor(props: {
   const [manualSiteUrl, setManualSiteUrl] = useState("");
   const [score, setScore] = useState<PostScore | null>(null);
   const [scoreLoading, setScoreLoading] = useState(false);
+  const [scoreError, setScoreError] = useState("");
   const [regenPrompt, setRegenPrompt] = useState("");
   const [regenLoading, setRegenLoading] = useState(false);
   const [regenError, setRegenError] = useState("");
@@ -158,7 +161,7 @@ export function PostEditor(props: {
   }
 
   async function handlePost() {
-    if (props.onPostLinkedIn && props.linkedinConnected) {
+    if (props.isPro && props.onPostLinkedIn && props.linkedinConnected) {
       setLinkedinError("");
       setLinkedinPosting(true);
       try {
@@ -237,10 +240,13 @@ export function PostEditor(props: {
 
   async function handleScore() {
     if (!props.onScore) return;
+    setScoreError("");
     setScoreLoading(true);
     try {
       const result = await props.onScore(content);
       setScore(result);
+    } catch {
+      setScoreError("Could not score this draft. Please try again.");
     } finally {
       setScoreLoading(false);
     }
@@ -392,11 +398,11 @@ export function PostEditor(props: {
                   {linkedinPosting
                     ? <><Sparkles size={12} className="animate-pulse" /> Posting…</>
                     : copied
-                    ? <><Check size={12} /> {props.linkedinConnected ? "Posted!" : "Copied — LinkedIn opening…"}</>
-                    : <><Linkedin size={13} /> {props.linkedinConnected ? "Post to LinkedIn" : "Copy & Open LinkedIn"}</>
+                    ? <><Check size={12} /> {props.isPro && props.linkedinConnected ? "Posted!" : "Copied — LinkedIn opening…"}</>
+                    : <><Linkedin size={13} /> {props.isPro && props.linkedinConnected ? "Post to LinkedIn" : "Copy & Open LinkedIn"}</>
                   }
                 </button>
-                {props.linkedinConnected && props.onScheduleLinkedIn && (
+                {props.isPro && props.linkedinConnected && props.onScheduleLinkedIn && (
                   <button
                     type="button"
                     onClick={() => setShowScheduler(!showScheduler)}
@@ -473,6 +479,12 @@ export function PostEditor(props: {
                 </span>
               ))}
             </div>
+          {platform === "linkedin" && props.linkedinConnected && !props.isPro && (
+            <Link href="/pricing" className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold text-[#d4ff00]/80 transition-colors hover:text-[#d4ff00]">
+              <Lock size={11} /> Get Pro to publish directly or schedule
+            </Link>
+          )}
+          {scoreError && <p role="alert" className="text-xs text-red-300">{scoreError}</p>}
           </div>
         )}
 

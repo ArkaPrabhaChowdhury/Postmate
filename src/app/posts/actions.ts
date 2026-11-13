@@ -9,6 +9,7 @@ import { logExtraction } from "@/lib/logger";
 import { postToLinkedIn } from "@/lib/linkedin";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
+import { assertProPlan } from "@/lib/plan-limits";
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
@@ -243,6 +244,7 @@ export async function findPostImage(formData: FormData): Promise<string> {
 
 export async function postToLinkedInNow(postId: string): Promise<{ ok: boolean; error?: string }> {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const post = await prisma.generatedPost.findFirst({
     where: { id: postId, userId },
     select: { content: true },
@@ -273,6 +275,7 @@ export async function postToLinkedInNow(postId: string): Promise<{ ok: boolean; 
 
 export async function scheduleLinkedInPost(postId: string, scheduledAt: string): Promise<{ ok: boolean; error?: string }> {
   const userId = await requireUserId();
+  await assertProPlan(userId);
   const post = await prisma.generatedPost.findFirst({
     where: { id: postId, userId },
     select: { id: true },

@@ -269,6 +269,8 @@ export async function generateProjectShowcaseForRepo() {
 
 export async function autoGenerateVoice(): Promise<string> {
   const userId = await requireUserId();
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!isOwnerPromptAdminEmail(user?.email)) await assertProPlan(userId);
 
   const fingerprintData = await getVoiceFingerprintData(userId);
   const generated = await generateVoiceFingerprint(fingerprintData);
@@ -302,6 +304,7 @@ export async function saveVoiceSettings(formData: FormData) {
     select: { email: true },
   });
   const isOwnerPromptAdmin = isOwnerPromptAdminEmail(user?.email);
+  if (!isOwnerPromptAdmin) await assertProPlan(userId);
 
   await prisma.userSettings.upsert({
     where: { userId },

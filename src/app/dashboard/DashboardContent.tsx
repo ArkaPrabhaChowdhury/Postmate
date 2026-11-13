@@ -3,8 +3,7 @@ import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcas
 import { getPostingSuggestion } from "@/lib/scoring";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
 import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
-import { assertPublicRepo, getOctokitForUser } from "@/lib/github";
-import { redirect } from "next/navigation";
+import { getOctokitForUser } from "@/lib/github";
 import {
   Sparkles, GitCommit, FileText, Route,
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Layers, Zap, Lock, Calendar,
@@ -127,17 +126,6 @@ export async function DashboardContent({
     );
   }
 
-  try {
-    const [owner, name] = activeRepo.fullName.split("/");
-    if (!owner || !name) throw new Error("Invalid active repository.");
-    await assertPublicRepo(owner, name);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("public repositories only")) {
-      redirect("/settings?repoError=publicOnly");
-    }
-    throw error;
-  }
-
   // Auto-sync commits — at most once every 5 minutes to avoid waterfall on every load
   const staleSince = 0;
   if (staleSince > 5 * 60 * 1000) {
@@ -246,6 +234,7 @@ export async function DashboardContent({
   const trialEndsAt = userState?.proTrialEndsAt ?? null;
   const isExpiredStandaloneTrial = !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt <= now;
   const isPro = userState?.plan === "pro" && !isExpiredStandaloneTrial;
+  const canUseVoiceSettings = isPro || isOwnerPromptAdmin;
   const freePostsLeft = Math.max(0, 5 - monthlyPostCount);
   const isTrialActive = userState?.plan === "pro" && !!trialEndsAt && !userState?.paddleSubscriptionId && trialEndsAt > now;
   const isTrialExpired = isExpiredStandaloneTrial || (!isPro && !!userState?.proTrialExpiredAt && !userState.paddleSubscriptionId);
@@ -343,7 +332,7 @@ export async function DashboardContent({
 
         {aiUnavailable && (
           <div role="alert" className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100">
-            Postmate couldn’t reach its AI service, so this draft wasn’t created. Please try again later.
+            Postmate couldn’t produce this draft right now, so nothing was saved. Please try again.
           </div>
         )}
 
@@ -501,14 +490,26 @@ export async function DashboardContent({
               <ChevronDown size={14} className="text-[#555] chevron" />
             </summary>
             <div className="p-5">
-              <VoiceSettingsSection
-                initialVoiceMemory={settings?.voiceMemory ?? ""}
-                initialTone={settings?.tone ?? "50"}
-                initialOwnerGlobalInstruction={settings?.ownerGlobalInstructionOverride ?? ""}
-                showOwnerGlobalInstruction={isOwnerPromptAdmin}
-                onSave={saveVoiceSettings}
-                onAutoGenerate={autoGenerateVoice}
-              />
+              {canUseVoiceSettings ? (
+                <VoiceSettingsSection
+                  initialVoiceMemory={settings?.voiceMemory ?? ""}
+                  initialTone={settings?.tone ?? "50"}
+                  initialOwnerGlobalInstruction={settings?.ownerGlobalInstructionOverride ?? ""}
+                  showOwnerGlobalInstruction={isOwnerPromptAdmin}
+                  onSave={saveVoiceSettings}
+                  onAutoGenerate={autoGenerateVoice}
+                />
+              ) : (
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-[#f0ede8]">Make every draft sound like you</p>
+                    <p className="mt-1 text-xs text-[#777]">Save a voice profile and tone, or let Postmate learn from your public GitHub writing.</p>
+                  </div>
+                  <Link href="/pricing" className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[#d4ff00] px-3 py-2 text-xs font-bold text-[#090909] transition-colors hover:bg-[#c4ef00]">
+                    <Lock size={11} /> Get Pro Â· {proPrice}
+                  </Link>
+                </div>
+              )}
             </div>
           </details>
         </section>

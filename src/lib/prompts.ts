@@ -14,7 +14,7 @@ Lead with the concrete change in the commit. Explain what changed and why only w
 Mention a tradeoff, result, mistake, or lesson only when it is explicitly supported by the supplied context.
 
 Tone: Professional, conversational, and direct. No corporate buzzwords.
-Length: 70–130 words. Use short paragraphs and stop when the source facts are covered.`.trim();
+Length: 35–90 words. If the source is thin, use one short paragraph. Do not pad the post with generic summaries or bullets.`.trim();
 
             case "insight":
                 return `
@@ -75,6 +75,7 @@ Length: 100–180 words.`.trim();
         "11. Only include a metric or outcome if the exact fact appears in the supplied source. Do not infer results from code changes.",
         "12. If the source is thin, write a short factual update instead of filling gaps. If a detail is uncertain, leave it out.",
         "13. Regeneration means rephrasing the same supported facts, not adding new facts.",
+        "14. Never infer documentation contents, API behavior, architecture, tests, or user impact from a filename or a vague commit message. Mention those details only when they appear in the diff.",
         "",
         "Output ONLY the post text.",
     ].join("\n"),

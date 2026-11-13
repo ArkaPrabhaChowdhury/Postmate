@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { PostEditor } from "@/components/PostEditor";
 import { markPostCopied, savePost, findPostImage, scorePostAction, regeneratePostAction, postToLinkedInNow, scheduleLinkedInPost, cancelLinkedInSchedule } from "../actions";
 import { getLinkedInAccount } from "@/lib/linkedin";
-import { assertPublicRepo, parseFullName } from "@/lib/github";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 const styleConfig: Record<string, { label: string; cls: string }> = {
   progress: { label: "Progress update", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
@@ -25,7 +24,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const userId = await requireUserId();
   const { id } = await params;
 
-  const [post, linkedinAccount, xSettings] = await Promise.all([
+  const [post, linkedinAccount, xSettings, userPlan] = await Promise.all([
     prisma.generatedPost.findFirst({
       where: { id, userId },
       select: {
@@ -38,19 +37,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     }),
     getLinkedInAccount(userId),
     prisma.userSettings.findUnique({ where: { userId }, select: { xEnforce280: true } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, proTrialEndsAt: true, paddleSubscriptionId: true },
+    }),
   ]);
   if (!post) notFound();
-  if (post.repo?.fullName) {
-    const { owner, repo } = parseFullName(post.repo.fullName);
-    try {
-      await assertPublicRepo(owner, repo);
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("public repositories only")) {
-        redirect("/settings?repoError=publicOnly");
-      }
-      throw error;
-    }
-  }
+  const isExpiredStandaloneTrial = !!userPlan?.proTrialEndsAt && !userPlan.paddleSubscriptionId && userPlan.proTrialEndsAt <= new Date();
+  const isPro = userPlan?.plan === "pro" && !isExpiredStandaloneTrial;
 
   const sc = styleConfig[post.style] ?? styleConfig.progress;
   const st = statusConfig[post.status] ?? statusConfig.draft;
@@ -106,6 +100,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
         <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl p-3 sm:p-5">
           <PostEditor
             postId={post.id}
+            isPro={isPro}
             initialContent={post.content}
             initialPlatform={post.platform === "x" ? "x" : "linkedin"}
             initialLinkedinStatus={post.linkedinStatus}
