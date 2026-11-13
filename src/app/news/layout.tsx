@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { headers } from "next/headers";
 import { requireUserId } from "@/lib/requireUser";
 import { getUserPlan } from "@/lib/plan-limits";
+import { PLANS } from "@/lib/plans";
 export default async function NewsLayout({ children }: { children: React.ReactNode }) {
   const userId = await requireUserId();
+  const countryCode = (await headers()).get("x-vercel-ip-country")?.toUpperCase() ?? "US";
+  const proPrice = countryCode === "IN" ? `₹${PLANS.pro.indiaPrice}` : `$${PLANS.pro.price}`;
   const plan = await getUserPlan(userId);
   const isPro = plan === "pro";
 
@@ -20,13 +24,16 @@ export default async function NewsLayout({ children }: { children: React.ReactNo
           <p className="text-sm text-[#666] mt-2 max-w-xl">
             Upgrade to Pro to unlock the News queue, digest email, and history.
           </p>
+          <p className="mt-4 text-sm font-semibold text-[#f0ede8]">
+            {proPrice} one time · Lifetime access · No renewals
+          </p>
           <div className="flex items-center gap-3 mt-6">
             <Link
               href="/pricing"
               className="inline-flex items-center gap-2 px-4 py-2 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] text-sm font-bold rounded-xl transition-colors"
             >
               <Sparkles size={14} />
-              Upgrade to Pro
+              Get Pro · {proPrice}
             </Link>
             <Link
               href="/dashboard"

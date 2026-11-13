@@ -16,6 +16,8 @@ import { StopPropagation } from "@/components/StopPropagation";
 import { syncUserFromPaddleTransaction } from "@/lib/paddle-sync";
 import { isOwnerPromptAdminEmail } from "@/lib/owner-prompt";
 import { DashboardAutoSync } from "@/components/DashboardAutoSync";
+import { headers } from "next/headers";
+import { PLANS } from "@/lib/plans";
 
 function normalizeJourneyPost(value: unknown): JourneyPostData | null {
   if (!value || typeof value !== "object") return null;
@@ -75,6 +77,8 @@ export async function DashboardContent({
   userId: string;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const countryCode = (await headers()).get("x-vercel-ip-country")?.toUpperCase() ?? "US";
+  const proPrice = countryCode === "IN" ? `₹${PLANS.pro.indiaPrice}` : `$${PLANS.pro.price}`;
   const params = await searchParams;
   const upgraded = params?.upgraded === "1";
   const commitsPageParam = params?.commitsPage;
@@ -351,7 +355,7 @@ export async function DashboardContent({
               href="/pricing"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
             >
-              Upgrade to Pro
+              Get Pro · {proPrice}
               <ChevronRight size={12} />
             </Link>
           </div>
@@ -382,7 +386,7 @@ export async function DashboardContent({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
             >
               <Sparkles size={11} />
-              Upgrade to Pro
+              Get Pro · {proPrice}
             </Link>
           </div>
         )}
