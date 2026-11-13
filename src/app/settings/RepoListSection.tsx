@@ -25,8 +25,8 @@ export function RepoListSectionFallback() {
     <section className="bg-[#0c0c0c] border border-white/[0.08] rounded-xl overflow-hidden">
       <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-[#f0ede8]">Your repositories</h2>
-          <p className="text-xs text-[#666] mt-0.5">Loading from GitHub...</p>
+          <h2 className="text-sm font-semibold text-[#f0ede8]">Your public repositories</h2>
+          <p className="text-xs text-[#666] mt-0.5">Loading public repositories from GitHub...</p>
         </div>
         <GitBranch size={14} className="text-[#555] flex-shrink-0" />
       </div>

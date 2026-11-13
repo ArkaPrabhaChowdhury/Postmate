@@ -3,7 +3,8 @@ import { generatePostFromCommit, generateStrategyForRepo, generateProjectShowcas
 import { getPostingSuggestion } from "@/lib/scoring";
 import { StrategyJourneyCards, type JourneyPostData } from "@/components/StrategyJourneyCards";
 import { VoiceSettingsSection } from "@/components/VoiceSettingsSection";
-import { getOctokitForUser } from "@/lib/github";
+import { assertPublicRepo, getOctokitForUser } from "@/lib/github";
+import { redirect } from "next/navigation";
 import {
   Sparkles, GitCommit, FileText, Route,
   ExternalLink, ChevronRight, CheckCircle2, ChevronDown, Layers, Zap, Lock, Calendar,
@@ -119,6 +120,17 @@ export async function DashboardContent({
         </Link>
       </div>
     );
+  }
+
+  try {
+    const [owner, name] = activeRepo.fullName.split("/");
+    if (!owner || !name) throw new Error("Invalid active repository.");
+    await assertPublicRepo(owner, name);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("public repositories only")) {
+      redirect("/settings?repoError=publicOnly");
+    }
+    throw error;
   }
 
   // Auto-sync commits — at most once every 5 minutes to avoid waterfall on every load
@@ -440,9 +452,15 @@ export async function DashboardContent({
                 <Zap size={14} className="text-[#d4ff00]" />
               </div>
               <div>
-                <p className="text-xs font-bold text-[#d4ff00] uppercase tracking-wider mb-0.5">Suggested today</p>
+                <p className="text-xs font-bold text-[#d4ff00] uppercase tracking-wider mb-0.5">Suggested commit</p>
+                <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-[#555]">Draft source</p>
                 <p className="text-sm font-medium text-[#f0ede8]">{suggestion.repoFullName}</p>
                 <p className="text-xs text-[#666] mt-0.5">{suggestion.reasons.join(" · ")}</p>
+                {suggestion.repoId !== activeRepo.id && (
+                  <p className="mt-1 text-[11px] text-amber-200/80">
+                    This suggestion uses a different repo from your active dashboard repo.
+                  </p>
+                )}
               </div>
             </div>
             <form action={generateSuggestedPost}>
@@ -453,7 +471,7 @@ export async function DashboardContent({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909] rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
               >
                 <Sparkles size={11} />
-                Generate post
+                Generate from {suggestion.repoFullName.split("/").pop()}
               </SubmitButton>
             </form>
           </div>

@@ -283,7 +283,9 @@ npx tsc -p tsconfig.json --noEmit
 
 ## Posting behavior
 
-- GitHub access is read-only
+- Postmate uses public repositories only and makes no GitHub changes
+- New GitHub sign-ins request profile and email scopes, not the broad `repo` scope
+- Previously authorized GitHub tokens may keep their old scope until the user revokes Postmate in GitHub settings
 - LinkedIn supports direct posting and scheduling
 - X supports generation only; publishing is manual
 - News auto-posting applies to LinkedIn only

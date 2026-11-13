@@ -4,7 +4,7 @@ export const PLANS = {
     repos: 1,
     postsPerMonth: 5,
     features: [
-      "1 GitHub repo",
+      "1 active public GitHub repo",
       "5 AI posts / month",
       "Progress style only",
     ],
@@ -17,15 +17,14 @@ export const PLANS = {
     repos: Infinity,
     postsPerMonth: Infinity,
     features: [
-      "Unlimited repos",
+      "Unlimited saved public repos",
       "Unlimited AI posts",
       "All 4 post styles",
       "Journey & showcase posts",
       "News tweet generation",
       "Voice memory & tone",
       "Email digest",
-      "Post scheduler for LinkedIn",
-      "Auto-post to LinkedIn",
+      "Publish or schedule LinkedIn drafts",
     ],
   },
 } as const;

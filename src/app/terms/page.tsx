@@ -66,9 +66,9 @@ export default function TermsPage() {
                 Postmate transforms your GitHub commit activity into AI-generated social media posts for LinkedIn and X (Twitter). The Service includes:
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>GitHub OAuth integration to read your repositories and commit history</li>
+                <li>GitHub integration for public repositories and commit history</li>
                 <li>AI-powered post generation using large language models</li>
-                <li>LinkedIn post scheduling and auto-posting</li>
+                <li>LinkedIn post publishing and scheduling</li>
                 <li>News tweet generation from curated RSS feeds</li>
                 <li>Voice memory and tone personalization</li>
               </ul>

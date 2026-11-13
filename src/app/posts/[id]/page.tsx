@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { PostEditor } from "@/components/PostEditor";
 import { markPostCopied, savePost, findPostImage, scorePostAction, regeneratePostAction, postToLinkedInNow, scheduleLinkedInPost, cancelLinkedInSchedule } from "../actions";
 import { getLinkedInAccount } from "@/lib/linkedin";
+import { assertPublicRepo, parseFullName } from "@/lib/github";
 import { ChevronLeft, ExternalLink } from "lucide-react";
 const styleConfig: Record<string, { label: string; cls: string }> = {
   progress: { label: "Progress update", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
@@ -39,6 +40,17 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     prisma.userSettings.findUnique({ where: { userId }, select: { xEnforce280: true } }),
   ]);
   if (!post) notFound();
+  if (post.repo?.fullName) {
+    const { owner, repo } = parseFullName(post.repo.fullName);
+    try {
+      await assertPublicRepo(owner, repo);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("public repositories only")) {
+        redirect("/settings?repoError=publicOnly");
+      }
+      throw error;
+    }
+  }
 
   const sc = styleConfig[post.style] ?? styleConfig.progress;
   const st = statusConfig[post.status] ?? statusConfig.draft;

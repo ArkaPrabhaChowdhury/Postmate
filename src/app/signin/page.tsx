@@ -1,6 +1,18 @@
 import { SignInButton } from "@/components/AuthButtons";
 import { Shield, Lock, EyeOff } from "lucide-react";
-export default function SignInPage() {
+import Link from "next/link";
+
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = (await searchParams) ?? {};
+  const callbackUrl = params.callbackUrl === "/pricing?upgrade=pro"
+    ? "/pricing?upgrade=pro"
+    : "/dashboard";
+  const isUpgradeFlow = callbackUrl === "/pricing?upgrade=pro";
+
   return (
     <div className="max-w-sm mx-auto mt-24 px-4">
       <div className="bg-[#0c0c0c] border border-white/[0.08] rounded-3xl p-8 text-center shadow-[0_32px_80px_rgba(0,0,0,0.6)]">
@@ -22,20 +34,22 @@ export default function SignInPage() {
           className="text-2xl font-bold tracking-tight text-[#f0ede8] mb-2"
           style={{ fontFamily: "var(--font-heading)" }}
         >
-          Sign in to Postmate
+          {isUpgradeFlow ? "Continue to Postmate Pro" : "Sign in to Postmate"}
         </h1>
         <p className="text-sm text-[#888] leading-relaxed mb-8">
-          Connect your GitHub account to start turning your commits into LinkedIn &amp; X posts.
+          {isUpgradeFlow
+            ? "Sign in to return to secure checkout. You will see the final price before paying."
+            : "Pick a public repository and turn one commit into a LinkedIn or X draft you can edit."}
         </p>
 
-        <SignInButton />
+        <SignInButton callbackUrl={callbackUrl} />
 
         {/* Trust Signals */}
         <div className="mt-8 flex flex-col gap-3">
           {[
-            { icon: EyeOff, text: "Read-only access to your repos" },
-            { icon: Lock, text: "We never commit code or post for you" },
-            { icon: Shield, text: "No LinkedIn or X API required" },
+            { icon: EyeOff, text: "Public repositories only" },
+            { icon: Lock, text: "Postmate never changes your GitHub" },
+            { icon: Shield, text: "Review every draft before sharing" },
           ].map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center justify-center gap-2 text-xs font-medium text-[#666]">
               <Icon size={14} className="text-[#d4ff00]/60" />
@@ -43,6 +57,10 @@ export default function SignInPage() {
             </div>
           ))}
         </div>
+        <p className="text-[11px] leading-relaxed text-[#555] mt-6">
+          GitHub sign-in asks for profile and email access.{" "}
+          <Link href="/privacy" className="text-[#777] underline underline-offset-2 hover:text-[#d4ff00]">How data is used</Link>.
+        </p>
       </div>
     </div>
   );

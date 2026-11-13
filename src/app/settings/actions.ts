@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { parseFullName } from "@/lib/github";
+import { assertPublicRepo, parseFullName } from "@/lib/github";
 import { requireUserId } from "@/lib/requireUser";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
@@ -25,6 +25,12 @@ export async function setActiveRepo(formData: FormData) {
 
   const fullName = fullNameRaw.replace(/^https?:\/\/github\.com\//i, "").replace(/\/+$/, "");
   const { owner, repo } = parseFullName(fullName);
+
+  try {
+    await assertPublicRepo(owner, repo);
+  } catch {
+    redirect("/settings?repoError=publicOnly");
+  }
 
   await prisma.repo.updateMany({
     where: { userId },

@@ -279,31 +279,33 @@ function hasUnsupportedClaimSignals(output: string, source: string): boolean {
   const out = normalizeForClaimCheck(output);
   const src = normalizeForClaimCheck(source);
 
-  const signalRegexes: RegExp[] = [
-    /\b\d+(\.\d+)?\s*%/,
-    /\b(latency|throughput|qps|rps|p95|p99|sla|uptime)\b/,
-    /\b(revenue|arr|mrr|conversion|roi|churn)\b/,
-    /\b(users?|customers?|downloads?|installs?)\b/,
-    /\b(x faster|times faster|improved by|reduced by|increased by)\b/,
-  ];
+  const outputNumbers = (out.match(/\b\d+(?:,\d{3})*(?:\.\d+)?\b/g) ?? [])
+    .map((number) => number.replace(/,/g, ""));
+  const sourceNumbers = new Set(
+    (src.match(/\b\d+(?:,\d{3})*(?:\.\d+)?\b/g) ?? []).map((number) => number.replace(/,/g, "")),
+  );
+  if (outputNumbers.some((number) => !sourceNumbers.has(number))) return true;
 
-  return signalRegexes.some((re) => re.test(out) && !re.test(src));
+  const percentages = out.match(/\b\d+(?:,\d{3})*(?:\.\d+)?\s*%/g) ?? [];
+  if (percentages.some((percentage) => !src.includes(percentage))) return true;
+
+  const signalRegexes: RegExp[] = [
+    /\b(latency|throughput|qps|rps|p95|p99|sla|uptime)\b/g,
+    /\b(revenue|arr|mrr|conversion|roi|churn)\b/g,
+    /\b(users?|customers?|downloads?|installs?)\b/g,
+    /\b(performance|production|scale|traffic|retention)\b/g,
+    /\b(improv(?:e|ed|es|ing)|reduc(?:e|ed|es|ing)|increas(?:e|ed|es|ing)|optimis(?:e|ed|es|ing)|optimiz(?:e|ed|es|ing)|sped up|faster|saved|doubled|halved)\b/g,
+  ];
+  if (signalRegexes.some((re) => [...out.matchAll(re)].some(([signal]) => !src.includes(signal)))) return true;
+
+  const personalExperience = /\b(?:i\s+(?:was\s+(?:tasked|surprised|stuck|wrong)|felt|learned|realized|realised|discovered|struggled|spent|noticed|expected|assumed|wanted|decided|had to)|late night|over coffee|aha moment)\b[^.!?\n]*/g;
+  return [...out.matchAll(personalExperience)].some(([claim]) => !src.includes(claim));
 }
 
 function stripLikelyUnsupportedClaimLines(output: string, source: string): string {
-  const src = normalizeForClaimCheck(source);
   const lines = output.split(/\r?\n/);
-  const signalRegexes: RegExp[] = [
-    /\b\d+(\.\d+)?\s*%/,
-    /\b(latency|throughput|qps|rps|p95|p99|sla|uptime)\b/,
-    /\b(revenue|arr|mrr|conversion|roi|churn)\b/,
-    /\b(users?|customers?|downloads?|installs?)\b/,
-    /\b(x faster|times faster|improved by|reduced by|increased by)\b/,
-  ];
-
   const kept = lines.filter((line) => {
-    const n = normalizeForClaimCheck(line);
-    return !signalRegexes.some((re) => re.test(n) && !re.test(src));
+    return !hasUnsupportedClaimSignals(line, source);
   });
   return kept.join("\n").trim();
 }
@@ -446,6 +448,7 @@ export async function generateLinkedInPost(input: {
   });
   const claimSource = [
     input.commit.message,
+    input.commit.authoredAt ?? "",
     filesSummary,
     patchHints,
     input.additionalPrompt ?? "",
@@ -464,6 +467,10 @@ export async function generateLinkedInPost(input: {
     candidate = hasUnsupportedClaimSignals(retry, claimSource)
       ? stripLikelyUnsupportedClaimLines(retry, claimSource)
       : retry;
+  }
+
+  if (!candidate.trim()) {
+    candidate = `Commit update: ${input.commit.message.trim()}`;
   }
 
   const voiced = normalizePostVoice(candidate);

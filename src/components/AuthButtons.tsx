@@ -5,7 +5,7 @@ import { Github, LogOut } from "lucide-react";
 import { captureAnalyticsEvent } from "@/components/AppAnalytics";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
 
-export function SignInButton() {
+export function SignInButton({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
   return (
     <button
       onClick={() => {
@@ -13,7 +13,7 @@ export function SignInButton() {
           provider: "github",
           location: "signin_page",
         });
-        signIn("github", { callbackUrl: "/dashboard" });
+        signIn("github", { callbackUrl });
       }}
       className="w-full inline-flex items-center justify-center gap-2.5 px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-900 text-sm font-semibold rounded-xl transition-all shadow-sm"
     >

@@ -7,20 +7,15 @@ import {
   ArrowRight,
   Github,
   Linkedin,
-  BrainCircuit,
-  Route,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
-  Rss,
   Zap,
   EyeOff,
   PencilLine,
-  PlayCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { XLogo } from "@/components/XLogo";
-import { HomeDemoVideo } from "@/components/HomeDemoVideo";
+import { CommitPostDemo } from "@/components/CommitPostDemo";
 
 const containerVariants = {
   hidden: {},
@@ -111,33 +106,27 @@ export default function Home() {
                 variants={itemVariants}
                 className="text-[#8d8d8d] text-lg leading-[1.7] max-w-lg font-medium"
               >
-                Ship code, not just drafts. Postmate reads your GitHub activity,
-                shapes the narrative, and hands you a post you&apos;ll actually
-                want to publish.
+                Turn a public GitHub commit into a LinkedIn or X draft grounded
+                in the change. Check the source, edit the copy, then decide how
+                to publish.
               </motion.p>
 
               <motion.div variants={itemVariants} className="lg:hidden">
                 <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c0c] p-3 shadow-[0_24px_60px_rgba(0,0,0,0.35)]">
                   <div className="mb-3 flex items-center justify-between border-b border-white/[0.05] pb-2.5">
                     <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-[#666]">
-                      Generated post
+                      Illustrative sample
                     </span>
                     <span className="rounded-full border border-[#d4ff00]/20 bg-[#d4ff00]/[0.07] px-2 py-0.5 text-[10px] font-mono text-[#d4ff00]">
                       LinkedIn
                     </span>
                   </div>
                   <p className="text-[13px] leading-relaxed text-[#c8c4bd]">
-                    &ldquo;I shipped OAuth refresh handling this week. The
-                    interesting part wasn&apos;t the token logic, it was learning
-                    how tiny auth edge cases quietly shape user trust.&rdquo;
+                    &ldquo;I updated Postmate&apos;s site typography and mobile
+                    navigation. The commit adds Oswald for headings, hides the
+                    floating app nav when signed out, and lets footer links wrap
+                    on smaller screens.&rdquo;
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {["#buildinpublic", "#webdev", "#shipping"].map((tag) => (
-                      <span key={tag} className="text-[10px] font-mono text-[#d4ff00]/55">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </motion.div>
 
@@ -157,10 +146,14 @@ export default function Home() {
                   href="#demo"
                   className="inline-flex items-center gap-2 px-6 py-3 border border-white/[0.14] bg-white/[0.03] text-[#d8d4cc] hover:bg-white/[0.07] hover:border-white/25 rounded-xl transition-all text-sm font-semibold"
                 >
-                  <PlayCircle size={16} />
-                  Watch demo
+                  <Github size={16} />
+                  See a real example
                 </Link>
               </motion.div>
+
+              <motion.p variants={itemVariants} className="text-xs font-mono text-[#666]">
+                5 free drafts each month · No card required
+              </motion.p>
 
               {/* Trust note */}
               <motion.div
@@ -169,15 +162,15 @@ export default function Home() {
               >
                 <span className="inline-flex items-center gap-1.5">
                   <EyeOff size={13} className="text-[#d4ff00]/70" />
-                  Read-only GitHub
+                  Public repositories only
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <PencilLine size={13} className="text-[#d4ff00]/70" />
-                  Edit before publishing
+                  No changes to your GitHub
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <ShieldCheck size={13} className="text-[#d4ff00]/70" />
-                  No auto-posting
+                  You choose before publishing
                 </span>
               </motion.div>
 
@@ -221,9 +214,7 @@ export default function Home() {
                     Recent commits
                   </div>
                   {[
-                    { msg: "fix: resolve token expiry edge case", hash: "a3f2c1" },
-                    { msg: "feat: add OAuth2 refresh flow", hash: "b8e4d9" },
-                    { msg: "docs: update API reference", hash: "c1f7a2" },
+                    { msg: "Refresh site typography and mobile navigation behavior", hash: "d7637e1" },
                   ].map((commit, i) => (
                     <motion.div
                       key={i}
@@ -259,7 +250,7 @@ export default function Home() {
                   >
                     <Zap size={9} className="text-[#d4ff00]" />
                     <span className="text-[10px] font-mono text-[#d4ff00]">
-                      AI generating
+                      source-linked example
                     </span>
                   </motion.div>
                   <div className="flex-1 h-px bg-white/[0.04]" />
@@ -268,38 +259,28 @@ export default function Home() {
                 {/* Generated post */}
                 <div className="p-4">
                   <div className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em] mb-3">
-                    Generated post · LinkedIn
+                    Sample draft · LinkedIn
                   </div>
                   <div className="p-3 rounded-xl bg-[#131313] border border-white/[0.05]">
                     <p className="text-[11px] text-[#808080] leading-relaxed">
-                      &ldquo;Just fixed a subtle bug that was silently breaking
-                      auth for 12% of users. Here&apos;s what I learned about
-                      JWT expiry edge cases...&rdquo;
+                      &ldquo;I updated Postmate&apos;s display typography and
+                      mobile navigation. The commit adds Oswald for headings,
+                      hides the floating app nav when signed out, and lets
+                      footer links wrap on narrow screens.&rdquo;
                     </p>
-                    <div className="mt-2.5 flex gap-2 flex-wrap">
-                      {["#buildinpublic", "#webdev", "#javascript"].map(
-                        (tag) => (
-                          <span
-                            key={tag}
-                            className="text-[10px] text-[#d4ff00]/40 font-mono"
-                          >
-                            {tag}
-                          </span>
-                        )
-                      )}
-                    </div>
                   </div>
                   <div className="mt-3 flex justify-end">
-                    <Link href={authed ? "/dashboard" : "/signin"}>
-                      <motion.div
-                        initial={shouldReduceMotion ? {} : { opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1.2 }}
-                        className="px-3 py-1.5 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-lg cursor-pointer hover:bg-[#c4ef00] transition-colors"
-                      >
-                        Copy to LinkedIn →
-                      </motion.div>
-                    </Link>
+                    <motion.a
+                      href="https://github.com/ArkaPrabhaChowdhury/Postmate/commit/d7637e185fc04df8f8e0e7393d2d8537a202c00a"
+                      target="_blank"
+                      rel="noreferrer"
+                      initial={shouldReduceMotion ? {} : { opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1.2 }}
+                      className="px-3 py-1.5 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-lg hover:bg-[#c4ef00] transition-colors"
+                    >
+                      Inspect the source →
+                    </motion.a>
                   </div>
                 </div>
               </div>
@@ -309,7 +290,7 @@ export default function Home() {
       </section>
 
       {/* ── PLATFORM STRIP ───────────────────────────────── */}
-      <HomeDemoVideo />
+      <CommitPostDemo />
 
       <section className="w-full py-10 border-y border-white/[0.04] bg-[#0a0a0a]">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-between gap-5">
@@ -337,7 +318,7 @@ export default function Home() {
             </div>
           </div>
           <div className="hidden sm:block text-[11px] font-mono text-[#666] text-right">
-            read-only · no write access
+            Public repo only · no GitHub changes
           </div>
         </div>
       </section>
@@ -362,7 +343,7 @@ export default function Home() {
             >
               Sync, draft, ship.
               <br />
-              <span className="text-[#555]">Under 60 seconds.</span>
+              <span className="text-[#555]">Three clear steps.</span>
             </h2>
           </motion.div>
 
@@ -441,8 +422,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-[#666] text-lg leading-relaxed font-medium lg:pb-1"
             >
-              Stop staring at your commits. AI narration that sounds like you
-              — not a corporate press release.
+              Keep each draft tied to the change that inspired it. Review the source beside the copy.
             </motion.p>
           </div>
 
@@ -549,17 +529,16 @@ export default function Home() {
                 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.04em] text-[#f0ede8] leading-[1.0]"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Build in public.
+                Share what you shipped.
                 <br />
-                <span className="text-[#444]">Start today.</span>
+                <span className="text-[#444]">Start with one commit.</span>
               </motion.h2>
 
               <motion.p
                 variants={itemVariants}
                 className="text-[#444] text-xl leading-relaxed max-w-lg"
               >
-                Join developers who ship and share — turning every commit into
-                momentum.
+                Turn a public commit into a draft you can check, edit, and choose to publish.
               </motion.p>
 
               <motion.div
@@ -588,63 +567,39 @@ export default function Home() {
 
 const features = [
   {
-    icon: <BrainCircuit size={17} />,
-    title: "AI Voice Sync",
-    description:
-      "Set a voice memory prompt and tone slider — every post sounds like you, not a corporate press release.",
-  },
-  {
     icon: <Github size={17} />,
-    title: "Deep Git Context",
+    title: "Draft from a real commit",
     description:
-      "Reads commit messages, file diffs, READMEs, and language stats. Real technical insight, not just subject lines.",
+      "Use the commit message and available diff to explain what changed, with a link back to its source.",
   },
   {
-    icon: <Sparkles size={17} />,
-    title: "Four Post Styles",
+    icon: <PencilLine size={17} />,
+    title: "Edit every line",
     description:
-      "Progress update, technical insight, build-in-public, or full project showcase. One commit, four angles.",
-  },
-  {
-    icon: <Route size={17} />,
-    title: "Journey Threads",
-    description:
-      "Generate a 3-post X thread arc — origin, build, launch — from your repo's full history in one click.",
-  },
-  {
-    icon: <TrendingUp size={17} />,
-    title: "Trend Posts",
-    description:
-      "Tie your work to live tech trends via Google Trends RSS. Generate LinkedIn or X posts anchored to what's hot.",
-  },
-  {
-    icon: <Rss size={17} />,
-    title: "News Intelligence",
-    description:
-      "Ingests 15+ RSS feeds — TechCrunch, Hacker News, Anthropic, OpenAI — and auto-drafts tweets for your review.",
+      "Shape the draft with your saved voice preferences, then review it before publishing.",
   },
   {
     icon: <ShieldCheck size={17} />,
-    title: "Read-Only Security",
+    title: "Choose how it ships",
     description:
-      "OAuth read-only scope. We never write to your repos or post on your behalf. Total control, always.",
+      "Publish or schedule LinkedIn posts when you choose. X posts stay manual.",
   },
 ];
 
 const steps = [
   {
-    title: "Connect Your GitHub",
+    title: "Choose a public repository",
     description:
-      "Grant read-only OAuth access. We pull commit history, READMEs, and language stats — nothing more.",
+      "Sign in with GitHub, then choose a public repo. Postmate supports public repositories only.",
   },
   {
-    title: "Pick a generation mode",
+    title: "Pick a commit and format",
     description:
-      "Single commit post, full project showcase, 3-post X journey thread, or a trend-anchored opinion piece.",
+      "Use the commit message and available diff to draft for LinkedIn or X.",
   },
   {
-    title: "Edit & Ship",
+    title: "Review before publishing",
     description:
-      "Review the draft in our editor. One click copies to LinkedIn or opens the X composer — done.",
+      "Edit the draft, then publish or schedule on LinkedIn when you choose. X stays manual.",
   },
 ];

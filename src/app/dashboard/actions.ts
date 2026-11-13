@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
-import { getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprintData } from "@/lib/github";
+import { assertPublicRepo, getOctokitForUser, getRepoContext, getGitHubProfile, getVoiceFingerprintData } from "@/lib/github";
 import { fetchDevNews } from "@/lib/news";
 import { generateLinkedInPost, generateProjectStrategy, generateJourneyPosts, generateProjectShowcase, generateTrendPost, generateVoiceFingerprint, generateClusteredPosts, type PostStyle } from "@/lib/ai";
 import { assertCanGeneratePost, assertProPlan } from "@/lib/plan-limits";
@@ -23,6 +23,7 @@ export async function syncRecentCommits() {
     select: { id: true, owner: true, name: true, fullName: true },
   });
   if (!repo) redirect("/settings");
+  await assertPublicRepo(repo.owner, repo.name);
 
   const octokit = await getOctokitForUser(userId);
   const res = await octokit.rest.repos.listCommits({
@@ -89,6 +90,7 @@ export async function generatePostFromCommit(formData: FormData) {
     select: { id: true, owner: true, name: true, fullName: true },
   });
   if (!repo) redirect("/settings");
+  await assertPublicRepo(repo.owner, repo.name);
 
   const octokit = await getOctokitForUser(userId);
   const commitRes = await octokit.rest.repos.getCommit({
@@ -324,6 +326,7 @@ export async function generateClusteredPostsAction(formData: FormData) {
     select: { id: true, owner: true, name: true, fullName: true },
   });
   if (!repo) redirect("/settings");
+  await assertPublicRepo(repo.owner, repo.name);
 
   const events = await prisma.gitHubEvent.findMany({
     where: { repoId: repo.id, type: "commit" },
@@ -373,6 +376,7 @@ export async function generateClusteredPostsAction(formData: FormData) {
 
 export async function generateSuggestedPost(formData: FormData) {
   const userId = await requireUserId();
+  await assertCanGeneratePost(userId, "progress");
   const commitSha = String(formData.get("commitSha") ?? "").trim();
   const repoId = String(formData.get("repoId") ?? "").trim();
   if (!commitSha || !repoId) throw new Error("Missing suggestion data.");
@@ -382,6 +386,7 @@ export async function generateSuggestedPost(formData: FormData) {
     select: { id: true, owner: true, name: true, fullName: true },
   });
   if (!repo) throw new Error("Repo not found.");
+  await assertPublicRepo(repo.owner, repo.name);
 
   const event = await prisma.gitHubEvent.findFirst({
     where: { repoId: repo.id, type: "commit", externalId: commitSha },

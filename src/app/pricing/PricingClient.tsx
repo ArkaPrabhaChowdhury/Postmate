@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -21,7 +21,7 @@ const stagger = {
 
 type Plan = "free" | "pro";
 
-export default function PricingPage({ countryCode }: { countryCode: string }) {
+export default function PricingPage({ countryCode, isPro }: { countryCode: string; isPro: boolean }) {
   const { data: session } = useSession();
   const authed = !!session?.user;
   const [loading, setLoading] = useState<Plan | null>(null);
@@ -34,15 +34,15 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
     });
   }, [authed]);
 
-  async function handleUpgrade(plan: Plan) {
-    if (plan === "free") return;
+  const handleUpgrade = useCallback(async (plan: Plan) => {
+    if (plan === "free" || isPro) return;
     captureAnalyticsEvent(ANALYTICS_EVENTS.pricingPlanSelected, {
       plan,
       authed,
       action: "one_time_purchase",
     });
     if (!authed) {
-      window.location.href = "/signin";
+      window.location.href = "/signin?callbackUrl=" + encodeURIComponent("/pricing?upgrade=pro");
       return;
     }
     setLoading(plan);
@@ -61,7 +61,16 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
     } finally {
       setLoading(null);
     }
-  }
+  }, [authed, isPro]);
+
+  const resumedUpgrade = useRef(false);
+  useEffect(() => {
+    const shouldResume = new URLSearchParams(window.location.search).get("upgrade") === "pro";
+    if (!authed || isPro || !shouldResume || resumedUpgrade.current) return;
+    resumedUpgrade.current = true;
+    window.history.replaceState(window.history.state, "", "/pricing");
+    void handleUpgrade("pro");
+  }, [authed, handleUpgrade, isPro]);
 
   const tiers: { key: Plan; highlight?: boolean }[] = [
     { key: "free" },
@@ -75,12 +84,12 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,rgba(212,255,0,0.04)_0%,transparent_65%)]" />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 md:px-12 lg:px-16 py-16">
 
         {/* Header */}
         <motion.div
           variants={stagger}
-          className="text-center mb-20"
+          className="text-center mb-10"
         >
           <motion.div variants={fadeUp}>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#d4ff00]/20 bg-[#d4ff00]/[0.05] text-[#d4ff00] text-[11px] font-mono tracking-wide mb-6">
@@ -100,13 +109,12 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
           </motion.h1>
 
           <motion.p variants={fadeUp} className="text-[#555] text-lg max-w-md mx-auto leading-relaxed">
-            Start free. Upgrade when your content game needs more firepower.
+            5 drafts a month are free. Upgrade once for unlimited drafts.
           </motion.p>
         </motion.div>
 
         {/* Pricing cards */}
-        <div className="relative max-w-3xl mx-auto mt-10 pt-5">
-          {/* Most Popular badge - positioned above the Pro card */}
+        <div className="relative max-w-3xl mx-auto">
           <motion.div
             variants={stagger}
             className="grid md:grid-cols-2 gap-px bg-white/[0.04] rounded-2xl border border-white/[0.04]"
@@ -128,7 +136,7 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
                       <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#d4ff00] text-[#090909] text-[10px] font-bold rounded-full tracking-wide uppercase shadow-lg">
                         <Zap size={9} />
-                        Most popular
+                        One-time access
                       </div>
                     </div>
                   </>
@@ -162,16 +170,16 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
                 {/* CTA */}
                 {isFree ? (
                   <Link
-                    href={authed ? "/dashboard" : "/signin"}
+                    href={authed || isPro ? "/dashboard" : "/signin"}
                     className="mb-8 w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-[#888] hover:text-[#f0ede8] rounded-xl transition-all text-sm font-semibold"
                   >
-                    {authed ? "Current plan" : "Get started free"}
+                    {isPro ? "Go to dashboard" : authed ? "Current plan" : "Get started free"}
                   </Link>
                 ) : (
                   <div className="mb-8">
                     <button
                       onClick={() => handleUpgrade(key)}
-                      disabled={isLoading}
+                      disabled={isLoading || isPro}
                       className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-60 bg-[#d4ff00] hover:bg-[#c4ef00] text-[#090909]"
                     >
                       {isLoading ? (
@@ -181,7 +189,7 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
                         </>
                       ) : (
                         <>
-                          Get Pro once
+                          {isPro ? "Pro is active" : "Get Pro once"}
                           <ArrowRight size={14} />
                         </>
                       )}
@@ -191,6 +199,12 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
                         {checkoutError}
                       </p>
                     )}
+                    <p className="mt-3 text-center text-[11px] text-[#666]">
+                      7-day refund guarantee ·{" "}
+                      <Link href="/refund" className="text-[#888] underline underline-offset-2 hover:text-[#d4ff00]">
+                        See policy
+                      </Link>
+                    </p>
                   </div>
                 )}
 
@@ -220,7 +234,7 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
           variants={fadeUp}
           className="text-center text-[12px] text-[#444] font-mono mt-10 tracking-wide"
         >
-          One payment, lifetime Pro access · Secure checkout via Paddle
+          One payment · Lifetime Pro access · No renewals · Secure checkout via Paddle
         </motion.p>
 
         {/* FAQ section */}
@@ -246,7 +260,14 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
               className="border-b border-white/[0.05] py-5"
             >
               <p className="text-sm font-semibold text-[#f0ede8] mb-2">{faq.q}</p>
-              <p className="text-sm text-[#555] leading-relaxed">{faq.a}</p>
+              <p className="text-sm text-[#555] leading-relaxed">
+                {faq.a}{" "}
+                {faq.href && (
+                  <Link href={faq.href} className="text-[#888] underline underline-offset-2 hover:text-[#d4ff00]">
+                    {faq.linkLabel}
+                  </Link>
+                )}
+              </p>
             </motion.div>
           ))}
         </motion.div>
@@ -258,18 +279,26 @@ export default function PricingPage({ countryCode }: { countryCode: string }) {
 const faqs = [
   {
     q: "Is Pro a subscription?",
-    a: "No. Pro is a one-time purchase with ongoing access. There are no renewals or cancellation steps.",
+    a: "New Pro purchases are one-time with lifetime access and no renewals. Existing legacy subscriptions keep their current billing terms until canceled.",
   },
   {
     q: "What counts as a post?",
-    a: "Any AI-generated draft — LinkedIn post, X tweet, showcase, journey arc, or news tweet. Regenerating the same commit is a new post.",
+    a: "Each new draft uses one monthly slot. Editing or regenerating the same saved draft does not use another slot.",
   },
   {
     q: "What happens after I pay?",
     a: "Paddle confirms your payment and Pro features are enabled on your account.",
   },
   {
-    q: "Is my GitHub data safe?",
-    a: "Read-only OAuth scope — we never write to your repos. Commit data is stored encrypted and never shared.",
-  }
+    q: "What does Postmate send to AI?",
+    a: "When you generate a draft, the selected commit context is sent to Groq for processing. Postmate works with public repositories only.",
+    href: "/privacy",
+    linkLabel: "Read the privacy policy.",
+  },
+  {
+    q: "Can I get a refund?",
+    a: "Yes. First-time Pro purchases are covered by a 7-day refund guarantee.",
+    href: "/refund",
+    linkLabel: "Read the refund policy.",
+  },
 ];

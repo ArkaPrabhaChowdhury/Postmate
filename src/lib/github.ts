@@ -1,6 +1,7 @@
 import { Octokit } from "octokit";
 import { prisma } from "@/lib/prisma";
 import { logExtraction } from "@/lib/logger";
+import { decryptGitHubToken, encryptGitHubToken, isEncryptedGitHubToken } from "@/lib/github-token";
 
 export type GitHubRepoListItem = {
   id: number;
@@ -15,14 +16,21 @@ export type GitHubRepoListItem = {
 export async function getGitHubAccessToken(userId: string): Promise<string> {
   const account = await prisma.account.findFirst({
     where: { userId, provider: "github" },
-    select: { access_token: true },
+    select: { id: true, access_token: true },
   });
-  if (!account?.access_token) {
+  const token = decryptGitHubToken(account?.access_token);
+  if (!account || !token) {
     throw new Error(
       "Missing GitHub access token. Try signing out and signing in again."
     );
   }
-  return account.access_token;
+  if (!isEncryptedGitHubToken(account.access_token ?? "")) {
+    await prisma.account.update({
+      where: { id: account.id },
+      data: { access_token: encryptGitHubToken(token) },
+    });
+  }
+  return token;
 }
 
 export async function getOctokitForUser(userId: string): Promise<Octokit> {
@@ -41,9 +49,10 @@ export async function listUserRepos(
     page,
     per_page: perPage,
     sort: "updated",
+    visibility: "public",
   });
 
-  return res.data.map((repo) => ({
+  return res.data.filter((repo) => !repo.private).map((repo) => ({
     id: repo.id,
     full_name: repo.full_name,
     private: repo.private,
@@ -52,6 +61,24 @@ export async function listUserRepos(
     stargazers_count: repo.stargazers_count ?? 0,
     updated_at: repo.updated_at ?? null,
   }));
+}
+
+export async function assertPublicRepo(owner: string, repo: string): Promise<void> {
+  // Check without the user's token so a legacy broad OAuth grant cannot expose
+  // private repository metadata during the visibility check.
+  const octokit = new Octokit();
+  try {
+    const response = await octokit.rest.repos.get({ owner, repo });
+    if (response.data.private) {
+      throw new Error("Postmate currently supports public repositories only.");
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("public repositories only")) throw error;
+    if ((error as { status?: number })?.status === 404) {
+      throw new Error("Repository not found or private. Postmate currently supports public repositories only.");
+    }
+    throw error;
+  }
 }
 
 export async function syncRecentCommitsForRepo(params: {
@@ -66,6 +93,7 @@ export async function syncRecentCommitsForRepo(params: {
   }
 
   const octokit = await getOctokitForUser(params.userId);
+  await assertPublicRepo(owner, repo);
   const res = await octokit.rest.repos.listCommits({
     owner,
     repo,
@@ -158,7 +186,7 @@ export async function getVoiceFingerprintData(userId: string): Promise<{
 
   const [profileRes, reposRes] = await Promise.allSettled([
     octokit.rest.users.getAuthenticated(),
-    octokit.rest.repos.listForAuthenticatedUser({ per_page: 10, sort: "updated" }),
+    octokit.rest.repos.listForAuthenticatedUser({ per_page: 10, sort: "updated", visibility: "public" }),
   ]);
 
   const bio =
@@ -168,7 +196,7 @@ export async function getVoiceFingerprintData(userId: string): Promise<{
 
   const repos =
     reposRes.status === "fulfilled"
-      ? reposRes.value.data.slice(0, 5)
+    ? reposRes.value.data.filter((repo) => !repo.private).slice(0, 5)
       : [];
 
   const repoDescriptions = repos
@@ -216,6 +244,7 @@ export async function getRepoContext(params: {
   owner: string;
   repo: string;
 }) {
+  await assertPublicRepo(params.owner, params.repo);
   const octokit = await getOctokitForUser(params.userId);
 
   const [repoRes, readmeRes, commitsRes, languagesRes] = await Promise.allSettled([
