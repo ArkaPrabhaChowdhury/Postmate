@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Oswald, Syne, DM_Sans, Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -7,28 +7,34 @@ import { Analytics } from "@vercel/analytics/next";
 import { MobileNavPill } from "@/components/MobileNavPill";
 import { SiteNavAccount, SiteNavLinks } from "@/components/SiteNav";
 
-const syne = Syne({
+const syne = localFont({
+  src: "./fonts/syne-latin.woff2",
   variable: "--font-syne",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
+  weight: "400 800",
+  display: "swap",
 });
 
-const heroDisplay = Oswald({
+const heroDisplay = localFont({
+  src: "./fonts/oswald-latin.woff2",
   variable: "--font-hero",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "500 700",
+  display: "swap",
 });
 
-const dmSans = DM_Sans({
+const dmSans = localFont({
+  src: "./fonts/dm-sans-latin.woff2",
   variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400 700",
+  display: "swap",
 });
 
-const spaceMono = Space_Mono({
+const spaceMono = localFont({
+  src: [
+    { path: "./fonts/space-mono-latin-regular.woff2", weight: "400" },
+    { path: "./fonts/space-mono-latin-bold.woff2", weight: "700" },
+  ],
   variable: "--font-space-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
