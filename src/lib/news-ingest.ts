@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_SOURCES, fetchHNAlgoliaItems, parseRss, uniqueByUrl, type RssItem } from "@/lib/news-rss";
 import { fetchLatestXItems } from "@/lib/news-x";
 import { generateNewsTweet } from "@/lib/ai";
+import { getRepoContext } from "@/lib/github";
 
 // Force IPv4 — same fix as ai.ts
 dns.setDefaultResultOrder("ipv4first");
@@ -42,7 +43,7 @@ function clampText(input: string, maxChars: number) {
   return trimmed.slice(0, maxChars - 1).trimEnd() + "…";
 }
 
-async function fetchArticleBlurb(url: string): Promise<string> {
+export async function fetchArticleBlurb(url: string): Promise<string> {
   try {
     const res = await fetch(url, {
       cache: "no-store",
@@ -154,6 +155,26 @@ async function getUserNewsSettings(userId: string) {
 
 export async function runNewsIngestForUser(userId: string): Promise<IngestResult> {
   const settings = await getUserNewsSettings(userId);
+  const activeRepo = await prisma.repo.findFirst({
+    where: { userId, isActive: true },
+    select: { owner: true, name: true, fullName: true },
+  });
+  let projectContext = "";
+  if (activeRepo) {
+    try {
+      const context = await getRepoContext({ userId, owner: activeRepo.owner, repo: activeRepo.name });
+      projectContext = [
+        `Project: ${activeRepo.fullName}`,
+        context.description ? `Description: ${context.description}` : "",
+        context.topics.length ? `Topics: ${context.topics.join(", ")}` : "",
+        context.languages ? `Languages: ${Object.keys(context.languages).join(", ")}` : "",
+        context.readme ? `README: ${context.readme.slice(0, 1800)}` : "",
+        context.commits.length ? `Recent commits: ${context.commits.slice(0, 8).map((commit) => commit.message).join("; ")}` : "",
+      ].filter(Boolean).join("\n");
+    } catch {
+      // News still works when the project is unavailable; drafts stay source-based.
+    }
+  }
 
   const userKeywords = settings.newsKeywords
     ? settings.newsKeywords.split(",").map((k) => k.trim()).filter(Boolean).slice(0, 5)
@@ -260,6 +281,7 @@ export async function runNewsIngestForUser(userId: string): Promise<IngestResult
     const tweet = await generateNewsTweet({
       title: item.title,
       summary,
+      projectContext,
       voiceMemory: settings.voiceMemory,
       tasteProfile: settings.newsTasteProfile,
     });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { ArrowRight, RefreshCw } from "lucide-react";
-import { ingestNews, getPendingTweets, getLastFetchTime, getLinkedInStatus } from "./actions";
+import { ingestNews, getPendingTweets, getLastFetchTime, getLinkedInStatus, getNewsProjectName } from "./actions";
 import { TweetCard } from "./TweetCard";
 
 type NewsItem = {
@@ -22,11 +22,13 @@ export default function NewsPage() {
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState("");
   const [linkedinConnected, setLinkedinConnected] = useState(false);
+  const [projectName, setProjectName] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
-      const [data, lastFetch, liConnected] = await Promise.all([getPendingTweets(), getLastFetchTime(), getLinkedInStatus()]);
+      const [data, lastFetch, liConnected, activeProject] = await Promise.all([getPendingTweets(), getLastFetchTime(), getLinkedInStatus(), getNewsProjectName()]);
       setLinkedinConnected(liConnected);
+      setProjectName(activeProject);
       setItems(data);
       setLoaded(true);
 
@@ -75,7 +77,7 @@ export default function NewsPage() {
               News queue
             </h1>
             <p className="text-xs text-[#666] mt-1">
-              High-signal tech news → AI-drafted tweets ready to post.
+              {projectName ? `Tech stories with an angle for ${projectName}.` : "Tech stories with developer-focused drafts ready to review."}
             </p>
           </div>
           <div className="flex items-center gap-2">

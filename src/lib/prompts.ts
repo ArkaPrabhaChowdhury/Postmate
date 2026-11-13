@@ -188,6 +188,8 @@ Length: 100–180 words.`.trim();
         "- Use the USER'S SAVED VOICE.",
         "- IMPORTANT: You are sharing news about other people's products. You did NOT build or develop them. Never use 'I built', 'I developed', or 'my team' when referring to the product.",
         "- HARD FACTUALITY: Use only facts present in the provided title/summary. Do NOT add numbers, claims, or outcomes that are not explicitly provided.",
+        "- When project context is supplied, explain one specific, factual connection to that project. Clearly distinguish the article's facts from the developer's perspective. If there is no credible connection, write a useful developer-focused reaction without pretending the story affects their project.",
+        "- Never claim the user uses, built, or is affected by a technology unless project context explicitly supports it. Avoid generic 'this changes everything' reactions.",
         "- Regeneration must be a rewrite of the same facts only.",
         "",
         "Output ONLY the tweet.",

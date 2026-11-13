@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/requireUser";
 import { assertProPlan } from "@/lib/plan-limits";
-import { runNewsIngestForUser } from "@/lib/news-ingest";
+import { fetchArticleBlurb, runNewsIngestForUser } from "@/lib/news-ingest";
 import { sendNewsDigestEmail } from "@/lib/email";
 import type { IngestArticle } from "@/lib/news-ingest";
 import { generateNewsTweet } from "@/lib/ai";
 import { postToLinkedIn } from "@/lib/linkedin";
 import { captureServerEvent } from "@/lib/posthog-server";
 import { ANALYTICS_EVENTS } from "@/lib/analytics";
+import { getRepoContext } from "@/lib/github";
 
 export async function ingestNews() {
   const userId = await requireUserId();
@@ -70,6 +71,15 @@ export async function getLinkedInStatus(): Promise<boolean> {
     select: { access_token: true },
   });
   return !!account?.access_token;
+}
+
+export async function getNewsProjectName(): Promise<string | null> {
+  const userId = await requireUserId();
+  const repo = await prisma.repo.findFirst({
+    where: { userId, isActive: true },
+    select: { fullName: true },
+  });
+  return repo?.fullName ?? null;
 }
 
 export async function approveTweet(formData: FormData) {
@@ -201,9 +211,19 @@ export async function regenerateNewsTweet(id: string, additionalPrompt?: string)
     select: { voiceMemory: true, newsTasteProfile: true },
   });
 
+  const activeRepo = await prisma.repo.findFirst({ where: { userId, isActive: true }, select: { owner: true, name: true, fullName: true } });
+  let projectContext = "";
+  if (activeRepo) {
+    try {
+      const context = await getRepoContext({ userId, owner: activeRepo.owner, repo: activeRepo.name });
+      projectContext = [`Project: ${activeRepo.fullName}`, context.description, context.topics.join(", "), Object.keys(context.languages).join(", "), context.readme.slice(0, 1800), context.commits.slice(0, 8).map((commit) => commit.message).join("; ")].filter(Boolean).join("\n");
+    } catch {}
+  }
+
   const tweet = await generateNewsTweet({
     title: existing.articleTitle,
-    summary: "",
+    summary: await fetchArticleBlurb(existing.articleUrl),
+    projectContext,
     voiceMemory: settings?.voiceMemory ?? undefined,
     tasteProfile: settings?.newsTasteProfile ?? undefined,
     additionalPrompt,

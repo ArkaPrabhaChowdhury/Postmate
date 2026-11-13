@@ -740,6 +740,7 @@ export async function generateVoiceFingerprint(input: {
 export async function generateNewsTweet(input: {
   title: string;
   summary: string;
+  projectContext?: string;
   voiceMemory?: string;
   tasteProfile?: string;
   additionalPrompt?: string;
@@ -755,6 +756,7 @@ export async function generateNewsTweet(input: {
   const userMsg = [
     `Title: ${input.title}`,
     input.summary ? `Summary: ${input.summary}` : "",
+    input.projectContext ? `User's active public project context:\n${input.projectContext}` : "",
     ...buildPromptContext({ ...input, ownerGlobalInstruction }),
   ]
     .filter(Boolean)
