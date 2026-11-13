@@ -210,7 +210,7 @@ export default function Home() {
 
                 {/* Commits list */}
                 <div className="p-4 space-y-1.5">
-                  <div className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em] mb-3">
+                  <div className="text-[10px] font-mono text-[#a3a3a3] uppercase tracking-[0.15em] mb-3">
                     Recent commits
                   </div>
                   {[
@@ -258,7 +258,7 @@ export default function Home() {
 
                 {/* Generated post */}
                 <div className="p-4">
-                  <div className="text-[10px] font-mono text-[#555] uppercase tracking-[0.15em] mb-3">
+                  <div className="text-[10px] font-mono text-[#a3a3a3] uppercase tracking-[0.15em] mb-3">
                     Sample draft · LinkedIn
                   </div>
                   <div className="p-3 rounded-xl bg-[#131313] border border-white/[0.05]">
