@@ -20,7 +20,7 @@ npx prisma studio        # Open Prisma GUI
 
 ## Architecture
 
-**Postmate** is a Next.js 16 App Router application that transforms GitHub commit activity into AI-generated social media posts (LinkedIn, X/Twitter). It uses GitHub OAuth for authentication, reads commit history via Octokit, and generates content using Groq's LLM API (llama-3.3-70b-versatile).
+**Postmate** is a Next.js 16 App Router application that transforms GitHub commit activity into AI-generated social media posts (LinkedIn, X/Twitter). It uses GitHub OAuth for authentication, reads commit history via Octokit, and generates content using Groq's LLM API (`openai/gpt-oss-120b`).
 
 ### Key Data Flow
 

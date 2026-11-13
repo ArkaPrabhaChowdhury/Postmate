@@ -323,7 +323,7 @@ function getOpenAIClient() {
   });
 }
 
-// Groq's Llama 4 Scout endpoint was shut down on July 17, 2026.
+// Shared Groq production model for Postmate text generation.
 const MODEL = "openai/gpt-oss-120b";
 
 async function chat(
