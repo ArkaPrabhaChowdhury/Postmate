@@ -134,7 +134,13 @@ export async function generatePostFromCommit(formData: FormData) {
       tone: settings?.tone ?? undefined,
       enforce280: platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
     });
-  } catch {
+  } catch (error) {
+    const providerError = error as { status?: unknown; code?: unknown };
+    console.error("[AI] Commit draft generation failed", {
+      status: providerError.status,
+      code: providerError.code,
+      message: error instanceof Error ? error.message : String(error),
+    });
     redirect("/dashboard?error=ai_unavailable");
   }
 

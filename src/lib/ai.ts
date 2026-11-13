@@ -323,8 +323,8 @@ function getOpenAIClient() {
   });
 }
 
-// Groq model to use — fast, free, high quality
-const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+// Groq's Llama 4 Scout endpoint was shut down on July 17, 2026.
+const MODEL = "openai/gpt-oss-120b";
 
 async function chat(
   client: OpenAI,

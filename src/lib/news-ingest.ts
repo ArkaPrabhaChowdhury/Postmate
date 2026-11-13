@@ -115,7 +115,7 @@ Return ONLY a JSON array of objects with index and score. No explanation. Exampl
 
   try {
     const res = await client.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "openai/gpt-oss-120b",
       temperature: 0,
       max_tokens: 512,
       messages: [
