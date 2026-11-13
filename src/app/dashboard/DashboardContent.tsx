@@ -81,6 +81,7 @@ export async function DashboardContent({
   const proPrice = countryCode === "IN" ? `₹${PLANS.pro.indiaPrice}` : `$${PLANS.pro.price}`;
   const params = await searchParams;
   const upgraded = params?.upgraded === "1";
+  const aiUnavailable = params?.error === "ai_unavailable";
   const commitsPageParam = params?.commitsPage;
   const commitsPageRaw = Array.isArray(commitsPageParam) ? commitsPageParam[0] : commitsPageParam;
   const commitsPageNum = Number.parseInt(commitsPageRaw ?? "1", 10);
@@ -337,6 +338,12 @@ export async function DashboardContent({
               Upgrade now
               <ChevronRight size={12} />
             </Link>
+          </div>
+        )}
+
+        {aiUnavailable && (
+          <div role="alert" className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100">
+            Postmate couldn’t reach its AI service, so this draft wasn’t created. Please try again later.
           </div>
         )}
 

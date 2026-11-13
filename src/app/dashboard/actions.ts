@@ -116,22 +116,27 @@ export async function generatePostFromCommit(formData: FormData) {
 
   const settings = await prisma.userSettings.findUnique({ where: { userId } });
 
-  const content = await generateLinkedInPost({
-    repoFullName: repo.fullName,
-    style,
-    platform,
-    commit: {
-      sha,
-      message: firstLine(message),
-      url: commit.html_url,
-      authoredAt,
-      authorLogin,
-      files,
-    },
-    voiceMemory: settings?.voiceMemory ?? undefined,
-    tone: settings?.tone ?? undefined,
-    enforce280: platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
-  });
+  let content: string;
+  try {
+    content = await generateLinkedInPost({
+      repoFullName: repo.fullName,
+      style,
+      platform,
+      commit: {
+        sha,
+        message: firstLine(message),
+        url: commit.html_url,
+        authoredAt,
+        authorLogin,
+        files,
+      },
+      voiceMemory: settings?.voiceMemory ?? undefined,
+      tone: settings?.tone ?? undefined,
+      enforce280: platform === "x" ? (settings?.xEnforce280 ?? true) : undefined,
+    });
+  } catch {
+    redirect("/dashboard?error=ai_unavailable");
+  }
 
   const post = await prisma.generatedPost.create({
     data: {
